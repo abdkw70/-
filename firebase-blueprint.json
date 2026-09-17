@@ -1,0 +1,30 @@
+{
+  "entities": {
+    "UserProfile": {
+      "collection": "users",
+      "fields": {
+        "userId": { "type": "string", "description": "Unique user ID" },
+        "name": { "type": "string", "description": "User display name" },
+        "email": { "type": "string", "description": "User email address" },
+        "phone": { "type": "string", "description": "User phone number" },
+        "role": { "type": "string", "description": "User role: user or admin" },
+        "xp": { "type": "number", "description": "Total XP points" },
+        "currentTier": { "type": "string", "description": "Current rank tier" },
+        "createdAt": { "type": "string", "description": "Account creation timestamp" },
+        "lastLoginAt": { "type": "string", "description": "Last sign in timestamp" }
+      }
+    },
+    "WalletItem": {
+      "collection": "users/{userId}/wallet_items",
+      "fields": {
+        "id": { "type": "string", "description": "Reward item ID" },
+        "userId": { "type": "string", "description": "Owner user ID" },
+        "amount": { "type": "number", "description": "Active remaining balance" },
+        "initialAmount": { "type": "number", "description": "Initial reward amount" },
+        "earnedAt": { "type": "string", "description": "Earned timestamp" },
+        "expiresAt": { "type": "string", "description": "Expiry timestamp" },
+        "status": { "type": "string", "description": "Item status" }
+      }
+    }
+  }
+}

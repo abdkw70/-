@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630">
+  <defs>
+    <linearGradient id="ogBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0f172a" />
+      <stop offset="50%" stop-color="#0c4a6e" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f8fafc" />
+    </linearGradient>
+    <linearGradient id="btnGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <filter id="cardShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="24" flood-color="#000000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#ogBg)" />
+
+  <!-- Background Decorative Grid & Blobs -->
+  <circle cx="1050" cy="150" r="300" fill="#38bdf8" opacity="0.15" />
+  <circle cx="150" cy="500" r="250" fill="#0284c7" opacity="0.2" />
+
+  <!-- Main Showcase Card -->
+  <g transform="translate(100, 75)">
+    <rect width="1000" height="480" rx="36" fill="url(#cardGrad)" filter="url(#cardShadow)" />
+    
+    <!-- Top Bar inside Card with Kuwait Flag & Verified Badge -->
+    <g transform="translate(60, 50)">
+      <!-- Kuwait Flag -->
+      <g transform="translate(0, 0)">
+        <rect x="0" y="0" width="30" height="10" rx="2" fill="#15803d" />
+        <rect x="33" y="0" width="30" height="10" rx="2" fill="#ffffff" stroke="#e2e8f0" stroke-width="0.5" />
+        <rect x="66" y="0" width="30" height="10" rx="2" fill="#dc2626" />
+        <polygon points="0,0 12,5 0,10" fill="#000000" />
+      </g>
+      <text x="110" y="11" font-family="'Alexandria', sans-serif" font-size="16" font-weight="700" fill="#0369a1">
+        متجر كويتي معتمد 100% 🇰🇼
+      </text>
+    </g>
+
+    <!-- Logo and Brand Typography -->
+    <g transform="translate(60, 110)">
+      <!-- Brand Emblem -->
+      <rect width="110" height="110" rx="26" fill="url(#btnGrad)" />
+      
+      <!-- Open Book Vector -->
+      <g transform="translate(55, 55) scale(0.38)">
+        <path d="M 0 -80 C 40 -100, 110 -100, 150 -70 L 150 70 C 110 40, 40 40, 0 60 C -40 40, -110 40, -150 70 L -150 -70 C -110 -100, -40 -100, 0 -80 Z" fill="#ffffff" />
+        <path d="M 0 -75 L 0 65" stroke="#0284c7" stroke-width="6" stroke-linecap="round" />
+      </g>
+
+      <!-- Main Titles -->
+      <text x="135" y="48" font-family="'Cairo', 'Alexandria', sans-serif" font-size="40" font-weight="900" fill="#0f172a">
+        مكتبة الشاطئ الازرق
+      </text>
+      <text x="138" y="86" font-family="'Alexandria', sans-serif" font-size="20" font-weight="800" fill="#0284c7" letter-spacing="1">
+        Blue Beach Stationery
+      </text>
+    </g>
+
+    <!-- Subtitle / Tagline -->
+    <text x="60" y="270" font-family="'Cairo', sans-serif" font-size="22" font-weight="700" fill="#334155">
+      الوجهة الأولى للقرطاسية، الشنط المدرسية، أدوات الرسم والفنون والمستلزمات التعليمية في الكويت
+    </text>
+
+    <!-- Highlights Features Pills -->
+    <g transform="translate(60, 320)">
+      <!-- Pill 1: Delivery -->
+      <rect x="0" y="0" width="260" height="50" rx="14" fill="#f0f9ff" stroke="#bae6fd" stroke-width="1.5" />
+      <text x="25" y="32" font-family="'Cairo', sans-serif" font-size="16" font-weight="800" fill="#0369a1">
+        🚚 توصيل سريع لجميع المحافظات
+      </text>
+
+      <!-- Pill 2: Cash on Delivery -->
+      <rect x="280" y="0" width="260" height="50" rx="14" fill="#ecfdf5" stroke="#a7f3d0" stroke-width="1.5" />
+      <text x="305" y="32" font-family="'Cairo', sans-serif" font-size="16" font-weight="800" fill="#047857">
+        💵 الدفع عند الاستلام متوفر
+      </text>
+
+      <!-- Pill 3: WhatsApp Support -->
+      <rect x="560" y="0" width="320" height="50" rx="14" fill="#fefce8" stroke="#fef08a" stroke-width="1.5" />
+      <text x="585" y="32" font-family="'Cairo', sans-serif" font-size="16" font-weight="800" fill="#854d0e">
+        💬 خدمة عملاء وطلب بالواتساب: 97123698
+      </text>
+    </g>
+
+    <!-- Bottom Bar / Website URL -->
+    <g transform="translate(60, 420)">
+      <text x="0" y="0" font-family="'Alexandria', sans-serif" font-size="15" font-weight="600" fill="#64748b">
+        تسوق أونلاين عبر متجرنا الرسمي مع تجربة تسوق فورية وسريعة
+      </text>
+    </g>
+  </g>
+</svg>

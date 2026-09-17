@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 160" width="100%" height="100%">
+  <defs>
+    <linearGradient id="logoBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fef08a" />
+      <stop offset="100%" stop-color="#f59e0b" />
+    </linearGradient>
+    <filter id="logoShadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+
+  <!-- Left/Icon Badge -->
+  <g transform="translate(15, 10)">
+    <rect width="140" height="140" rx="32" fill="url(#logoBg)" filter="url(#logoShadow)" />
+    
+    <!-- Open Book Vector inside Badge -->
+    <g transform="translate(70, 70) scale(0.48)">
+      <path d="M 0 -80 C 40 -100, 110 -100, 150 -70 L 150 70 C 110 40, 40 40, 0 60 C -40 40, -110 40, -150 70 L -150 -70 C -110 -100, -40 -100, 0 -80 Z" fill="#ffffff" />
+      <path d="M 0 -75 L 0 65" stroke="#0284c7" stroke-width="6" stroke-linecap="round" />
+      <g transform="translate(0, -90) scale(1.2)">
+        <path d="M 0 -50 L 18 10 L 8 40 L -8 40 L -18 10 Z" fill="url(#gold)" />
+      </g>
+    </g>
+    
+    <!-- Kuwait Mini Badge -->
+    <g transform="translate(48, 115)">
+      <rect x="0" y="0" width="14" height="6" rx="1" fill="#15803d" />
+      <rect x="15" y="0" width="14" height="6" rx="1" fill="#ffffff" />
+      <rect x="30" y="0" width="14" height="6" rx="1" fill="#dc2626" />
+      <polygon points="0,0 5,3 0,6" fill="#000000" />
+    </g>
+  </g>
+
+  <!-- Typography Right (Arabic & English) -->
+  <g transform="translate(175, 45)">
+    <text x="0" y="30" font-family="'Cairo', 'Alexandria', 'Segoe UI', Tahoma, sans-serif" font-size="34" font-weight="900" fill="#0f172a" letter-spacing="-0.5">
+      مكتبة الشاطئ الازرق
+    </text>
+    <text x="2" y="65" font-family="'Alexandria', 'Segoe UI', Montserrat, sans-serif" font-size="16" font-weight="800" fill="#0284c7" letter-spacing="1.5">
+      Blue Beach Stationery
+    </text>
+    <text x="2" y="90" font-family="'Cairo', 'Alexandria', sans-serif" font-size="13" font-weight="600" fill="#64748b">
+      القرطاسية والأدوات المدرسية والمكتبية الأولى بالكويت 🇰🇼
+    </text>
+  </g>
+</svg>
