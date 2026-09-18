@@ -78,13 +78,36 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode }> = ({ chil
 
   const t = useCallback(
     (key: string, fallback?: string, params?: Record<string, string | number>): string => {
-      let text = translations[language]?.[key] || translations['ar']?.[key] || fallback || key;
-      if (params) {
+      let text = translations[language]?.[key] || translations['ar']?.[key];
+      
+      if (!text) {
+        if (fallback) {
+          text = fallback;
+        } else {
+          // Smart fallback for missing keys to avoid showing technical keys like 'shop.sort_default'
+          if (language === 'ar') {
+             if (key.includes('sort')) text = 'ترتيب';
+             else if (key.includes('filter')) text = 'تصفية';
+             else if (key.includes('search')) text = 'بحث';
+             else if (key.includes('cart')) text = 'السلة';
+             else if (key.includes('checkout')) text = 'الدفع';
+             else if (key.includes('shop') || key.includes('product')) text = 'المنتجات';
+             else if (key.includes('auth') || key.includes('login')) text = 'الحساب';
+             else text = ''; // Don't show English keys in Arabic UI
+          } else {
+            // For English, format the key to look like normal text (e.g., shop.sort_default -> Sort Default)
+            text = key.split('.').pop()?.split('_').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ') || key;
+          }
+        }
+      }
+
+      if (params && text) {
         Object.entries(params).forEach(([paramKey, val]) => {
           text = text.replace(new RegExp(`\\{${paramKey}\\}`, 'g'), String(val));
         });
       }
-      return text;
+      
+      return text || '';
     },
     [language]
   );

@@ -221,7 +221,7 @@ const MainApp: React.FC = () => {
       </div>
 
       {!isAdminRoute && <Footer categories={categories} onNavigate={navigate} />}
-      {!isAdminRoute && <Chatbot />}
+      {!isAdminRoute && <Chatbot onNavigate={navigate} currentPath={currentPath} />}
 
       {/* Global Modals & Drawers */}
       {!isAdminRoute && <CartDrawer onNavigate={navigate} />}

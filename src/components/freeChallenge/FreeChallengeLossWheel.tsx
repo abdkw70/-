@@ -19,7 +19,7 @@ export const FreeChallengeLossWheel: React.FC<Props> = ({
 }) => {
   const { cart } = useCart();
   const { settings } = useFreeChallenge();
-  const { dir, isRtl, formatPrice } = useLanguage();
+  const { t, dir, isRtl, formatPrice } = useLanguage();
   const [isSpinning, setIsSpinning] = useState(true);
   const [hasSpun, setHasSpun] = useState(false);
   const [rotationDegrees, setRotationDegrees] = useState(0);
@@ -34,7 +34,7 @@ export const FreeChallengeLossWheel: React.FC<Props> = ({
 
   const segments = configuredValues.map((val, idx) => ({
     percent: val,
-    label: isRtl ? `خصم ${val}%` : `${val}% OFF`,
+    label: t('games.discount_val', '', { val }),
     color: colors[idx % colors.length],
   }));
 
@@ -59,7 +59,7 @@ export const FreeChallengeLossWheel: React.FC<Props> = ({
     const updateCountdown = () => {
       const remainingMs = new Date(expiresAt).getTime() - Date.now();
       if (remainingMs <= 0) {
-        setTimeLeftStr(isRtl ? 'انتهت الصلاحية' : 'Expired');
+        setTimeLeftStr(t('games.expired'));
         return;
       }
       const mins = Math.floor(remainingMs / (1000 * 60));
@@ -85,20 +85,18 @@ export const FreeChallengeLossWheel: React.FC<Props> = ({
       {/* Header Badge */}
       <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 border border-amber-400/30 text-xs font-bold mb-3">
         <Sparkles className="w-3.5 h-3.5 text-amber-400 animate-spin" />
-        <span>{isRtl ? 'عجلة الحظ للخصومات الفورية' : 'Instant Discount Lucky Wheel'}</span>
+        <span>{t('games.instant_lucky_wheel')}</span>
       </div>
 
       {/* Title */}
       <h3 className="text-xl sm:text-2xl font-black text-amber-300 mb-2 whitespace-pre-line leading-snug">
-        {isRtl ? 'تعبك ماراح عالفاضي' : 'Your effort is rewarded!'}
+        {t('games.effort_rewarded')}
         <span className="block text-white text-lg sm:text-xl font-bold mt-1">
-          {isRtl ? 'لف العجله وشوف حظك 🎡' : 'Spin the wheel & claim your discount 🎡'}
+          {t('games.spin_wheel')}
         </span>
       </h3>
       <p className="text-xs text-slate-400 mb-4 max-w-sm">
-        {isRtl
-          ? 'نظام المكافآت يمنحك فرصة ربح خصم فوري ومباشر على سلتك تقديراً لمشاركتك في التحدي!'
-          : 'Our rewards system gives you an instant discount on your cart to thank you for participating!'}
+        {t('games.loss_wheel_desc')}
       </p>
 
       {/* Interactive Wheel Graphic */}
@@ -142,16 +140,16 @@ export const FreeChallengeLossWheel: React.FC<Props> = ({
         <div className="w-full max-w-md bg-slate-800/90 border border-amber-400/40 rounded-2xl p-4 mt-3 shadow-xl animate-in fade-in zoom-in-90">
           <div className="flex items-center justify-between border-b border-slate-700 pb-2 mb-2">
             <span className="text-xs text-slate-300 font-semibold">
-              {isRtl ? 'قيمة الخصم المكتسب:' : 'Earned Discount:'}
+              {t('games.earned_discount')}
             </span>
             <span className="text-xl font-black text-amber-300">
-              {isRtl ? `خصم ${discountPercentage}%` : `${discountPercentage}% OFF`}
+              {t('games.discount_val', '', { val: discountPercentage })}
             </span>
           </div>
 
           {cart && cart.subtotal > 0 && (
             <div className="flex items-center justify-between text-xs text-slate-400 mb-2">
-              <span>{isRtl ? 'توفير متوقع على سلتك الحالية:' : 'Estimated cart savings:'}</span>
+              <span>{t('games.estimated_savings')}</span>
               <span className="font-bold text-emerald-400">-{formatPrice(estimatedSavedKwd)}</span>
             </div>
           )}
@@ -159,7 +157,7 @@ export const FreeChallengeLossWheel: React.FC<Props> = ({
           {/* Countdown timer */}
           <div className="flex items-center justify-center gap-2 py-2 px-3 bg-slate-900/80 rounded-xl border border-slate-700/60 mb-3 text-amber-300 font-mono text-sm font-bold">
             <Clock className="w-4 h-4 text-amber-400 animate-pulse" />
-            <span>{isRtl ? 'صالح للاستخدام لمدة:' : 'Valid for:'}</span>
+            <span>{t('games.valid_for')}</span>
             <span className="text-base text-white font-black">{timeLeftStr}</span>
           </div>
 
@@ -171,7 +169,7 @@ export const FreeChallengeLossWheel: React.FC<Props> = ({
               className="flex-1 py-3 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-black text-sm shadow-lg flex items-center justify-center gap-2 active:scale-95 transition-all cursor-pointer"
             >
               <ShoppingBag className="w-4 h-4" />
-              <span>{isRtl ? 'إتمام الطلب بالخصم الآن' : 'Checkout with Discount Now'}</span>
+              <span>{t('games.checkout_discount')}</span>
             </button>
             <button
               type="button"
@@ -179,7 +177,7 @@ export const FreeChallengeLossWheel: React.FC<Props> = ({
               className="py-3 px-4 rounded-xl bg-slate-700/80 hover:bg-slate-700 text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
             >
               {isRtl ? <ArrowLeft className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
-              <span>{isRtl ? 'متابعة التسوق' : 'Continue Shopping'}</span>
+              <span>{t('games.continue_shopping')}</span>
             </button>
           </div>
         </div>

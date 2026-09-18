@@ -1,3 +1,5 @@
+
+export type LocalizedText = string | { ar: string; en: string };
 import { CartItem, Product } from './types';
 
 export type VisualPuzzleType =
@@ -16,15 +18,15 @@ export interface VisualPuzzle {
   id: string;
   gameId?: string;
   type: VisualPuzzleType;
-  title: string;
-  prompt: string;
+  title: LocalizedText;
+  prompt: LocalizedText;
   category: string;
   difficulty: 'easy' | 'medium' | 'hard' | 'adaptive';
   timeLimitSeconds?: number;
   // Options & Content
   options: {
     id: string;
-    label?: string;
+    label?: LocalizedText;
     svgContent?: string;
     imageUrl?: string;
     meta?: any;
@@ -34,13 +36,13 @@ export interface VisualPuzzle {
     svgContent?: string;
     imageUrl?: string;
     gridItems?: any[];
-    promptDetails?: string;
+    promptDetails?: LocalizedText;
     memoryCards?: { id: string; front: string; back: string }[];
     sequenceItems?: any[];
     mazePath?: string;
     targetSpeedMs?: number;
   };
-  explanation?: string;
+  explanation?: LocalizedText;
   isActive: boolean;
   createdAt: string;
   updatedAt?: string;
@@ -49,8 +51,8 @@ export interface VisualPuzzle {
 export interface GameConfig {
   id: string;
   type: VisualPuzzleType;
-  title: string;
-  description: string;
+  title: LocalizedText;
+  description: LocalizedText;
   icon: string;
   bannerImage?: string;
   enabled: boolean;
@@ -78,9 +80,9 @@ export interface GameConfig {
   activeHours?: { start: number; end: number } | null;
   maxDailyWinners: number;
   targetWinRate: number;
-  winMessage: string;
-  lossMessage: string;
-  timeoutMessage: string;
+  winMessage: LocalizedText;
+  lossMessage: LocalizedText;
+  timeoutMessage: LocalizedText;
 }
 
 export interface TickerSettings {

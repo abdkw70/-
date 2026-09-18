@@ -74,8 +74,16 @@ export const AccountPage: React.FC<AccountPageProps> = ({ onNavigate }) => {
   const { dir, isRtl, language, t, formatPrice } = useLanguage();
 
   const [editingName, setEditingName] = useState<boolean>(false);
-  const [tempName, setTempName] = useState<string>(userProfile?.displayName || user?.displayName || (isRtl ? 'عميل المتجر' : 'Store Customer'));
-  const [tempPhone, setTempPhone] = useState<string>(userProfile?.phone || '');
+  const [tempName, setTempName] = useState<string>("");
+  const [tempPhone, setTempPhone] = useState<string>("");
+
+  useEffect(() => {
+    if (editingName) {
+      setTempName(userProfile?.displayName || user?.displayName || "");
+      setTempPhone(userProfile?.phone || "");
+    }
+  }, [editingName]);
+
   const [achievements, setAchievements] = useState<Achievement[]>([]);
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([]);
   const [addresses, setAddresses] = useState<UserAddress[]>([]);
@@ -104,11 +112,6 @@ export const AccountPage: React.FC<AccountPageProps> = ({ onNavigate }) => {
   const [isSavingAddr, setIsSavingAddr] = useState(false);
 
   const displayName = userProfile?.displayName || user?.displayName || user?.email?.split('@')[0] || (isRtl ? 'عميل المتجر' : 'Store Customer');
-
-  useEffect(() => {
-    setTempName(displayName);
-    if (userProfile?.phone) setTempPhone(userProfile.phone);
-  }, [displayName, userProfile]);
 
   const loadAddresses = async () => {
     const uId = user?.uid || profile?.id;
@@ -350,7 +353,8 @@ export const AccountPage: React.FC<AccountPageProps> = ({ onNavigate }) => {
                       />
                       <button
                         onClick={handleSaveProfile}
-                        className="p-1.5 rounded-lg bg-amber-500 text-slate-950 hover:bg-amber-400 cursor-pointer"
+                        disabled={!tempName.trim()}
+                        className={`p-1.5 rounded-lg text-slate-950 cursor-pointer transition-colors ${tempName.trim() ? 'bg-amber-500 hover:bg-amber-400' : 'bg-slate-500 opacity-50 cursor-not-allowed'}`}
                         title={isRtl ? 'حفظ التعديلات' : 'Save Changes'}
                       >
                         <Save className="w-4 h-4" />

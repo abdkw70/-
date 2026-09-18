@@ -1,0 +1,6 @@
+const fs = require('fs');
+let code = fs.readFileSync('server/routes/aiChat.ts', 'utf8');
+
+code = code.replace(/gemini-2\.0-flash/g, 'gemini-3.6-flash');
+
+fs.writeFileSync('server/routes/aiChat.ts', code);

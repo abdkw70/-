@@ -1,0 +1,1 @@
+{"error":"BadRequestError: 400 Unknown parameter 'voice_config' at 'generation_config.structured_speech_config'."}

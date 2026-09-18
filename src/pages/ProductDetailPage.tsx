@@ -508,7 +508,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ idOrHandle
               <div className="flex flex-wrap gap-2.5">
                 {product.variants.map(v => {
                   const isSelected = selectedVariantId === v.id;
-                  const isAvailable = v.stock !== undefined ? v.stock > 0 : v.enabled !== false;
+                  const isAvailable = v.stock !== undefined ? v.stock > 0 : v.enabled !== false && product.isInStock;
                   const displayTitle = translateOptionValue(v.selectedOptions?.[0]?.valueName || v.title);
 
                   return (
@@ -584,9 +584,9 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ idOrHandle
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={handleAddToCart}
-                disabled={!product.isInStock || isAdding}
+                disabled={!currentInStock || isAdding}
                 className={`flex-1 py-3.5 px-6 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer ${
-                  !product.isInStock
+                  !currentInStock
                     ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                     : addedSuccess
                     ? 'bg-emerald-600 text-white'
@@ -608,7 +608,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ idOrHandle
 
               <button
                 onClick={handleBuyNow}
-                disabled={!product.isInStock}
+                disabled={!currentInStock}
                 className="bg-amber-400 hover:bg-amber-300 disabled:opacity-50 text-slate-950 font-bold py-3.5 px-6 rounded-2xl text-sm transition-all shadow-xs cursor-pointer text-center"
               >
                 {t('product.buy_now')}

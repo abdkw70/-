@@ -1,5 +1,7 @@
 import React from 'react';
 import { VisualPuzzleClient } from '../../types';
+import { useLanguage } from '../../context/LanguageContext';
+import { getLocalizedText } from '../../utils/translation';
 import { Sparkles, HelpCircle, Eye, Compass, Layers, CheckCircle2, Clock } from 'lucide-react';
 
 interface Props {
@@ -15,35 +17,36 @@ export const VisualPuzzleRenderer: React.FC<Props> = ({
   onSelectOption,
   disabled = false,
 }) => {
+  const { t, language } = useLanguage();
   const { type, prompt, mainVisual, options, category, difficulty } = puzzle;
 
   const getDifficultyBadge = () => {
     switch (difficulty) {
       case 'easy':
-        return <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">سهل 🟢</span>;
+        return <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">{t('games.diff_easy')}</span>;
       case 'hard':
-        return <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">متقدم 🔥</span>;
+        return <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/10 text-rose-400 border border-rose-500/20">{t('games.diff_hard')}</span>;
       default:
-        return <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">متوسط ⚡</span>;
+        return <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">{t('games.diff_medium')}</span>;
     }
   };
 
   const getTypeLabel = () => {
     switch (type) {
       case 'silhouette_match':
-        return { label: 'تطابق الظل البصري', icon: Eye, color: 'text-sky-400' };
+        return { label: t('games.shadow_match'), icon: Eye, color: 'text-sky-400' };
       case 'fast_pattern_count':
-        return { label: 'عد الأنماط السريع', icon: Sparkles, color: 'text-emerald-400' };
+        return { label: t('games.pattern_count'), icon: Sparkles, color: 'text-emerald-400' };
       case 'one_stroke_maze':
-        return { label: 'مسار الخط الواحد', icon: Compass, color: 'text-amber-400' };
+        return { label: t('games.single_line'), icon: Compass, color: 'text-amber-400' };
       case 'missing_puzzle_piece':
-        return { label: 'القطعة المفقودة', icon: Layers, color: 'text-purple-400' };
+        return { label: t('games.missing_piece'), icon: Layers, color: 'text-purple-400' };
       case 'visual_difference':
-        return { label: 'اكتشاف الاختلاف', icon: HelpCircle, color: 'text-pink-400' };
+        return { label: t('games.spot_diff'), icon: HelpCircle, color: 'text-pink-400' };
       case 'pattern_completion':
-        return { label: 'إكمال المتتالية', icon: CheckCircle2, color: 'text-indigo-400' };
+        return { label: t('games.sequence'), icon: CheckCircle2, color: 'text-indigo-400' };
       default:
-        return { label: 'لغز بصري', icon: Sparkles, color: 'text-amber-400' };
+        return { label: t('games.visual_puzzle', 'لغز بصري'), icon: Sparkles, color: 'text-amber-400' };
     }
   };
 
@@ -66,7 +69,7 @@ export const VisualPuzzleRenderer: React.FC<Props> = ({
       {/* Question Prompt */}
       <div className="bg-slate-800/60 border border-slate-700/60 rounded-xl p-3.5 shadow-inner">
         <p className="text-sm sm:text-base font-bold text-slate-100 leading-relaxed text-center">
-          {prompt}
+          {getLocalizedText(prompt, language)}
         </p>
       </div>
 
@@ -108,7 +111,7 @@ export const VisualPuzzleRenderer: React.FC<Props> = ({
         {/* Prompt Hint */}
         {mainVisual?.promptDetails && (
           <p className="text-[11px] text-amber-300/80 font-medium mt-2.5 flex items-center gap-1">
-            <span>💡</span> {mainVisual.promptDetails}
+            <span>💡</span> {getLocalizedText(mainVisual.promptDetails, language)}
           </p>
         )}
       </div>
@@ -137,7 +140,7 @@ export const VisualPuzzleRenderer: React.FC<Props> = ({
                     : 'bg-slate-700 text-slate-300 group-hover:bg-slate-600'
                 }`}
               >
-                {['أ', 'ب', 'ج', 'د'][idx]}
+                {language === 'en' ? ['A', 'B', 'C', 'D'][idx] : ['أ', 'ب', 'ج', 'د'][idx]}
               </span>
 
               {/* Option Visual (if SVG present) */}
@@ -152,7 +155,7 @@ export const VisualPuzzleRenderer: React.FC<Props> = ({
               <span className={`text-xs sm:text-sm font-semibold flex-1 leading-snug ${
                 isSelected ? 'text-amber-200 font-bold' : 'text-slate-200'
               }`}>
-                {option.label || `الخيار ${idx + 1}`}
+                {getLocalizedText(option.label, language) || t('games.option_x', '', { idx: idx + 1 })}
               </span>
 
               {/* Selection Checkmark Indicator */}

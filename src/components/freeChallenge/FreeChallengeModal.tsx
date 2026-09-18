@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useFreeChallenge } from '../../context/FreeChallengeContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { getLocalizedText } from '../../utils/translation';
 import { VisualPuzzleRenderer } from './VisualPuzzleRenderer';
 import { FreeChallengeWinModal } from './FreeChallengeWinModal';
 import { FreeChallengeLossWheel } from './FreeChallengeLossWheel';
@@ -42,7 +43,7 @@ export const FreeChallengeModal: React.FC<Props> = ({ onNavigate }) => {
     submitAnswer,
     watchRewardedAd,
   } = useFreeChallenge();
-  const { language, dir, isRtl, formatPrice, storeName } = useLanguage();
+  const { t, language, dir, isRtl, formatPrice, storeName } = useLanguage();
 
   const [selectedOption, setSelectedOption] = useState<number | null>(null);
   const [secondsLeft, setSecondsLeft] = useState<number>(8);
@@ -106,8 +107,10 @@ export const FreeChallengeModal: React.FC<Props> = ({ onNavigate }) => {
       setAdSeconds((prev) => {
         if (prev <= 1) {
           clearInterval(interval);
-          setShowAdView(false);
-          watchRewardedAd();
+          setTimeout(() => {
+            setShowAdView(false);
+            watchRewardedAd();
+          }, 0);
           return 0;
         }
         return prev - 1;
@@ -141,18 +144,16 @@ export const FreeChallengeModal: React.FC<Props> = ({ onNavigate }) => {
             </div>
             <div>
               <h2 className="text-sm font-black text-slate-100 flex items-center gap-1.5">
-                <span>{activeGame?.title || (isRtl ? 'تحدّي التسوق المجاني' : 'Shopping Challenge')}</span>
+                <span>{getLocalizedText(activeGame?.title, language) || (t('games.shopping_challenge'))}</span>
                 {mode === 'mystery_box' && (
                   <span className="text-[10px] text-purple-400 font-bold">
-                    ({isRtl ? 'صندوق الغموض' : 'Mystery Box'})
+                    ({t('games.mystery_box')})
                   </span>
                 )}
               </h2>
               {activePuzzle && !isFinished && (
                 <span className="text-[11px] text-slate-400 font-medium">
-                  {isRtl
-                    ? `المرحلة ${activePuzzle.puzzleIndex} من ${activePuzzle.totalPuzzles}`
-                    : `Round ${activePuzzle.puzzleIndex} of ${activePuzzle.totalPuzzles}`}
+                  {t('games.round_x_of_y', '', { current: activePuzzle.puzzleIndex, total: activePuzzle.totalPuzzles })}
                 </span>
               )}
             </div>
@@ -187,7 +188,7 @@ export const FreeChallengeModal: React.FC<Props> = ({ onNavigate }) => {
               }`}
             >
               <Clock className="w-3.5 h-3.5" />
-              <span>{secondsLeft.toFixed(1)} {isRtl ? 'ثانية' : 's'}</span>
+              <span>{secondsLeft.toFixed(1)} {t('games.seconds_short')}</span>
             </div>
           </div>
         )}
@@ -201,15 +202,13 @@ export const FreeChallengeModal: React.FC<Props> = ({ onNavigate }) => {
                 <Tv className="w-8 h-8 text-white" />
               </div>
               <h3 className="text-lg font-black mb-1">
-                {isRtl ? `عرض خاص: تشكيلة أدوات فاخرة من ${storeName}` : `Special Offer: Premium stationery from ${storeName}`}
+                {t('games.special_offer', '', { storeName })}
               </h3>
               <p className="text-xs text-slate-300 max-w-xs mb-4">
-                {isRtl
-                  ? 'شاهد العرض حتى النهاية للحصول على محاولة إضافية مجانية في التحدي!'
-                  : 'Watch until the end to get an extra free attempt in the challenge!'}
+                {t('games.watch_ad_reward')}
               </p>
               <div className="px-4 py-2 rounded-xl bg-slate-800 border border-slate-700 text-amber-300 font-mono text-sm font-bold mb-4">
-                {isRtl ? 'متبقي:' : 'Remaining:'} {adSeconds} {isRtl ? 'ثانية' : 's'}
+                {t('games.remaining')} {adSeconds} {t('games.seconds_short')}
               </div>
             </div>
           ) : isFinished ? (
@@ -260,16 +259,14 @@ export const FreeChallengeModal: React.FC<Props> = ({ onNavigate }) => {
                     })}
                   </div>
                   <span className="text-[11px] text-slate-300 font-bold">
-                    {isRtl
-                      ? `السؤال ${activePuzzle.puzzleIndex} من ${activePuzzle.totalPuzzles}`
-                      : `Question ${activePuzzle.puzzleIndex} of ${activePuzzle.totalPuzzles}`}
+                    {t('games.question_x_of_y', '', { current: activePuzzle.puzzleIndex, total: activePuzzle.totalPuzzles })}
                   </span>
                 </div>
 
                 <div className="flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 px-2.5 py-1 rounded-lg">
                   <Coins className="w-3.5 h-3.5 text-amber-400" />
                   <span className="text-[11px] text-slate-400">
-                    {isRtl ? 'مكافأة المرحلة:' : 'Round reward:'}
+                    {t('games.round_reward')}
                   </span>
                   <span className="text-xs font-black text-amber-300 font-mono">
                     +{formatPrice(activePuzzle.puzzleIndex * 0.250)}
@@ -292,29 +289,23 @@ export const FreeChallengeModal: React.FC<Props> = ({ onNavigate }) => {
                 <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-amber-500/30 text-amber-300 text-xs font-black mb-2 border border-amber-400/40">
                   <Sparkles className="w-3.5 h-3.5" />
                   <span>
-                    {isRtl ? `تحديات ${storeName} الكبرى` : `${storeName} Challenges`}
+                    {t('games.store_challenges', '', { storeName })}
                   </span>
                 </div>
                 <h3 className="text-base sm:text-lg font-black text-white mb-1">
-                  {isRtl
-                    ? 'اختر لعبتك وتحدّى لتربح خصمك الفوري وجوائز المتجر 🏆'
-                    : 'Choose your challenge, beat the clock & win instant discounts! 🏆'}
+                  {t('games.choose_game_title')}
                 </h3>
                 <p className="text-xs text-slate-300 max-w-sm mx-auto">
-                  {isRtl
-                    ? 'اختر من بين الألعاب والمسابقات المتنوعة أدناه. حل الألغاز البصرية بالوقت المحدد واربح كوبونات خصم إضافية تصل إلى 25% فوراً!'
-                    : 'Select a game below, solve visual puzzles within seconds, and unlock discount coupons up to 25% OFF instantly!'}
+                  {t('games.choose_game_desc')}
                 </p>
 
                 {/* User attempts status pill */}
                 <div className="mt-3 flex items-center justify-center gap-2 flex-wrap text-xs">
                   <span className="px-3 py-1 rounded-xl bg-slate-900/90 text-amber-300 font-bold border border-slate-700 shadow-xs">
-                    {isRtl
-                      ? `🎯 المحاولات اليومية المتبقية: ${dailyAttemptsRemaining} من ${maxDailyAttempts}`
-                      : `🎯 Daily attempts remaining: ${dailyAttemptsRemaining} of ${maxDailyAttempts}`}
+                    {t('games.daily_attempts', '', { remaining: dailyAttemptsRemaining, max: maxDailyAttempts })}
                   </span>
                   <span className="px-3 py-1 rounded-xl bg-slate-900/90 text-emerald-400 font-bold border border-slate-700 shadow-xs">
-                    {isRtl ? '🎡 عجلة الحظ مضمونة عند الخسارة' : '🎡 Lucky wheel guaranteed upon loss'}
+                    {t('games.lucky_wheel_guaranteed')}
                   </span>
                 </div>
               </div>
@@ -323,18 +314,16 @@ export const FreeChallengeModal: React.FC<Props> = ({ onNavigate }) => {
               <div className="space-y-3">
                 <div className="flex items-center justify-between text-xs font-bold text-slate-400 px-1">
                   <span>
-                    {isRtl
-                      ? `الألعاب المفعلة المتاحة (${games.filter(g => g.enabled).length} ألعاب):`
-                      : `Available Games (${games.filter(g => g.enabled).length} games):`}
+                    {t('games.available_games', '', { count: games.filter(g => g.enabled).length })}
                   </span>
                   <span>
-                    {isRtl ? 'مدة السؤال: 7-10 ثوانٍ' : '7-10s per puzzle'}
+                    {t('games.time_7_10')}
                   </span>
                 </div>
 
                 {games.filter(g => g.enabled).length === 0 ? (
                   <div className="text-center py-8 text-slate-400 text-xs bg-slate-800/40 rounded-2xl p-4 border border-slate-800">
-                    {isRtl ? 'جاري تحميل الألعاب والتحديات المفعلة...' : 'Loading games and challenges...'}
+                    {t('games.loading')}
                   </div>
                 ) : (
                   games.filter(g => g.enabled).map((game, idx) => {
@@ -353,29 +342,29 @@ export const FreeChallengeModal: React.FC<Props> = ({ onNavigate }) => {
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 flex-wrap mb-1">
                                 <h4 className="text-sm font-black text-slate-100 group-hover:text-amber-300 transition-colors truncate">
-                                  {game.title}
+                                  {t(`games.${game.id}_title`, game.title)}
                                 </h4>
                                 <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-700 text-slate-300">
                                   {game.type.replace(/_/g, ' ')}
                                 </span>
                               </div>
                               <p className="text-xs text-slate-300 line-clamp-2 leading-relaxed">
-                                {game.description || (isRtl ? 'تحدَّ تركيزك وسرعة بديهتك بحل الألغاز البصرية بأسرع وقت.' : 'Test your speed and focus solving stationery visual puzzles.')}
+                                {t(`games.${game.id}_desc`, game.description || t('games.visual_puzzle_desc'))}
                               </p>
 
                               {/* Game Specs Badges */}
                               <div className="flex items-center gap-2 mt-2 flex-wrap text-[11px] font-semibold text-slate-400">
                                 <span className="flex items-center gap-1 bg-slate-900/60 px-2 py-0.5 rounded-md border border-slate-700/50 text-sky-300">
                                   <Clock className="w-3 h-3 text-sky-400" />
-                                  {game.timerSeconds || 8} {isRtl ? 'ثوانٍ / لغز' : 'sec / puzzle'}
+                                  {game.timerSeconds || 8} {t('games.sec_per_puzzle')}
                                 </span>
                                 <span className="flex items-center gap-1 bg-slate-900/60 px-2 py-0.5 rounded-md border border-slate-700/50 text-amber-300">
                                   <Flame className="w-3 h-3 text-amber-400" />
-                                  {game.questionsPerRound || 4} {isRtl ? 'أسئلة' : 'puzzles'}
+                                  {game.questionsPerRound || 4} {t('games.puzzles')}
                                 </span>
                                 <span className="flex items-center gap-1 bg-slate-900/60 px-2 py-0.5 rounded-md border border-slate-700/50 text-emerald-300">
                                   <Trophy className="w-3 h-3 text-emerald-400" />
-                                  {isRtl ? 'خصومات فورية حتى 25% + رصيد' : 'Up to 25% discount + credits'}
+                                  {t('games.discount_credits_desc')}
                                 </span>
                               </div>
                             </div>
@@ -401,8 +390,8 @@ export const FreeChallengeModal: React.FC<Props> = ({ onNavigate }) => {
                               <Play className="w-3.5 h-3.5 fill-current" />
                               <span>
                                 {hasAttempts
-                                  ? (isRtl ? 'ابدأ اللعبة' : 'Play Now')
-                                  : (isRtl ? 'محاولة بإعلان' : 'Watch Ad to Play')}
+                                  ? (t('games.play_now'))
+                                  : (t('games.watch_ad'))}
                               </span>
                             </button>
                           </div>
@@ -422,7 +411,7 @@ export const FreeChallengeModal: React.FC<Props> = ({ onNavigate }) => {
             <div className="flex items-center gap-1.5">
               <Sparkles className="w-3.5 h-3.5 text-amber-400" />
               <span>
-                {isRtl ? 'لا تغادر الصفحة لتجنب احتساب المحاولة' : 'Do not leave the page to avoid losing the attempt'}
+                {t('games.dont_leave')}
               </span>
             </div>
 
@@ -432,7 +421,7 @@ export const FreeChallengeModal: React.FC<Props> = ({ onNavigate }) => {
               className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-amber-300 font-semibold transition-colors cursor-pointer"
             >
               <Tv className="w-3.5 h-3.5" />
-              <span>{isRtl ? 'مشاهدة إعلان لمزيد من الفرص' : 'Watch ad for extra chance'}</span>
+              <span>{t('games.watch_ad_extra')}</span>
             </button>
           </div>
         )}

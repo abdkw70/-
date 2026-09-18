@@ -19,9 +19,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
   const primaryImage = product.images[0]?.src || 'https://assets.wuiltstore.com/clqvb10wk0zhh01o1ed177fz2__D8_B4_D8_B9_D8_A7_D8_B14.png';
   const secondaryImage = product.images[1]?.src || primaryImage;
 
+  const hasStock = product.variants?.length > 0 
+    ? product.variants.some(v => v.stock !== undefined ? v.stock > 0 : v.enabled !== false && product.isInStock)
+    : product.isInStock;
+
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!product.isInStock || isAdding) return;
+    if (!hasStock || isAdding) return;
 
     setIsAdding(true);
     try {
@@ -71,7 +75,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
             </span>
           )}
 
-          {!product.isInStock && (
+          {!hasStock && (
             <span className="bg-slate-800/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs backdrop-blur-xs">
               {t('product.out_of_stock', 'نفذت الكمية')}
             </span>
@@ -150,15 +154,15 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
           {/* Add to Cart Icon Button */}
           <button
             onClick={handleAddToCart}
-            disabled={!product.isInStock || isAdding}
+            disabled={!hasStock || isAdding}
             className={`p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 shrink-0 ${
-              !product.isInStock
+              !hasStock
                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                 : addedSuccess
                 ? 'bg-emerald-600 text-white'
                 : 'bg-sky-50 text-sky-700 hover:bg-sky-700 hover:text-white active:scale-95'
             }`}
-            title={product.isInStock ? t('product.add_to_cart', 'أضف للسلة') : t('product.out_of_stock', 'غير متوفر')}
+            title={hasStock ? t('product.add_to_cart', 'أضف للسلة') : t('product.out_of_stock', 'غير متوفر')}
           >
             {addedSuccess ? (
               <>

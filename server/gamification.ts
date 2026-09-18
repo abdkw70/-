@@ -162,8 +162,8 @@ export const defaultAchievements: Achievement[] = [
 export const defaultQuestions: QuizQuestion[] = [
   {
     id: 'q_1',
-    question: 'ما هي عاصمة دولة الكويت؟',
-    options: ['مدينة الكويت', 'الجهراء', 'الأحمدي', 'حولي'],
+    question: { ar: "ما هي عاصمة دولة الكويت؟", en: "Gamification Question" },
+    options: [{ ar: "مدينة الكويت", en: "Option text" }, { ar: "الجهراء", en: "Option text" }, { ar: "الأحمدي", en: "Option text" }, { ar: "حولي", en: "Option text" }],
     correctAnswerIndex: 0,
     rewardAmount: 0.500,
     xpAmount: 25,
@@ -177,8 +177,8 @@ export const defaultQuestions: QuizQuestion[] = [
   },
   {
     id: 'q_2',
-    question: 'ما هو الرمز الكيميائي للرصاص المستخدم في أقلام الرصاص تاريخياً (مع العلم أنه جرافيت)؟',
-    options: ['Pb', 'Fe', 'C (كربون/جرافيت)', 'Au'],
+    question: { ar: "ما هو الرمز الكيميائي للرصاص المستخدم في أقلام الرصاص تاريخياً (مع العلم أنه جرافيت)؟", en: "Gamification Question" },
+    options: [{ ar: "Pb", en: "Option text" }, { ar: "Fe", en: "Option text" }, { ar: "C (كربون/جرافيت)", en: "Option text" }, { ar: "Au", en: "Option text" }],
     correctAnswerIndex: 2,
     rewardAmount: 0.500,
     xpAmount: 30,
@@ -192,8 +192,8 @@ export const defaultQuestions: QuizQuestion[] = [
   },
   {
     id: 'q_3',
-    question: 'ما هو المقاس القياسي لورق الطباعة المكتبي الأكثر استخداماً؟',
-    options: ['A3', 'A4', 'A5', 'B5'],
+    question: { ar: "ما هو المقاس القياسي لورق الطباعة المكتبي الأكثر استخداماً؟", en: "Gamification Question" },
+    options: [{ ar: "A3", en: "Option text" }, { ar: "A4", en: "Option text" }, { ar: "A5", en: "Option text" }, { ar: "B5", en: "Option text" }],
     correctAnswerIndex: 1,
     rewardAmount: 0.250,
     xpAmount: 20,
@@ -207,8 +207,8 @@ export const defaultQuestions: QuizQuestion[] = [
   },
   {
     id: 'q_4',
-    question: 'في أي عام تم افتتاح أبراج الكويت رسمياً كمعلم حضاري؟',
-    options: ['1979م', '1961م', '1985م', '1990م'],
+    question: { ar: "في أي عام تم افتتاح أبراج الكويت رسمياً كمعلم حضاري؟", en: "Gamification Question" },
+    options: [{ ar: "1979م", en: "Option text" }, { ar: "1961م", en: "Option text" }, { ar: "1985م", en: "Option text" }, { ar: "1990م", en: "Option text" }],
     correctAnswerIndex: 0,
     rewardAmount: 0.500,
     xpAmount: 35,
@@ -222,8 +222,8 @@ export const defaultQuestions: QuizQuestion[] = [
   },
   {
     id: 'q_5',
-    question: 'ما هي الأداة الهندسية المستخدمة لرسم الدوائر والأقواس بدقة؟',
-    options: ['الفرجار', 'المنقلة', 'المثلث القائم', 'المسطرة'],
+    question: { ar: "ما هي الأداة الهندسية المستخدمة لرسم الدوائر والأقواس بدقة؟", en: "Gamification Question" },
+    options: [{ ar: "الفرجار", en: "Option text" }, { ar: "المنقلة", en: "Option text" }, { ar: "المثلث القائم", en: "Option text" }, { ar: "المسطرة", en: "Option text" }],
     correctAnswerIndex: 0,
     rewardAmount: 0.250,
     xpAmount: 20,
@@ -237,8 +237,8 @@ export const defaultQuestions: QuizQuestion[] = [
   },
   {
     id: 'q_6',
-    question: 'ما هو البحر أو المسطح المائي الذي تطل عليه سواحل دولة الكويت؟',
-    options: ['الخليج العربي', 'بحر العرب', 'البحر الأحمر', 'خليج عمان'],
+    question: { ar: "ما هو البحر أو المسطح المائي الذي تطل عليه سواحل دولة الكويت؟", en: "Gamification Question" },
+    options: [{ ar: "الخليج العربي", en: "Option text" }, { ar: "بحر العرب", en: "Option text" }, { ar: "البحر الأحمر", en: "Option text" }, { ar: "خليج عمان", en: "Option text" }],
     correctAnswerIndex: 0,
     rewardAmount: 0.250,
     xpAmount: 20,
@@ -252,8 +252,8 @@ export const defaultQuestions: QuizQuestion[] = [
   },
   {
     id: 'q_7',
-    question: 'ما هي العملة الرسمية لدولة الكويت وتعتبر من أعلى العملات قيمة عالمياً؟',
-    options: ['الدينار الكويتي', 'الريال', 'الدرهم', 'الليرة'],
+    question: { ar: "ما هي العملة الرسمية لدولة الكويت وتعتبر من أعلى العملات قيمة عالمياً؟", en: "Gamification Question" },
+    options: [{ ar: "الدينار الكويتي", en: "Option text" }, { ar: "الريال", en: "Option text" }, { ar: "الدرهم", en: "Option text" }, { ar: "الليرة", en: "Option text" }],
     correctAnswerIndex: 0,
     rewardAmount: 0.250,
     xpAmount: 20,
@@ -267,8 +267,8 @@ export const defaultQuestions: QuizQuestion[] = [
   },
   {
     id: 'q_8',
-    question: 'ما هو النوع الشائع من الألوان المائية التي تجف بسرعة وتتميز بقوام بلاستيكي مرن؟',
-    options: ['ألوان الأكريليك', 'ألوان الباستيل الزيتي', 'ألوان الجواش', 'الفحم النباتي'],
+    question: { ar: "ما هو النوع الشائع من الألوان المائية التي تجف بسرعة وتتميز بقوام بلاستيكي مرن؟", en: "Gamification Question" },
+    options: [{ ar: "ألوان الأكريليك", en: "Option text" }, { ar: "ألوان الباستيل الزيتي", en: "Option text" }, { ar: "ألوان الجواش", en: "Option text" }, { ar: "الفحم النباتي", en: "Option text" }],
     correctAnswerIndex: 0,
     rewardAmount: 0.500,
     xpAmount: 30,
@@ -282,8 +282,8 @@ export const defaultQuestions: QuizQuestion[] = [
   },
   {
     id: 'q_9',
-    question: 'ما هو أكبر كواكب المجموعة الشمسية حجماً وكتلة؟',
-    options: ['المشتري', 'زحل', 'الأرض', 'نبتون'],
+    question: { ar: "ما هو أكبر كواكب المجموعة الشمسية حجماً وكتلة؟", en: "Gamification Question" },
+    options: [{ ar: "المشتري", en: "Option text" }, { ar: "زحل", en: "Option text" }, { ar: "الأرض", en: "Option text" }, { ar: "نبتون", en: "Option text" }],
     correctAnswerIndex: 0,
     rewardAmount: 0.500,
     xpAmount: 25,
@@ -297,8 +297,8 @@ export const defaultQuestions: QuizQuestion[] = [
   },
   {
     id: 'q_10',
-    question: 'كم عدد أحرف اللغة العربية الهجائية؟',
-    options: ['28 حرفاً', '26 حرفاً', '30 حرفاً', '29 حرفاً'],
+    question: { ar: "كم عدد أحرف اللغة العربية الهجائية؟", en: "Gamification Question" },
+    options: [{ ar: "28 حرفاً", en: "Option text" }, { ar: "26 حرفاً", en: "Option text" }, { ar: "30 حرفاً", en: "Option text" }, { ar: "29 حرفاً", en: "Option text" }],
     correctAnswerIndex: 0,
     rewardAmount: 0.250,
     xpAmount: 20,
@@ -312,8 +312,8 @@ export const defaultQuestions: QuizQuestion[] = [
   },
   {
     id: 'q_11',
-    question: 'ما هو الجزء في الحاسوب المسؤول عن معالجة البيانات والعمليات الحسابية (عقل الجهاز)؟',
-    options: ['المعالج (CPU)', 'القرص الصلب (HDD)', 'ذاكرة الوصول العشوائي (RAM)', 'الشاشة'],
+    question: { ar: "ما هو الجزء في الحاسوب المسؤول عن معالجة البيانات والعمليات الحسابية (عقل الجهاز)؟", en: "Gamification Question" },
+    options: [{ ar: "المعالج (CPU)", en: "Option text" }, { ar: "القرص الصلب (HDD)", en: "Option text" }, { ar: "ذاكرة الوصول العشوائي (RAM)", en: "Option text" }, { ar: "الشاشة", en: "Option text" }],
     correctAnswerIndex: 0,
     rewardAmount: 0.500,
     xpAmount: 25,
@@ -327,8 +327,8 @@ export const defaultQuestions: QuizQuestion[] = [
   },
   {
     id: 'q_12',
-    question: 'ما هو مضاد كلمة "إيجاز" في اللغة العربية؟',
-    options: ['إطناب وتفصيل', 'اختصار', 'بلاغة', 'صمت'],
+    question: { ar: "ما هو مضاد كلمة 'إيجاز' في اللغة العربية؟", en: "Gamification Question" },
+    options: [{ ar: "إطناب وتفصيل", en: "Option text" }, { ar: "اختصار", en: "Option text" }, { ar: "بلاغة", en: "Option text" }, { ar: "صمت", en: "Option text" }],
     correctAnswerIndex: 0,
     rewardAmount: 0.500,
     xpAmount: 35,
@@ -342,8 +342,8 @@ export const defaultQuestions: QuizQuestion[] = [
   },
   {
     id: 'q_13',
-    question: 'ما هي الجزيرة الكويتية الأكبر مساحة وغير المأهولة بالسكان وتشتهر بآثارها وموقعها الاستراتيجي؟',
-    options: ['جزيرة بوبيان', 'جزيرة فيلكا', 'جزيرة وربة', 'جزيرة كبر'],
+    question: { ar: "ما هي الجزيرة الكويتية الأكبر مساحة وغير المأهولة بالسكان وتشتهر بآثارها وموقعها الاستراتيجي؟", en: "Gamification Question" },
+    options: [{ ar: "جزيرة بوبيان", en: "Option text" }, { ar: "جزيرة فيلكا", en: "Option text" }, { ar: "جزيرة وربة", en: "Option text" }, { ar: "جزيرة كبر", en: "Option text" }],
     correctAnswerIndex: 0,
     rewardAmount: 0.500,
     xpAmount: 35,
@@ -357,8 +357,8 @@ export const defaultQuestions: QuizQuestion[] = [
   },
   {
     id: 'q_14',
-    question: 'ما هي الجزيرة الكويتية التاريخية الشهيرة بآثار الحضارة الدلمونية والإغريقية؟',
-    options: ['جزيرة فيلكا', 'جزيرة قاروه', 'جزيرة أم المرادم', 'جزيرة عوهة'],
+    question: { ar: "ما هي الجزيرة الكويتية التاريخية الشهيرة بآثار الحضارة الدلمونية والإغريقية؟", en: "Gamification Question" },
+    options: [{ ar: "جزيرة فيلكا", en: "Option text" }, { ar: "جزيرة قاروه", en: "Option text" }, { ar: "جزيرة أم المرادم", en: "Option text" }, { ar: "جزيرة عوهة", en: "Option text" }],
     correctAnswerIndex: 0,
     rewardAmount: 0.500,
     xpAmount: 30,
@@ -372,8 +372,8 @@ export const defaultQuestions: QuizQuestion[] = [
   },
   {
     id: 'q_15',
-    question: 'ما هي وحدة قياس كثافة وسماكة ورق الطباعة والمستندات؟',
-    options: ['جم / متر مربع (GSM)', 'ملم مكعب', 'بوصة مربعة', 'ميكرومتر'],
+    question: { ar: "ما هي وحدة قياس كثافة وسماكة ورق الطباعة والمستندات؟", en: "Gamification Question" },
+    options: [{ ar: "جم / متر مربع (GSM)", en: "Option text" }, { ar: "ملم مكعب", en: "Option text" }, { ar: "بوصة مربعة", en: "Option text" }, { ar: "ميكرومتر", en: "Option text" }],
     correctAnswerIndex: 0,
     rewardAmount: 0.750,
     xpAmount: 40,
@@ -387,8 +387,8 @@ export const defaultQuestions: QuizQuestion[] = [
   },
   {
     id: 'q_16',
-    question: 'من هو مخترع المصباح الكهربائي العملي ومسجل آلاف براءات الاختراع؟',
-    options: ['توماس إديسون', 'نيكولا تسلا', 'ألكسندر غراهام بيل', 'إسحاق نيوتن'],
+    question: { ar: "من هو مخترع المصباح الكهربائي العملي ومسجل آلاف براءات الاختراع؟", en: "Gamification Question" },
+    options: [{ ar: "توماس إديسون", en: "Option text" }, { ar: "نيكولا تسلا", en: "Option text" }, { ar: "ألكسندر غراهام بيل", en: "Option text" }, { ar: "إسحاق نيوتن", en: "Option text" }],
     correctAnswerIndex: 0,
     rewardAmount: 0.500,
     xpAmount: 25,
@@ -402,8 +402,8 @@ export const defaultQuestions: QuizQuestion[] = [
   },
   {
     id: 'q_17',
-    question: 'ما هي درجة غليان الماء النقي تحت الضغط الجوي العادي؟',
-    options: ['100 درجة مئوية', '90 درجة مئوية', '120 درجة مئوية', '80 درجة مئوية'],
+    question: { ar: "ما هي درجة غليان الماء النقي تحت الضغط الجوي العادي؟", en: "Gamification Question" },
+    options: [{ ar: "100 درجة مئوية", en: "Option text" }, { ar: "90 درجة مئوية", en: "Option text" }, { ar: "120 درجة مئوية", en: "Option text" }, { ar: "80 درجة مئوية", en: "Option text" }],
     correctAnswerIndex: 0,
     rewardAmount: 0.250,
     xpAmount: 20,
@@ -417,8 +417,8 @@ export const defaultQuestions: QuizQuestion[] = [
   },
   {
     id: 'q_18',
-    question: 'ما هو الخط العربي الكلاسيكي المتميز بالحروف العريضة والهندسية والمستخدم في المصاحف القديمة؟',
-    options: ['الخط الكوفي', 'خط الرقعة', 'خط النسخ', 'خط الديواني'],
+    question: { ar: "ما هو الخط العربي الكلاسيكي المتميز بالحروف العريضة والهندسية والمستخدم في المصاحف القديمة؟", en: "Gamification Question" },
+    options: [{ ar: "الخط الكوفي", en: "Option text" }, { ar: "خط الرقعة", en: "Option text" }, { ar: "خط النسخ", en: "Option text" }, { ar: "خط الديواني", en: "Option text" }],
     correctAnswerIndex: 0,
     rewardAmount: 0.500,
     xpAmount: 35,
@@ -432,8 +432,8 @@ export const defaultQuestions: QuizQuestion[] = [
   },
   {
     id: 'q_19',
-    question: 'ما هو الاسم التاريخي الشهير لسور الكويت الذي شُيد لحماية المدينة وله بوابات باقية حتى اليوم؟',
-    options: ['السور الثالث (1920م)', 'السور الأول', 'سور القرين', 'سور الشامية'],
+    question: { ar: "ما هو الاسم التاريخي الشهير لسور الكويت الذي شُيد لحماية المدينة وله بوابات باقية حتى اليوم؟", en: "Gamification Question" },
+    options: [{ ar: "السور الثالث (1920م)", en: "Option text" }, { ar: "السور الأول", en: "Option text" }, { ar: "سور القرين", en: "Option text" }, { ar: "سور الشامية", en: "Option text" }],
     correctAnswerIndex: 0,
     rewardAmount: 0.500,
     xpAmount: 35,
@@ -447,8 +447,8 @@ export const defaultQuestions: QuizQuestion[] = [
   },
   {
     id: 'q_20',
-    question: 'ما هي الأداة المكتبية المستخدمة لجمع وتثبيت الأوراق معاً باستخدام سلك معدني صغير؟',
-    options: ['الدباسة (Stapler)', 'المثقاب (Puncher)', 'المقص', 'المشبك المغناطيسي'],
+    question: { ar: "ما هي الأداة المكتبية المستخدمة لجمع وتثبيت الأوراق معاً باستخدام سلك معدني صغير؟", en: "Gamification Question" },
+    options: [{ ar: "الدباسة (Stapler)", en: "Option text" }, { ar: "المثقاب (Puncher)", en: "Option text" }, { ar: "المقص", en: "Option text" }, { ar: "المشبك المغناطيسي", en: "Option text" }],
     correctAnswerIndex: 0,
     rewardAmount: 0.250,
     xpAmount: 20,
@@ -605,7 +605,7 @@ class GamificationEngine {
   // --- User Profiles, Auth Sync & Management ---
   public syncUserProfile(
     userId: string,
-    data: { email?: string; displayName?: string; phone?: string; role?: 'user' | 'admin'; authProvider?: 'google' | 'phone' | 'email' | 'guest'; avatarUrl?: string },
+    data: { email?: string; isExplicitUpdate?: boolean; displayName?: string; phone?: string; role?: 'user' | 'admin'; authProvider?: 'google' | 'phone' | 'email' | 'guest'; avatarUrl?: string },
     ip = '127.0.0.1',
     userAgent = ''
   ): { profile: UserProfile; wallet: UserWallet } {
@@ -691,7 +691,7 @@ class GamificationEngine {
       }
     } else {
       const profile: UserProfile = raw.userProfiles[userId];
-      if (data.displayName && (!profile.displayName || profile.displayName === 'عميل المتجر')) {
+      if (data.displayName && (data.isExplicitUpdate || !profile.displayName || profile.displayName === 'عميل المتجر')) {
         profile.displayName = data.displayName;
       }
       if (data.email && !profile.email) {

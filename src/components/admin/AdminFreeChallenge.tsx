@@ -1515,15 +1515,7 @@ export const AdminFreeChallenge: React.FC = () => {
             <form onSubmit={handleSaveGame} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">اسم اللعبة / التحدي *</label>
-                  <input
-                    type="text"
-                    required
-                    value={selectedGameForEdit.title}
-                    onChange={(e) => setSelectedGameForEdit({ ...selectedGameForEdit, title: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold"
-                    placeholder="مثال: تحدي إكمال الأنماط الهندسية"
-                  />
+                  <LocalizedInput label="اسم اللعبة / التحدي *" value={selectedGameForEdit.title as any} onChange={val => setSelectedGameForEdit({ ...selectedGameForEdit, title: val as any })} theme="light" />
                 </div>
 
                 <div>
@@ -1548,14 +1540,7 @@ export const AdminFreeChallenge: React.FC = () => {
               </div>
 
               <div>
-                <label className="font-bold text-slate-700 block mb-1">وصف اللعبة المختصر للمتسوق</label>
-                <textarea
-                  rows={2}
-                  value={selectedGameForEdit.description || ''}
-                  onChange={(e) => setSelectedGameForEdit({ ...selectedGameForEdit, description: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-medium"
-                  placeholder="وصف مشوق يوضح طريقة التحدي"
-                />
+                <LocalizedInput label="وصف اللعبة المختصر للمتسوق" value={selectedGameForEdit.description as any} onChange={val => setSelectedGameForEdit({ ...selectedGameForEdit, description: val as any })} type="textarea" theme="light" />
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -1651,24 +1636,10 @@ export const AdminFreeChallenge: React.FC = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">رسالة الفوز بالتحدي</label>
-                  <input
-                    type="text"
-                    value={selectedGameForEdit.winMessage || ''}
-                    onChange={(e) => setSelectedGameForEdit({ ...selectedGameForEdit, winMessage: e.target.value })}
-                    placeholder="مبروك! لقد اجتزت التحدي وفزت بكوبون الخصم ومكافأة المحفظة!"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-medium text-xs"
-                  />
+                  <LocalizedInput label="رسالة الفوز بالتحدي" value={selectedGameForEdit.winMessage as any} onChange={val => setSelectedGameForEdit({ ...selectedGameForEdit, winMessage: val as any })} theme="light" />
                 </div>
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">رسالة الخسارة وتدوير العجلة</label>
-                  <input
-                    type="text"
-                    value={selectedGameForEdit.lossMessage || ''}
-                    onChange={(e) => setSelectedGameForEdit({ ...selectedGameForEdit, lossMessage: e.target.value })}
-                    placeholder="حظ أوفر! فزت بفرصة تدوير عجلة الحظ للحصول على خصم!"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-medium text-xs"
-                  />
+                  <LocalizedInput label="رسالة الخسارة وتدوير العجلة" value={selectedGameForEdit.lossMessage as any} onChange={val => setSelectedGameForEdit({ ...selectedGameForEdit, lossMessage: val as any })} theme="light" />
                 </div>
               </div>
 
@@ -1729,15 +1700,7 @@ export const AdminFreeChallenge: React.FC = () => {
             <form onSubmit={handleSavePuzzle} className="space-y-4 text-xs">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="font-bold text-slate-700 block mb-1">عنوان اللغز *</label>
-                  <input
-                    type="text"
-                    required
-                    value={selectedPuzzleForEdit.title}
-                    onChange={(e) => setSelectedPuzzleForEdit({ ...selectedPuzzleForEdit, title: e.target.value })}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 font-bold"
-                    placeholder="مثال: مطابقة الأشكال المتشابهة"
-                  />
+                  <LocalizedInput label="عنوان اللغز *" value={selectedPuzzleForEdit.title as any} onChange={val => setSelectedPuzzleForEdit({ ...selectedPuzzleForEdit, title: val as any })} theme="light" />
                 </div>
 
                 <div>
@@ -1798,25 +1761,28 @@ export const AdminFreeChallenge: React.FC = () => {
               <div className="space-y-2">
                 <label className="font-bold text-slate-800 block">خيارات الإجابة وتحديد الخيار الصحيح:</label>
                 {(selectedPuzzleForEdit.options || []).map((opt: any, idx: number) => (
-                  <div key={idx} className="flex items-center gap-2">
-                    <input
-                      type="radio"
-                      name="correct_answer"
-                      checked={selectedPuzzleForEdit.correctAnswerIndex === idx}
-                      onChange={() => setSelectedPuzzleForEdit({ ...selectedPuzzleForEdit, correctAnswerIndex: idx })}
-                      className="w-4 h-4 accent-emerald-600 cursor-pointer"
-                    />
-                    <input
-                      type="text"
-                      value={opt.label || ''}
-                      onChange={(e) => {
-                        const newOpts = [...selectedPuzzleForEdit.options];
-                        newOpts[idx] = { ...newOpts[idx], label: e.target.value };
-                        setSelectedPuzzleForEdit({ ...selectedPuzzleForEdit, options: newOpts });
-                      }}
-                      placeholder={`الخيار ${idx + 1}`}
-                      className="flex-1 bg-slate-50 border border-slate-200 rounded-xl p-2 font-bold text-xs"
-                    />
+                  <div key={idx} className="flex items-start gap-3 bg-slate-50/50 p-2 rounded-xl border border-slate-200/50">
+                    <div className="pt-2">
+                      <input
+                        type="radio"
+                        name="correct_answer"
+                        checked={selectedPuzzleForEdit.correctAnswerIndex === idx}
+                        onChange={() => setSelectedPuzzleForEdit({ ...selectedPuzzleForEdit, correctAnswerIndex: idx })}
+                        className="w-4 h-4 accent-emerald-600 cursor-pointer"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <LocalizedInput
+                        label={`الخيار ${idx + 1}`}
+                        value={opt.label as any}
+                        onChange={val => {
+                          const newOpts = [...selectedPuzzleForEdit.options];
+                          newOpts[idx] = { ...newOpts[idx], label: val as any };
+                          setSelectedPuzzleForEdit({ ...selectedPuzzleForEdit, options: newOpts });
+                        }}
+                        theme="light"
+                      />
+                    </div>
                   </div>
                 ))}
               </div>

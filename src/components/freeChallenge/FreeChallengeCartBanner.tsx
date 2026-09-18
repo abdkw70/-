@@ -12,7 +12,7 @@ interface Props {
 export const FreeChallengeCartBanner: React.FC<Props> = ({ onStartClick, compact = false }) => {
   const { settings, openChallenge } = useFreeChallenge();
   const { cart } = useCart();
-  const { dir, isRtl } = useLanguage();
+  const { t, dir, isRtl } = useLanguage();
 
   if (settings && !settings.gameEnabled) return null;
   if (!cart || cart.items.length === 0) return null;
@@ -43,14 +43,12 @@ export const FreeChallengeCartBanner: React.FC<Props> = ({ onStartClick, compact
             <div className="flex items-center gap-1.5 font-black text-sm">
               <Sparkles className="w-3.5 h-3.5" />
               <span>
-                {isRtl
-                  ? 'تحدَّ ذكاءك البصري واربح خصمك فوراً!'
-                  : 'Test your visual speed & win instant discount!'}
+                {t('games.challenge_mind')}
               </span>
             </div>
             <p className="text-xs text-slate-900/90 font-medium mt-0.5 leading-snug">
               {isRtl
-                ? `حل ${settings?.puzzlesPerChallenge || 3} ألغاز بصرية سريعة واحصل على كوبون خصم ${winDiscount}% فوري لطلبك + رصيد نقدي في محفظتك!`
+                ? t('games.cart_banner_desc', `حل ${settings?.puzzlesPerChallenge || 3} ألغاز بصرية سريعة واحصل على كوبون خصم ${winDiscount}% فوري لطلبك + رصيد نقدي في محفظتك!`, { count: settings?.puzzlesPerChallenge || 3, discount: winDiscount })
                 : `Solve ${settings?.puzzlesPerChallenge || 3} visual puzzles and get an instant ${winDiscount}% discount coupon + wallet credit!`}
             </p>
           </div>
@@ -62,7 +60,7 @@ export const FreeChallengeCartBanner: React.FC<Props> = ({ onStartClick, compact
           className="w-full sm:w-auto px-4 py-2.5 rounded-xl bg-slate-950 hover:bg-slate-900 text-amber-400 hover:text-amber-300 font-extrabold text-xs shadow-md flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer shrink-0"
         >
           <Ticket className="w-4 h-4" />
-          <span>{isRtl ? 'ابدأ التحدي الآن' : 'Start Challenge Now'}</span>
+          <span>{t('games.start_now')}</span>
           {isRtl ? <ArrowLeft className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
         </button>
       </div>

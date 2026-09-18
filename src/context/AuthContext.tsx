@@ -61,7 +61,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     explicitProvider?: 'google' | 'email' | 'phone'
   ) => {
     try {
-      const activeDisplayName = overrideDisplayName || firebaseUser.displayName || userProfile?.displayName || 'عميل المتجر';
+      const isExplicitUpdate = !!overrideDisplayName;
+      // Prefer override (if explicitly updating), then saved profile name, then google name
+      const activeDisplayName = overrideDisplayName || userProfile?.displayName || firebaseUser.displayName || 'عميل المتجر';
       const activePhone = phone || userProfile?.phone || firebaseUser.phoneNumber || '';
 
       const detectedProvider = explicitProvider || (
@@ -77,6 +79,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         phone: activePhone,
         role: firebaseUser.email === 'abdulrahmankw20@gmail.com' ? 'admin' : 'user',
         authProvider: detectedProvider,
+        isExplicitUpdate,
       };
 
       // 1. Sync with Server Store DB
@@ -86,9 +89,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         body: JSON.stringify(payload),
       });
 
+      let finalDisplayName = payload.displayName;
+      let finalPhone = payload.phone;
+
       if (res.ok) {
         const data = await res.json();
-        if (data.profile) setUserProfile(data.profile);
+        if (data.profile) {
+          setUserProfile(data.profile);
+          finalDisplayName = data.profile.displayName;
+          finalPhone = data.profile.phone;
+        }
         if (data.wallet) setWallet(data.wallet);
       }
 
@@ -100,9 +110,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (!existingDoc.exists()) {
           await setDoc(userDocRef, {
             userId: firebaseUser.uid,
-            name: payload.displayName,
+            name: finalDisplayName,
             email: payload.email,
-            phone: payload.phone,
+            phone: finalPhone,
             role: payload.role,
             authProvider: detectedProvider,
             xp: 0,
@@ -113,8 +123,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } else {
           await setDoc(userDocRef, {
             lastLoginAt: serverTimestamp(),
-            name: payload.displayName,
-            phone: payload.phone,
+            name: finalDisplayName,
+            phone: finalPhone,
             email: payload.email,
             authProvider: detectedProvider,
           }, { merge: true });

@@ -15,7 +15,7 @@ export const HeaderGamificationWidget: React.FC<HeaderGamificationWidgetProps> =
 
   const isChallengeEnabled = settings?.isEnabled !== false;
   const activeBalance = wallet?.activeBalance ?? 0;
-  const currentTier = profile?.currentTier || (isRtl ? 'المستوى البرونزي' : 'Bronze Tier');
+  const currentTier = profile?.currentTier || (t('games.bronze_tier'));
 
   // Get tier icon
   const getTierIcon = () => {
@@ -42,15 +42,15 @@ export const HeaderGamificationWidget: React.FC<HeaderGamificationWidgetProps> =
           id="btn_header_challenge"
           onClick={openChallengeModal}
           className="relative group flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/15 via-amber-500/25 to-amber-500/15 border border-amber-500/40 text-amber-700 hover:text-amber-900 hover:border-amber-500 transition-all text-xs font-extrabold shadow-xs cursor-pointer active:scale-95"
-          title={isRtl ? 'العب واربح رصيد مشتريات' : 'Play & win shopping credit'}
+          title={t('games.play_win')}
         >
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
             <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
           </span>
           <Award className="w-4 h-4 text-amber-600 group-hover:rotate-12 transition-transform" />
-          <span className="hidden sm:inline">{isRtl ? 'تحدّى واربح' : 'Play & Win'}</span>
-          <span className="sm:hidden">{isRtl ? 'تحدّى' : 'Play'}</span>
+          <span className="hidden sm:inline">{t('games.play_win_short')}</span>
+          <span className="sm:hidden">{t('games.play_short')}</span>
         </button>
       )}
 
@@ -64,7 +64,7 @@ export const HeaderGamificationWidget: React.FC<HeaderGamificationWidgetProps> =
               ? 'bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100'
               : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
           }`}
-          title={isRtl ? 'محفظة الرصيد والمكافآت' : 'Rewards Wallet'}
+          title={t('games.rewards_wallet')}
         >
           <Wallet className="w-3.5 h-3.5 text-emerald-600" />
           <span className="font-mono">{activeBalance.toFixed(3)}</span>
@@ -78,7 +78,7 @@ export const HeaderGamificationWidget: React.FC<HeaderGamificationWidgetProps> =
           id="btn_header_account"
           onClick={() => onNavigate('account')}
           className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 border border-slate-200 text-xs font-semibold text-slate-800 transition-colors cursor-pointer"
-          title={isRtl ? 'حسابي والمستويات' : 'My Account & Tiers'}
+          title={t('games.my_account_tiers')}
         >
           {getTierIcon()}
           <span className="max-w-[70px] truncate hidden sm:inline">
@@ -93,7 +93,7 @@ export const HeaderGamificationWidget: React.FC<HeaderGamificationWidgetProps> =
           id="btn_header_login"
           onClick={() => openAuthModal('login')}
           className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-amber-50 hover:border-amber-300 border border-slate-200 text-xs font-bold text-slate-700 hover:text-amber-700 transition-all cursor-pointer"
-          title={isRtl ? 'تسجيل الدخول / إنشاء حساب' : 'Sign In / Register'}
+          title={t('auth.sign_in_register')}
         >
           <LogIn className="w-3.5 h-3.5 text-amber-600" />
           <span>{t('nav.login')}</span>

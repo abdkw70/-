@@ -35,7 +35,7 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ categories, currentPath, onNavigate }) => {
   const { totalItemsCount, openCart, wishlist, formatPrice } = useCart();
-  const { user, openAuthModal } = useAuth();
+  const { user, userProfile, openAuthModal } = useAuth();
   const { wallet, profile } = useGamification();
   const { openChallenge } = useFreeChallenge();
   const { language, setLanguage, isRtl, dir, t, storeName, translateCategory, translateProductTitle } = useLanguage();
@@ -561,7 +561,7 @@ export const Header: React.FC<HeaderProps> = ({ categories, currentPath, onNavig
                         </div>
                         <div>
                           <p className="text-xs font-bold truncate max-w-[130px]">
-                            {profile?.displayName || user.displayName || t('nav.account')}
+                            {userProfile?.displayName || user.displayName || t('nav.account')}
                           </p>
                           <p className="text-[10px] text-sky-200">
                             {profile?.currentTier || (isRtl ? 'المستوى البرونزي' : 'Bronze Member')}

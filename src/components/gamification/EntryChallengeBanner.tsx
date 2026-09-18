@@ -7,7 +7,7 @@ import { useLanguage } from '../../context/LanguageContext';
 export const EntryChallengeBanner: React.FC = () => {
   const { showEntryBanner, dismissEntryBanner, settings } = useGamification();
   const { openChallenge } = useFreeChallenge();
-  const { dir, isRtl } = useLanguage();
+  const { t, dir, isRtl } = useLanguage();
 
   if (!showEntryBanner || settings?.isEnabled === false) return null;
 
@@ -22,16 +22,14 @@ export const EntryChallengeBanner: React.FC = () => {
           <div>
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-sm sm:text-base text-slate-950">
-                {isRtl ? '🏆 تحدّى واربح رصيدك الفوري!' : '🏆 Play & Win Instant Credit!'}
+                {t('games.banner_title')}
               </span>
               <span className="text-[11px] font-bold px-2 py-0.5 rounded-full bg-slate-950 text-amber-300">
-                {isRtl ? 'خصم 25% + رصيد' : '25% Off + Credit'}
+                {t('games.banner_badge')}
               </span>
             </div>
             <p className="text-xs font-medium text-slate-900/90 hidden sm:block">
-              {isRtl
-                ? 'اختر لعبتك المفضلة وحل الألغاز البصرية بالوقت المحدد واكسب كوبون خصمك الفوري ومكافأة محفظتك!'
-                : 'Solve visual puzzles within the time limit and earn an instant discount coupon and wallet rewards!'}
+              {t('games.banner_subtitle')}
             </p>
           </div>
         </div>
@@ -43,13 +41,13 @@ export const EntryChallengeBanner: React.FC = () => {
             onClick={() => openChallenge('challenge')}
             className="py-1.5 px-4 rounded-xl bg-slate-950 hover:bg-slate-900 text-amber-300 text-xs font-bold shadow-sm transition-all flex items-center gap-1.5 active:scale-95 cursor-pointer"
           >
-            <span>{isRtl ? 'ابدأ التحدي الآن' : 'Start Challenge Now'}</span>
+            <span>{t('games.start_now')}</span>
             {isRtl ? <ArrowLeft className="w-3.5 h-3.5" /> : <ArrowRight className="w-3.5 h-3.5" />}
           </button>
           <button
             onClick={dismissEntryBanner}
             className="p-1.5 text-slate-900 hover:text-slate-950 hover:bg-slate-950/10 rounded-lg transition-colors cursor-pointer"
-            title={isRtl ? 'إغلاق الإعلان' : 'Dismiss'}
+            title={t('games.dismiss')}
           >
             <X className="w-4 h-4" />
           </button>

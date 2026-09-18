@@ -5,7 +5,7 @@ import { Trophy, Sparkles, Gift, Flame, Award } from 'lucide-react';
 
 export const LiveWinnersTicker: React.FC = () => {
   const { recentWinners, settings } = useFreeChallenge();
-  const { isRtl, language } = useLanguage();
+  const { t, isRtl, language } = useLanguage();
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const tickerConfig = settings?.tickerSettings || {
@@ -16,7 +16,7 @@ export const LiveWinnersTicker: React.FC = () => {
     showAvatar: true,
     showPrizeAmount: true,
     showTimestamp: true,
-    customPrefixText: isRtl ? '🎉 مبروك للفائزين الجدد:' : '🎉 Congrats to recent winners:',
+    customPrefixText: t('games.recent_winners'),
   };
 
   useEffect(() => {
@@ -38,10 +38,10 @@ export const LiveWinnersTicker: React.FC = () => {
   const timeAgoFormatted = (dateStr: string) => {
     try {
       const diff = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
-      if (diff <= 1) return isRtl ? 'الآن' : 'Just now';
-      if (diff < 60) return isRtl ? `منذ ${diff} دقيقة` : `${diff}m ago`;
+      if (diff <= 1) return t('games.just_now');
+      if (diff < 60) return t('games.mins_ago', '', { diff });
       const hours = Math.floor(diff / 60);
-      return isRtl ? `منذ ${hours} ساعة` : `${hours}h ago`;
+      return t('games.hours_ago', '', { hours });
     } catch {
       return '';
     }
@@ -49,7 +49,7 @@ export const LiveWinnersTicker: React.FC = () => {
 
   const prefixText = tickerConfig.customPrefixText
     ? tickerConfig.customPrefixText
-    : isRtl ? '🎉 مبروك للفائزين الجدد:' : '🎉 Congrats to recent winners:';
+    : t('games.recent_winners');
 
   return (
     <div
@@ -65,7 +65,7 @@ export const LiveWinnersTicker: React.FC = () => {
         <div className="flex items-center gap-1.5 text-amber-400 font-black shrink-0">
           <Flame className="w-4 h-4 animate-bounce text-amber-400" />
           <span className="hidden sm:inline">{prefixText}</span>
-          <span className="sm:hidden">{isRtl ? 'مبروك:' : 'Winners:'}</span>
+          <span className="sm:hidden">{t('games.winners_label')}</span>
         </div>
 
         {/* Dynamic Winner Message with Fade transition */}

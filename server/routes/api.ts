@@ -1737,7 +1737,7 @@ const getClientIp = (req: Request): string => {
 // 1. Sync User Profile from Client
 apiRouter.post('/users/sync', (req, res) => {
   try {
-    const { userId, email, displayName, phone, role, authProvider, avatarUrl } = req.body;
+    const { userId, email, displayName, phone, role, authProvider, avatarUrl, isExplicitUpdate } = req.body;
     if (!userId) {
       return res.status(400).json({ success: false, error: 'معرف المستخدم مطلوب' });
     }
@@ -1747,7 +1747,7 @@ apiRouter.post('/users/sync', (req, res) => {
 
     const { profile, wallet } = gamificationEngine.syncUserProfile(
       userId,
-      { email, displayName, phone, role, authProvider, avatarUrl },
+      { email, displayName, phone, role, authProvider, avatarUrl, isExplicitUpdate },
       ip,
       userAgent
     );

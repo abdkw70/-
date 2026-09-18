@@ -16,6 +16,7 @@ import {
 import { motion, AnimatePresence } from 'motion/react';
 import { useGamification } from '../../context/GamificationContext';
 import { useLanguage } from '../../context/LanguageContext';
+import { getLocalizedText } from '../../utils/translation';
 import { startChallenge, submitChallengeAnswer, cancelChallenge, checkActiveChallenge } from '../../lib/api';
 import { ClientQuestion } from '../../types';
 
@@ -31,7 +32,7 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
   onNavigateToShop,
 }) => {
   const { userId, displayName, refreshGamification, playSound } = useGamification();
-  const { dir, isRtl, formatPrice, storeName } = useLanguage();
+  const { t, dir, isRtl, formatPrice, storeName } = useLanguage();
 
   const [gameState, setGameState] = useState<'intro' | 'playing' | 'answered' | 'completed' | 'cancelled' | 'error'>('intro');
   const [sessionToken, setSessionToken] = useState<string | null>(null);
@@ -80,9 +81,7 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {
       cancelChallenge(sessionToken, 'Browser closed or page refreshed');
       e.preventDefault();
-      e.returnValue = isRtl
-        ? 'مغادرتك للصفحة ستؤدي إلى إلغاء التحدي الحالي وفقدان المكافأة غير المكتملة.'
-        : 'Leaving the page will cancel the current challenge and forfeit in-progress rewards.';
+      e.returnValue = t('games.leaving_warning_alert');
       return e.returnValue;
     };
 
@@ -179,7 +178,7 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
         startTimerWithExpiry(data.firstQuestion.questionExpiresAt, data.timeLimitSeconds || 15);
       }
     } catch (err: any) {
-      setErrorMessage(err.message || (isRtl ? 'تعذر بدء التحدي حالياً' : 'Unable to start challenge at this time'));
+      setErrorMessage(err.message || (t('games.err_start')));
       setGameState('error');
     } finally {
       setLoading(false);
@@ -263,7 +262,7 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
       }, 1500);
     } catch (err: any) {
       isSubmittingRef.current = false;
-      setErrorMessage(err.message || (isRtl ? 'حدث خطأ أثناء إرسال الإجابة' : 'An error occurred while submitting your answer'));
+      setErrorMessage(err.message || (t('games.err_submit')));
       setGameState('error');
     }
   };
@@ -297,13 +296,13 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
             </div>
             <div>
               <h2 className="text-base font-bold text-white flex items-center gap-1.5">
-                <span>{isRtl ? 'تحدّى واربح رصيدك' : 'Challenge & Win Credit'}</span>
+                <span>{t('games.challenge_win_credit')}</span>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/40">
                   {storeName}
                 </span>
               </h2>
               <p className="text-xs text-slate-400">
-                {isRtl ? 'أجب واكسب رصيد مشتريات فوري ونقاط XP' : 'Answer and earn instant shopping credits & XP'}
+                {t('games.answer_earn_xp')}
               </p>
             </div>
           </div>
@@ -312,7 +311,7 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
             <button
               onClick={() => setShowExitConfirm(true)}
               className="p-1.5 text-slate-400 hover:text-rose-400 hover:bg-slate-800 rounded-lg transition-colors cursor-pointer"
-              title={isRtl ? 'إلغاء التحدي' : 'Cancel Challenge'}
+              title={t('games.cancel')}
             >
               <X className="w-5 h-5" />
             </button>
@@ -339,12 +338,10 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
 
               <div className="space-y-2">
                 <h3 className="text-xl font-bold text-white">
-                  {isRtl ? 'جاهز لاختبار معلوماتك وكسب رصيد؟' : 'Ready to test your trivia & win credit?'}
+                  {t('games.ready_trivia')}
                 </h3>
                 <p className="text-sm text-slate-300 max-w-md mx-auto leading-relaxed">
-                  {isRtl
-                    ? 'تنتظرك 10 أسئلة ممتعة في القرطاسية، تاريخ الكويت، والعلوم العامة. لكل سؤال 15 ثانية فقط!'
-                    : '10 fun questions about stationery, Kuwait history, and general science await you. 15 seconds per question!'}
+                  {t('games.trivia_desc')}
                 </p>
               </div>
 
@@ -353,23 +350,23 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
                 <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700/60 text-center">
                   <div className="text-amber-400 font-bold text-base mb-1">{formatPrice(0.5)}</div>
                   <div className="text-xs text-slate-400">
-                    {isRtl ? 'لكل إجابة صحيحة' : 'Per correct answer'}
+                    {t('games.per_correct')}
                   </div>
                 </div>
                 <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700/60 text-center">
                   <div className="text-cyan-400 font-bold text-base mb-1">
-                    {isRtl ? '15 ثانية' : '15 sec'}
+                    {t('games.15_sec')}
                   </div>
                   <div className="text-xs text-slate-400">
-                    {isRtl ? 'زمن كل سؤال' : 'Time per question'}
+                    {t('games.time_per_question')}
                   </div>
                 </div>
                 <div className="p-3.5 rounded-xl bg-slate-800/80 border border-slate-700/60 text-center">
                   <div className="text-emerald-400 font-bold text-base mb-1">
-                    {isRtl ? '48 ساعة' : '48 hours'}
+                    {t('games.48_hours')}
                   </div>
                   <div className="text-xs text-slate-400">
-                    {isRtl ? 'صلاحية الرصيد' : 'Credit validity'}
+                    {t('games.credit_validity')}
                   </div>
                 </div>
               </div>
@@ -378,9 +375,7 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
               <div className={`p-3 rounded-xl bg-amber-500/10 border border-amber-500/30 flex items-start gap-2.5 text-xs text-amber-200 ${isRtl ? 'text-right' : 'text-left'}`}>
                 <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                 <span>
-                  {isRtl
-                    ? 'ملاحظة هامة: مغادرة هذه الصفحة أو إغلاقها أثناء التحدي يلغي الجلسة تلقائياً لضمان النزاهة والمنافسة العادلة.'
-                    : 'Important: Leaving or closing this page during the challenge will automatically cancel your session to guarantee fairness.'}
+                  {t('games.leave_warning')}
                 </span>
               </div>
 
@@ -394,7 +389,7 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
                   <span className="inline-block w-5 h-5 border-2 border-slate-950 border-t-transparent rounded-full animate-spin" />
                 ) : (
                   <>
-                    <span>{isRtl ? 'بدء التحدي الآن' : 'Start Challenge Now'}</span>
+                    <span>{t('games.start_now')}</span>
                     {isRtl ? <ArrowLeft className="w-5 h-5" /> : <ArrowRight className="w-5 h-5" />}
                   </>
                 )}
@@ -409,9 +404,7 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-800 border border-slate-700 text-amber-400">
-                    {isRtl
-                      ? `السؤال ${currentQuestion.questionIndex} من ${currentQuestion.totalQuestions}`
-                      : `Question ${currentQuestion.questionIndex} of ${currentQuestion.totalQuestions}`}
+                    {t('games.question_x_of_y', '', { current: currentQuestion.questionIndex, total: currentQuestion.totalQuestions })}
                   </span>
                   <span className="text-xs text-slate-400">{currentQuestion.category}</span>
                 </div>
@@ -433,7 +426,7 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
                 <div className="flex items-center justify-between text-xs font-medium text-slate-400 mb-1.5">
                   <span className="flex items-center gap-1">
                     <Clock className="w-3.5 h-3.5 text-amber-400" />
-                    <span>{isRtl ? 'الوقت المتبقي:' : 'Time left:'}</span>
+                    <span>{t('games.time_left')}</span>
                   </span>
                   <span
                     className={`font-mono font-bold text-sm ${
@@ -456,7 +449,7 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
               {/* The Question Text */}
               <div className="p-4 rounded-xl bg-slate-800/60 border border-slate-700/80 min-h-[90px] flex items-center justify-center text-center">
                 <h3 className="text-base sm:text-lg font-bold text-white leading-relaxed">
-                  {currentQuestion.question}
+                  {getLocalizedText(currentQuestion.question, language)}
                 </h3>
               </div>
 
@@ -489,7 +482,7 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
                         <span className="w-6 h-6 rounded-lg bg-slate-900 border border-slate-700 flex items-center justify-center text-xs font-bold text-slate-400 shrink-0">
                           {idx + 1}
                         </span>
-                        <span className="leading-snug">{option}</span>
+                        <span className="leading-snug">{getLocalizedText(option, language)}</span>
                       </div>
 
                       {gameState === 'answered' && isSelected && (
@@ -524,7 +517,7 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
                         <Sparkles className="w-4 h-4 text-emerald-400" />
                         <span>
                           {isRtl
-                            ? `إجابة صحيحة وممتازة! (+${formatPrice(lastAnswerResult.rewardEarned)} و +${lastAnswerResult.xpEarned} XP)`
+                            ? t('games.correct_answer_reward', `إجابة صحيحة وممتازة! (+${formatPrice(lastAnswerResult.rewardEarned)} و +${lastAnswerResult.xpEarned} XP)`, { reward: formatPrice(lastAnswerResult.rewardEarned), xp: lastAnswerResult.xpEarned })
                             : `Excellent! Correct answer! (+${formatPrice(lastAnswerResult.rewardEarned)} & +${lastAnswerResult.xpEarned} XP)`}
                         </span>
                       </>
@@ -532,9 +525,7 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
                       <>
                         <XCircle className="w-4 h-4 text-rose-400" />
                         <span>
-                          {isRtl
-                            ? 'للأسف إجابة غير صحيحة، واصل التحدي في السؤال القادم!'
-                            : 'Incorrect answer. Keep going with the next question!'}
+                          {t('games.incorrect_answer')}
                         </span>
                       </>
                     )}
@@ -553,12 +544,10 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
 
               <div className="space-y-1.5">
                 <h3 className="text-xl font-bold text-white">
-                  {isRtl ? 'مبروك! أتممت التحدي بنجاح 🏆' : 'Congratulations! Challenge Completed 🏆'}
+                  {t('games.congrats_completed')}
                 </h3>
                 <p className="text-xs text-slate-300">
-                  {isRtl
-                    ? 'تمت إضافة رصيد المكافأة إلى محفظتك بنجاح، ويمكنك استخدامه فوراً في سلة الشراء.'
-                    : 'Reward credit has been added to your wallet and can be used immediately at checkout.'}
+                  {t('games.reward_added')}
                 </p>
               </div>
 
@@ -566,28 +555,28 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700/80">
                   <div className="text-xs text-slate-400 mb-1">
-                    {isRtl ? 'الرصيد المكتسب' : 'Earned Credit'}
+                    {t('games.earned_credit')}
                   </div>
                   <div className="text-base font-bold text-emerald-400">{formatPrice(totalReward)}</div>
                 </div>
                 <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700/80">
                   <div className="text-xs text-slate-400 mb-1">
-                    {isRtl ? 'نقاط الخبرة XP' : 'XP Points'}
+                    {t('games.xp_points')}
                   </div>
                   <div className="text-base font-bold text-cyan-400">+{totalXp} XP</div>
                 </div>
                 <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700/80">
                   <div className="text-xs text-slate-400 mb-1">
-                    {isRtl ? 'إجابات صحيحة' : 'Correct Answers'}
+                    {t('games.correct_answers')}
                   </div>
                   <div className="text-base font-bold text-amber-400">{correctCount} / 10</div>
                 </div>
                 <div className="p-3 rounded-xl bg-slate-800/80 border border-slate-700/80">
                   <div className="text-xs text-slate-400 mb-1">
-                    {isRtl ? 'صلاحية الرصيد' : 'Validity'}
+                    {t('games.validity')}
                   </div>
                   <div className="text-xs font-bold text-slate-200 mt-1">
-                    {isRtl ? '48 ساعة' : '48 Hours'}
+                    {t('games.48_hours')}
                   </div>
                 </div>
               </div>
@@ -603,13 +592,13 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
                   className="flex-1 py-3 px-5 rounded-xl font-bold bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-slate-950 shadow-lg shadow-emerald-500/20 transition-all flex items-center justify-center gap-2 cursor-pointer"
                 >
                   <ShoppingBag className="w-4 h-4" />
-                  <span>{isRtl ? 'تسوّق الآن بالرصيد المكتسب' : 'Shop Now with Credit'}</span>
+                  <span>{t('games.shop_now_credit')}</span>
                 </button>
                 <button
                   onClick={onClose}
                   className="py-3 px-5 rounded-xl font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition-colors cursor-pointer"
                 >
-                  {isRtl ? 'إغلاق' : 'Close'}
+                  {t('games.close')}
                 </button>
               </div>
             </div>
@@ -622,14 +611,14 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
                 <AlertTriangle className="w-7 h-7" />
               </div>
               <div className="space-y-1">
-                <h4 className="font-bold text-white">{isRtl ? 'تنبيه' : 'Notice'}</h4>
+                <h4 className="font-bold text-white">{t('games.notice')}</h4>
                 <p className="text-xs text-slate-300 max-w-sm mx-auto">{errorMessage}</p>
               </div>
               <button
                 onClick={onClose}
                 className="py-2.5 px-6 rounded-xl font-medium bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs border border-slate-700 transition-colors cursor-pointer"
               >
-                {isRtl ? 'حسناً، فهمت' : 'OK, Got It'}
+                {t('games.ok_got_it')}
               </button>
             </div>
           )}
@@ -645,12 +634,10 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
             </div>
             <div className="space-y-1.5">
               <h4 className="font-bold text-white text-base">
-                {isRtl ? 'هل أنت متأكد من مغادرة التحدي؟' : 'Are you sure you want to exit?'}
+                {t('games.sure_exit')}
               </h4>
               <p className="text-xs text-slate-300 leading-relaxed">
-                {isRtl
-                  ? 'مغادرتك الآن ستؤدي إلى إلغاء التحدي واحتساب محاولة واحدة من محاولاتك اليومية.'
-                  : 'Leaving now will cancel the challenge and count as one of your daily attempts.'}
+                {t('games.leaving_warning')}
               </p>
             </div>
             <div className="flex gap-2.5 pt-2">
@@ -658,13 +645,13 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
                 onClick={confirmExitAndCancel}
                 className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-bold transition-colors cursor-pointer"
               >
-                {isRtl ? 'نعم، غادر التحدي' : 'Yes, Exit Challenge'}
+                {t('games.yes_exit')}
               </button>
               <button
                 onClick={() => setShowExitConfirm(false)}
                 className="flex-1 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-colors cursor-pointer"
               >
-                {isRtl ? 'متابعة التحدي' : 'Continue Challenge'}
+                {t('games.continue_challenge')}
               </button>
             </div>
           </div>

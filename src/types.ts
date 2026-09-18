@@ -1,3 +1,6 @@
+
+export type LocalizedText = string | { ar: string; en: string };
+
 export interface ProductImage {
   id: string;
   src: string;
@@ -28,7 +31,7 @@ export interface ProductVariant {
   id: string;
   productId?: string;
   name?: string;
-  title: string;
+  title: LocalizedText;
   sku?: string | null;
   price: number;
   compareAtPrice?: number | null;
@@ -50,7 +53,7 @@ export interface ProductVariant {
 
 export interface Product {
   id: string;
-  title: string;
+  title: LocalizedText;
   titleEn?: string;
   handle: string;
   originalUrl?: string;
@@ -62,7 +65,7 @@ export interface Product {
   aiChatSystemPrompt?: string;
   sku?: string | null;
   type?: string;
-  description: string;
+  description: LocalizedText;
   descriptionEn?: string;
   isInStock: boolean;
   stockQuantity: number;
@@ -84,7 +87,7 @@ export interface Product {
 
 export interface Category {
   id: string;
-  title: string;
+  title: LocalizedText;
   titleEn?: string;
   handle: string;
   parentId?: string | null;
@@ -102,7 +105,7 @@ export interface CartItem {
   productId: string;
   variantId?: string;
   sku?: string;
-  title: string;
+  title: LocalizedText;
   titleEn?: string;
   handle: string;
   image: string;
@@ -127,7 +130,7 @@ export interface OrderItem {
   productId: string;
   variantId?: string;
   sku?: string;
-  title: string;
+  title: LocalizedText;
   handle: string;
   image: string;
   price: number;
@@ -267,6 +270,11 @@ export interface StoreSettings {
   currency: string;
   aiChatEnabled?: boolean;
   aiChatSystemPrompt?: string;
+  voiceAssistantEnabled?: boolean;
+  voiceAutoWelcomeEnabled?: boolean;
+  voiceAutoWelcomeTextAr?: string;
+  voiceAutoWelcomeTextEn?: string;
+  voiceAutoWelcomeDelaySeconds?: number;
   freeShippingEnabled?: boolean;
   freeShippingThreshold: number;
   standardShippingFee?: number;
@@ -303,8 +311,8 @@ export interface BackupRecord {
 
 export interface QuizQuestion {
   id: string;
-  question: string;
-  options: string[];
+  question: LocalizedText;
+  options: LocalizedText[];
   correctAnswerIndex?: number; // only present in admin responses
   rewardAmount: number; // in KWD e.g. 0.250, 0.500, 1.000
   xpAmount: number;
@@ -322,8 +330,8 @@ export interface ClientQuestion {
   questionId: string;
   questionIndex: number;
   totalQuestions: number;
-  question: string;
-  options: string[];
+  question: LocalizedText;
+  options: LocalizedText[];
   rewardAmount: number;
   xpAmount: number;
   timeLimitSeconds: number;
@@ -383,7 +391,7 @@ export interface WalletTransaction {
   type: 'credit' | 'debit' | 'expire';
   amount: number;
   balanceAfter: number;
-  description: string;
+  description: LocalizedText;
   referenceId?: string;
   createdAt: string;
 }
@@ -472,8 +480,8 @@ export interface AdminUserSummary {
 
 export interface Achievement {
   id: string;
-  title: string;
-  description: string;
+  title: LocalizedText;
+  description: LocalizedText;
   icon: string;
   requiredCondition: string;
   rewardXp: number;
@@ -527,19 +535,19 @@ export interface VisualPuzzleClient {
   puzzleIndex: number;
   totalPuzzles: number;
   type: VisualPuzzleType;
-  title: string;
-  prompt: string;
+  title: LocalizedText;
+  prompt: LocalizedText;
   category: string;
   difficulty: 'easy' | 'medium' | 'hard';
   mainVisual?: {
     svgContent?: string;
     imageUrl?: string;
     gridItems?: any[];
-    promptDetails?: string;
+    promptDetails?: LocalizedText;
   };
   options: {
     id: string;
-    label?: string;
+    label?: LocalizedText;
     svgContent?: string;
     imageUrl?: string;
     meta?: any;
@@ -616,7 +624,7 @@ export interface FreeChallengeUserStatus {
 export interface UserAddress {
   id: string;
   userId: string;
-  title: string;
+  title: LocalizedText;
   customerName: string;
   customerPhone: string;
   governorate: string;
