@@ -11,6 +11,7 @@ import {
   Achievement,
   GamificationSettings,
   LeaderboardEntry,
+  LocalizedText,
 } from './types';
 import { db } from './db';
 
@@ -545,7 +546,8 @@ class GamificationEngine {
         updatedAt: new Date().toISOString(),
       } as QuizQuestion;
       db.save();
-      db.logActivity('تعديل سؤال في بنك الأسئلة', 'settings', `تم تعديل السؤال: "${question.question?.substring(0, 30)}..."`, 'info');
+      const qText = typeof question.question === 'string' ? question.question : (question.question?.ar || question.question?.en || '');
+      db.logActivity('تعديل سؤال في بنك الأسئلة', 'settings', `تم تعديل السؤال: "${qText.substring(0, 30)}..."`, 'info');
       return questions[existingIndex];
     } else {
       const newQuestion: QuizQuestion = {
@@ -565,7 +567,8 @@ class GamificationEngine {
       };
       questions.unshift(newQuestion);
       db.save();
-      db.logActivity('إضافة سؤال جديد', 'settings', `تمت إضافة سؤال جديد إلى بنك الأسئلة: "${newQuestion.question.substring(0, 30)}..."`, 'success');
+      const newQText = typeof newQuestion.question === 'string' ? newQuestion.question : (newQuestion.question?.ar || newQuestion.question?.en || '');
+      db.logActivity('إضافة سؤال جديد', 'settings', `تمت إضافة سؤال جديد إلى بنك الأسئلة: "${newQText.substring(0, 30)}..."`, 'success');
       return newQuestion;
     }
   }
@@ -1643,12 +1646,13 @@ class GamificationEngine {
         question.timesCorrect = (question.timesCorrect || 0) + 1;
 
         // Credit wallet idempotently with unique transaction reference
+        const qStr = typeof question.question === 'string' ? question.question : (question.question?.ar || question.question?.en || '');
         this.addWalletReward(
           session.userId,
           rewardEarned,
           'challenge',
           session.id,
-          `مكافأة الإجابة الصحيحة للسؤال: ${question.question.substring(0, 25)}...`
+          `مكافأة الإجابة الصحيحة للسؤال: ${qStr.substring(0, 25)}...`
         );
 
         this.logChallengeActivity({
@@ -1812,7 +1816,7 @@ class GamificationEngine {
     startedAt?: string,
     expiresAt?: string,
     remainingSeconds?: number,
-    customOptions?: string[]
+    customOptions?: LocalizedText[]
   ) {
     return {
       questionId: question.id,

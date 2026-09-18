@@ -20,7 +20,7 @@ export interface VisualPuzzle {
   type: VisualPuzzleType;
   title: LocalizedText;
   prompt: LocalizedText;
-  category: string;
+  category: LocalizedText;
   difficulty: 'easy' | 'medium' | 'hard' | 'adaptive';
   timeLimitSeconds?: number;
   // Options & Content

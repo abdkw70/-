@@ -1,292 +1,502 @@
-import React, { useState, useRef, useEffect } from 'react';
-import { MessageCircle, X, Send, Bot, Loader2, GripHorizontal, Mic, MicOff, Volume2, VolumeX, Square } from 'lucide-react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { 
+  MessageCircle, 
+  X, 
+  Send, 
+  Bot, 
+  Loader2, 
+  GripHorizontal, 
+  ShoppingBag, 
+  Check, 
+  ExternalLink, 
+  Sparkles, 
+  RefreshCw,
+  Tag,
+  ShieldCheck,
+  ChevronRight,
+  ChevronLeft
+} from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
-import { Product } from '../types';
-import { ProductCard } from './ProductCard';
+import { Product, ProductVariant } from '../types';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { motion, useDragControls, useMotionValue, animate } from 'motion/react';
+import { motion, useDragControls } from 'motion/react';
 
 interface ChatbotProps {
   onNavigate?: (path: string) => void;
   currentPath?: string;
 }
 
-export const Chatbot: React.FC<ChatbotProps> = ({ onNavigate, currentPath = '' }) => {
-  const { isRtl } = useLanguage();
+interface ChatMessage {
+  role: 'user' | 'model';
+  content: string;
+  productCards?: Product[];
+}
+
+interface SmartRecommendationData {
+  recommendation: string;
+  inChatPrompt: string;
+  product: Product;
+}
+
+// ---------------- In-Chat Interactive Product Card ----------------
+interface InChatProductCardProps {
+  product: Product;
+  onNavigate: (path: string) => void;
+  onCloseChat?: () => void;
+}
+
+const InChatProductCard: React.FC<InChatProductCardProps> = ({ product, onNavigate, onCloseChat }) => {
+  const { addItemToCart } = useCart();
+  const { isRtl, formatPrice, translateProductTitle } = useLanguage();
+  
+  const [selectedVariantId, setSelectedVariantId] = useState<string>(() => {
+    if (product.variants && product.variants.length > 0) {
+      return product.variants[0].id;
+    }
+    return '';
+  });
+  
+  const [isAdding, setIsAdding] = useState(false);
+  const [isAdded, setIsAdded] = useState(false);
+
+  const selectedVariant = product.variants?.find(v => v.id === selectedVariantId);
+  const currentPrice = selectedVariant ? selectedVariant.price : product.price;
+  const comparePrice = selectedVariant?.compareAtPrice || product.compareAtPrice;
+  const hasDiscount = comparePrice && comparePrice > currentPrice;
+  
+  const isVariantInStock = selectedVariant 
+    ? (selectedVariant.stock !== undefined ? selectedVariant.stock > 0 : selectedVariant.isInStock !== false)
+    : product.isInStock;
+
+  const imageSrc = product.images?.[0]?.src || 'https://assets.wuiltstore.com/clqvb10wk0zhh01o1ed177fz2__D8_B4_D8_B9_D8_A7_D8_B14.png';
+  const displayTitle = translateProductTitle(product);
+
+  const handleAddToCart = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!isVariantInStock || isAdding) return;
+    setIsAdding(true);
+    try {
+      await addItemToCart(product, selectedVariant, 1);
+      setIsAdded(true);
+      setTimeout(() => setIsAdded(false), 2200);
+    } catch (err) {
+      console.error('Failed to add to cart:', err);
+    } finally {
+      setIsAdding(false);
+    }
+  };
+
+  const handleViewProduct = () => {
+    const handle = product.handle || product.id;
+    onNavigate(`/product/${encodeURIComponent(handle)}`);
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 10, scale: 0.96 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.25 }}
+      className="w-[230px] shrink-0 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200/90 dark:border-slate-700/80 shadow-xs hover:shadow-md transition-all flex flex-col justify-between overflow-hidden text-start"
+    >
+      {/* Product Image & Badges */}
+      <div 
+        onClick={handleViewProduct}
+        className="relative aspect-[4/3] w-full bg-slate-50 dark:bg-slate-900 overflow-hidden flex items-center justify-center p-2 cursor-pointer group"
+      >
+        <img
+          src={imageSrc}
+          alt={displayTitle}
+          className="w-full h-full object-contain mix-blend-multiply dark:mix-blend-normal transition-transform duration-300 group-hover:scale-105"
+          loading="lazy"
+        />
+
+        {/* Status Badges */}
+        <div className={`absolute top-2 ${isRtl ? 'right-2' : 'left-2'} flex flex-col gap-1 items-start pointer-events-none`}>
+          {hasDiscount && (
+            <span className="bg-rose-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-xs">
+              {product.discountPercentage 
+                ? `${isRtl ? 'خصم' : 'OFF'} ${product.discountPercentage}%` 
+                : (isRtl ? 'عرض خاص' : 'Special Offer')}
+            </span>
+          )}
+          <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-xs ${
+            isVariantInStock ? 'bg-emerald-600/90 text-white' : 'bg-slate-700 text-white'
+          }`}>
+            {isVariantInStock ? (isRtl ? 'متوفر' : 'In Stock') : (isRtl ? 'نفذت الكمية' : 'Out of Stock')}
+          </span>
+        </div>
+      </div>
+
+      {/* Details & Variant Selection */}
+      <div className="p-3 flex flex-col flex-1 justify-between gap-2.5">
+        <div>
+          <h4 
+            onClick={handleViewProduct}
+            className="text-xs font-bold text-slate-900 dark:text-white leading-tight line-clamp-2 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer transition-colors"
+          >
+            {displayTitle}
+          </h4>
+
+          {/* Pricing */}
+          <div className="mt-1.5 flex items-baseline gap-1.5">
+            <span className="text-sm font-extrabold text-sky-700 dark:text-sky-400">
+              {formatPrice(currentPrice)}
+            </span>
+            {hasDiscount && comparePrice && (
+              <span className="text-[10px] text-slate-400 line-through">
+                {formatPrice(comparePrice)}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Variant selector if multiple variants exist */}
+        {product.variants && product.variants.length > 1 && (
+          <div className="space-y-1">
+            <label className="block text-[10px] font-semibold text-slate-500 dark:text-slate-400">
+              {isRtl ? 'اختر المقاس / اللون:' : 'Choose Size / Color:'}
+            </label>
+            <select
+              value={selectedVariantId}
+              onChange={(e) => setSelectedVariantId(e.target.value)}
+              className="w-full text-[11px] py-1 px-2 rounded-lg bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 text-slate-800 dark:text-slate-200 focus:outline-none focus:border-sky-500 cursor-pointer"
+            >
+              {product.variants.map((v) => {
+                const vTitle = typeof v.title === 'string' ? v.title : (isRtl ? v.title?.ar : v.title?.en) || v.name || v.id;
+                const vStock = v.stock !== undefined ? v.stock > 0 : v.isInStock !== false;
+                return (
+                  <option key={v.id} value={v.id} disabled={!vStock}>
+                    {vTitle} {v.price ? `(${formatPrice(v.price)})` : ''} {!vStock ? ` - (${isRtl ? 'غير متوفر' : 'Sold out'})` : ''}
+                  </option>
+                );
+              })}
+            </select>
+          </div>
+        )}
+
+        {/* Action Buttons */}
+        <div className="grid grid-cols-2 gap-1.5 pt-2 border-t border-slate-100 dark:border-slate-700/60">
+          <button
+            onClick={handleViewProduct}
+            className="w-full py-1.5 px-2 rounded-xl text-[11px] font-semibold text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors flex items-center justify-center gap-1 cursor-pointer"
+          >
+            <ExternalLink className="w-3 h-3" />
+            <span>{isRtl ? 'عرض' : 'View'}</span>
+          </button>
+
+          <button
+            onClick={handleAddToCart}
+            disabled={!isVariantInStock || isAdding}
+            className={`w-full py-1.5 px-2 rounded-xl text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-pointer ${
+              !isVariantInStock
+                ? 'bg-slate-100 dark:bg-slate-700 text-slate-400 cursor-not-allowed'
+                : isAdded
+                ? 'bg-emerald-600 text-white'
+                : 'bg-sky-600 text-white hover:bg-sky-700 shadow-xs active:scale-95'
+            }`}
+          >
+            {isAdding ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : isAdded ? (
+              <>
+                <Check className="w-3.5 h-3.5" />
+                <span>{isRtl ? 'تم!' : 'Added!'}</span>
+              </>
+            ) : (
+              <>
+                <ShoppingBag className="w-3.5 h-3.5" />
+                <span>{isRtl ? 'أضف' : 'Add'}</span>
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+// ---------------- Main Smart Chatbot Component ----------------
+export const Chatbot: React.FC<ChatbotProps> = ({ onNavigate = () => {}, currentPath = '' }) => {
+  const { isRtl, formatPrice, translateProductTitle } = useLanguage();
   const { sessionId, storeSettings } = useCart();
   const { userProfile, user } = useAuth();
   
+  // UI & Positioning states
   const [isOpen, setIsOpen] = useState(false);
-  const [welcomeBubble, setWelcomeBubble] = useState<string | null>(null);
-  const [dynamicSuggestions, setDynamicSuggestions] = useState<string[]>([]);
+  const [chatPosition, setChatPosition] = useState({ x: 0, y: 0 });
   const dragControls = useDragControls();
-  const x = useMotionValue(0);
-  const y = useMotionValue(0);
   const chatRef = useRef<HTMLDivElement>(null);
-  
-  const [messages, setMessages] = useState<{ role: 'user' | 'model', content: string, productCards?: Product[] }[]>([]);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Smart Mini-Recommendation Floating Bubble
+  const [floatingRec, setFloatingRec] = useState<SmartRecommendationData | null>(null);
+
+  // Session context tracking
+  const recentHandlesRef = useRef<string[]>([]);
+  const recommendedHandlesRef = useRef<Set<string>>(new Set());
+
+  // Messages & Input
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputValue, setInputValue] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [dynamicSuggestions, setDynamicSuggestions] = useState<string[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  // Voice feature states
-  const [isListening, setIsListening] = useState(false);
-  const [micLang, setMicLang] = useState<'ar'|'en'>(isRtl ? 'ar' : 'ar'); // Default to Arabic as requested
-  const [isSoundOn, setIsSoundOn] = useState(false);
-  const [isSpeaking, setIsSpeaking] = useState(false);
-  const recognitionRef = useRef<any>(null);
+  const isSendingRef = useRef<boolean>(false);
+  const activeChatAbortRef = useRef<AbortController | null>(null);
+  const hasInitializedWelcomeRef = useRef(false);
 
-  // Initialize Welcome Message
-  useEffect(() => {
-    if (messages.length === 0) {
-      setMessages([
-        { role: 'model', content: isRtl ? 'مرحباً! أنا المساعد الذكي لمكتبة الشاطئ الأزرق 🌊📚، كيف يمكنني مساعدتك اليوم؟' : 'Hello! I am the AI shopping assistant for Blue Beach Stationery 🌊📚, how can I help you today?' }
-      ]);
-    }
-  }, [isRtl, messages.length]);
+  // Extract current product handle if on a product page
+  const currentProductHandle = currentPath.startsWith('/product/') 
+    ? decodeURIComponent(currentPath.replace('/product/', '').split('?')[0])
+    : undefined;
 
-  // Product Context & Auto-welcome
-  const currentProductHandle = currentPath.startsWith('/product/') ? currentPath.replace('/product/', '') : undefined;
-  const welcomedProductsRef = useRef<Set<string>>(new Set());
-  
+  // Extract current category handle if on category page
+  const currentCategoryHandle = currentPath.startsWith('/category/')
+    ? decodeURIComponent(currentPath.replace('/category/', '').split('?')[0])
+    : (currentPath.includes('category=') ? new URLSearchParams(currentPath.split('?')[1] || '').get('category') || undefined : undefined);
+
+  // Track product browsing history in session
   useEffect(() => {
-    if (currentProductHandle && storeSettings?.voiceAutoWelcomeEnabled !== false) {
-      if (!welcomedProductsRef.current.has(currentProductHandle)) {
-        welcomedProductsRef.current.add(currentProductHandle);
-        const delay = (storeSettings?.voiceAutoWelcomeDelaySeconds ?? 3) * 1000;
-        
-        // Fetch dynamic AI welcome string for this product
-        const timeout = setTimeout(async () => {
-           try {
-             const res = await fetch('/api/ai-chat', {
-               method: 'POST',
-               headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({ 
-                 isAutoWelcome: true, 
-                 currentProductHandle 
-               })
-             });
-             const data = await res.json();
-             const welcomeMsg = data.response || (isRtl ? 'يا هلا! تبيني أساعدك بهالمنتج؟' : 'Hello! Need help with this product?');
-             if (data.suggestions && data.suggestions.length > 0) {
-               setDynamicSuggestions(data.suggestions);
-             }
-             
-             setMessages(prev => {
-                // Prevent duplicate welcome messages in history
-                if (prev.length > 0 && prev[prev.length - 1].content === welcomeMsg) return prev;
-                return [...prev, { role: 'model', content: welcomeMsg }];
-             });
-             
-             if (!isOpen) {
-                setWelcomeBubble(welcomeMsg);
-                setTimeout(() => setWelcomeBubble(null), 10000); // auto-hide bubble after 10s
-             }
-             
-             if (isSoundOn) {
-               speakText(welcomeMsg);
-             }
-           } catch(e) {
-             console.error('Auto welcome fetch error:', e);
-           }
-        }, delay);
-        return () => clearTimeout(timeout);
+    if (currentProductHandle) {
+      if (!recentHandlesRef.current.includes(currentProductHandle)) {
+        recentHandlesRef.current = [currentProductHandle, ...recentHandlesRef.current].slice(0, 10);
       }
     }
-  }, [currentProductHandle, isRtl, storeSettings, isSoundOn]);
+  }, [currentProductHandle]);
 
-  // Speech Recognition Setup
-  useEffect(() => {
-    if (typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window)) {
-      const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-      recognitionRef.current = new SpeechRecognition();
-      recognitionRef.current.continuous = false;
-      recognitionRef.current.interimResults = true;
-      
-      recognitionRef.current.onresult = (event: any) => {
-        let interimTranscript = '';
-        let finalTranscript = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
-          } else {
-            interimTranscript += event.results[i][0].transcript;
-          }
-        }
-        if (finalTranscript) {
-          setInputValue(finalTranscript);
-          // auto send when final
-          sendMessageFromInput(finalTranscript);
-        } else {
-          setInputValue(interimTranscript);
-        }
-      };
-      
-      recognitionRef.current.onend = () => {
-        setIsListening(false);
-      };
-      
-      recognitionRef.current.onerror = (event: any) => {
-        if (event.error !== 'aborted' && event.error !== 'no-speech') {
-          console.error('Speech recognition error:', event.error);
-        }
-        setIsListening(false);
-      };
-    }
-  }, [isRtl]); // update language when isRtl changes
-
-  const toggleListening = () => {
-    if (isListening) {
-      recognitionRef.current?.stop();
-      setIsListening(false);
-    } else {
-      if (recognitionRef.current) {
-        recognitionRef.current.lang = micLang === 'ar' ? 'ar-KW' : 'en-US';
-        recognitionRef.current.start();
-        setIsListening(true);
-        // Ensure any ongoing speech stops when we start listening
-        stopSpeaking();
-      } else {
-        alert(isRtl ? 'متصفحك لا يدعم التعرف على الصوت' : 'Your browser does not support speech recognition');
-      }
-    }
-  };
-
-  
-  const audioContextRef = useRef<AudioContext | null>(null);
-  const currentAudioSourceRef = useRef<AudioBufferSourceNode | null>(null);
-
-  const stopSpeaking = () => {
-    if (currentAudioSourceRef.current) {
-      try {
-        currentAudioSourceRef.current.stop();
-      } catch (e) {}
-      currentAudioSourceRef.current = null;
-    }
-    if (audioContextRef.current) {
-      audioContextRef.current.close().catch(() => {});
-      audioContextRef.current = null;
-    }
-    setIsSpeaking(false);
-  };
-
-  const speakText = async (text: string) => {
-    // Clean text from emojis and markdown
-    const cleanText = text.replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '').replace(/\*\*/g, '');
-    if (!cleanText) return;
-    
-    const isArabicText = /[\u0600-\u06FF]/.test(cleanText);
-    const lang = isArabicText ? 'ar-SA' : 'en-US';
-
-    stopSpeaking(); // Stop any ongoing speech
-
-    setIsSpeaking(true);
-    try {
-      const res = await fetch('/api/ai-chat/tts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ text: cleanText, lang })
-      });
-      const data = await res.json();
-      
-      if (data.audioData) {
-        // Initialize AudioContext if not already initialized or if closed
-        if (!audioContextRef.current || audioContextRef.current.state === 'closed') {
-          audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
-        }
-        
-        const audioBuffer = await audioContextRef.current.decodeAudioData(
-          // Convert base64 to ArrayBuffer
-          await fetch(`data:audio/wav;base64,${data.audioData}`).then(r => r.arrayBuffer())
-        );
-        
-        const source = audioContextRef.current.createBufferSource();
-        source.buffer = audioBuffer;
-        source.connect(audioContextRef.current.destination);
-        source.onended = () => {
-          setIsSpeaking(false);
-        };
-        currentAudioSourceRef.current = source;
-        source.start(0);
-      } else {
-        setIsSpeaking(false);
-      }
-    } catch (e) {
-      console.error('TTS playback error', e);
-      setIsSpeaking(false);
-    }
-  };
-
+  // Outside click handler: Snap chat smoothly back to origin position (0, 0)
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent | TouchEvent) => {
-      if (isOpen && chatRef.current && !chatRef.current.contains(e.target as Node)) {
-        animate(x, 0, { type: "spring", stiffness: 300, damping: 25 });
-        animate(y, 0, { type: "spring", stiffness: 300, damping: 25 });
+      const target = e.target as Node;
+      // If click was outside both the chat window and the trigger button
+      if (
+        chatRef.current && 
+        !chatRef.current.contains(target) && 
+        buttonRef.current && 
+        !buttonRef.current.contains(target)
+      ) {
+        if (chatPosition.x !== 0 || chatPosition.y !== 0) {
+          setChatPosition({ x: 0, y: 0 });
+        }
       }
     };
-    document.addEventListener('mousedown', handleOutsideClick);
-    document.addEventListener('touchstart', handleOutsideClick);
+
+    if (isOpen) {
+      document.addEventListener('mousedown', handleOutsideClick);
+      document.addEventListener('touchstart', handleOutsideClick);
+    }
+
     return () => {
       document.removeEventListener('mousedown', handleOutsideClick);
       document.removeEventListener('touchstart', handleOutsideClick);
     };
-  }, [isOpen, x, y]);
+  }, [isOpen, chatPosition]);
 
+  // When opening chat, ensure it starts at its docking origin
+  const handleOpenChat = () => {
+    setChatPosition({ x: 0, y: 0 });
+    setIsOpen(true);
+  };
+
+  // Initialize initial greeting
   useEffect(() => {
-    if (messagesEndRef.current) {
+    if (!hasInitializedWelcomeRef.current && messages.length === 0) {
+      hasInitializedWelcomeRef.current = true;
+      const customerName = userProfile?.displayName || user?.displayName;
+      let initialGreeting = '';
+      
+      if (isRtl) {
+        initialGreeting = customerName 
+          ? `يا هلا فيك يا ${customerName} 👋 بمكتبة الشاطئ الأزرق! شلون أقدر أساعدك اليوم في اختياراتك وتجهيزاتك؟`
+          : `يا هلا فيك بمكتبة الشاطئ الأزرق 👋! أنا مساعدك الذكي للتسوق، متصل مباشرة ببيانات ومخزون المتجر لمساعدتك في العثور على أي منتج أو مقاس بدقة.`;
+      } else {
+        initialGreeting = customerName
+          ? `Hello ${customerName} 👋 Welcome to Blue Beach Stationery! How can I help you with your supplies today?`
+          : `Hello and welcome to Blue Beach Stationery 👋! I am your smart shopping assistant, connected live to the store catalog.`;
+      }
+
+      setMessages([{ role: 'model', content: initialGreeting }]);
+    }
+  }, [userProfile, user, isRtl]);
+
+  // Smart Mini-Recommendation on Product Page (Debounced, non-intrusive, no duplicate)
+  useEffect(() => {
+    if (!currentProductHandle) {
+      setFloatingRec(null);
+      return;
+    }
+
+    // Don't show if already recommended in this session
+    if (recommendedHandlesRef.current.has(currentProductHandle)) {
+      setFloatingRec(null);
+      return;
+    }
+
+    // Debounce by 2.5 seconds to avoid spamming fast clickers
+    const timer = setTimeout(async () => {
+      if (isOpen) return; // If chat is already open, do not show floating bubble
+
+      try {
+        const res = await fetch('/api/ai-chat/recommendation', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            productHandle: currentProductHandle,
+            recentProductHandles: recentHandlesRef.current,
+            currentLanguage: isRtl ? 'ar' : 'en'
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data && data.recommendation && data.product) {
+            setFloatingRec(data);
+          }
+        }
+      } catch (err) {
+        console.warn('Could not fetch recommendation:', err);
+      }
+    }, 2500);
+
+    return () => clearTimeout(timer);
+  }, [currentProductHandle, isRtl, isOpen]);
+
+  // When user clicks "[شوف التوصية]", expand it directly into the chat conversation
+  const handleAdoptRecommendationIntoChat = () => {
+    if (!floatingRec) return;
+
+    const rec = floatingRec;
+    setFloatingRec(null);
+    recommendedHandlesRef.current.add(rec.product.handle);
+
+    // Open chat at origin
+    setChatPosition({ x: 0, y: 0 });
+    setIsOpen(true);
+
+    // Append to messages stream
+    setMessages(prev => [
+      ...prev,
+      {
+        role: 'model',
+        content: rec.inChatPrompt,
+        productCards: [rec.product]
+      }
+    ]);
+  };
+
+  // Scroll to bottom on updates
+  useEffect(() => {
+    if (isOpen && messagesEndRef.current) {
       messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
     }
   }, [messages, isOpen, isLoading]);
 
   const messagesRef = useRef(messages);
-  useEffect(() => { messagesRef.current = messages; }, [messages]);
+  useEffect(() => { 
+    messagesRef.current = messages; 
+  }, [messages]);
 
+  // Send message to AI endpoint
   const sendMessageFromInput = async (textToSend: string) => {
-    if (!textToSend.trim()) return;
-    const newMessages = [...messagesRef.current, { role: 'user' as const, content: textToSend }];
-    setMessages(prev => [...prev, { role: 'user' as const, content: textToSend }]);
-    setInputValue('');
+    const trimmed = textToSend.trim();
+    if (!trimmed) return;
+    
+    if (isSendingRef.current || isLoading) {
+      return;
+    }
+    isSendingRef.current = true;
     setIsLoading(true);
 
+    const userMsg: ChatMessage = { role: 'user', content: trimmed };
+    const updatedMessages = [...messagesRef.current, userMsg];
+    setMessages(prev => [...prev, userMsg]);
+    setInputValue('');
+
+    if (activeChatAbortRef.current) {
+      try { activeChatAbortRef.current.abort(); } catch (_) {}
+    }
+    const controller = new AbortController();
+    activeChatAbortRef.current = controller;
+
+    const clientRequestId = `req_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    let timedOut = false;
+
     try {
+      const timeoutId = setTimeout(() => {
+        timedOut = true;
+        controller.abort();
+      }, 35000);
+
       const res = await fetch('/api/ai-chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        signal: controller.signal,
         body: JSON.stringify({ 
-          messages: newMessages.map(m => ({ role: m.role, content: m.content })),
+          requestId: clientRequestId,
+          messages: updatedMessages.map(m => ({ role: m.role, content: m.content })),
           sessionId,
           userId: userProfile?.id || user?.uid,
           userName: userProfile?.displayName || user?.displayName,
-          currentProductHandle
+          currentProductHandle,
+          currentCategoryHandle,
+          recentProductHandles: recentHandlesRef.current,
+          recommendedProductHandles: Array.from(recommendedHandlesRef.current),
+          currentLanguage: isRtl ? 'ar' : 'en'
         })
       });
+
+      clearTimeout(timeoutId);
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({}));
+        const serverError = errData.message || (isRtl 
+          ? 'عذراً يا الغالي، حدث خطأ بسيط بالاتصال، تفضل اسألني مرة ثانية وسأجاوبك فوراً.'
+          : 'Connection error, please ask again.');
+        setMessages(prev => [...prev, { role: 'model', content: serverError }]);
+        return;
+      }
+
+      const data = await res.json().catch(() => ({}));
+      const responseText = data.response;
       
-      const data = await res.json();
+      if (responseText) {
+        setMessages(prev => [...prev, {
+          role: 'model',
+          content: responseText,
+          productCards: data.productCards
+        }]);
 
-      if (data.suggestions && data.suggestions.length > 0) {
-        setDynamicSuggestions(data.suggestions);
-      }
-
-      if (data.error) {
-         setMessages(prev => [...prev, { role: 'model', content: isRtl ? 'عذراً، خدمة المساعد الذكي غير متاحة حالياً.' : 'Sorry, the AI assistant is currently unavailable.' }]);
+        if (data.suggestions && data.suggestions.length > 0) {
+          setDynamicSuggestions(data.suggestions);
+        }
       } else {
-         const responseText = data.response;
-         setMessages(prev => [...prev, {
-            role: 'model',
-            content: responseText,
-            productCards: data.productCards
-          }]);
-         
-         if (isSoundOn) {
-            speakText(responseText);
-         }
+        setMessages(prev => [...prev, {
+          role: 'model',
+          content: isRtl 
+            ? 'تفضل بأي استفسار وحاضر أساعدك بكل حب!' 
+            : 'How else can I assist you with our stationery catalog?'
+        }]);
       }
-    } catch (err) {
-      console.error(err);
-      setMessages(prev => [...prev, { role: 'model', content: isRtl ? 'حدث خطأ في الاتصال، يرجى المحاولة مرة أخرى.' : 'Connection error, please try again.' }]);
+    } catch (err: any) {
+      if (err?.name === 'AbortError' || activeChatAbortRef.current?.signal.aborted) {
+        if (timedOut) {
+          setMessages(prev => [...prev, {
+            role: 'model',
+            content: isRtl ? 'استغرقت الاستجابة وقتاً طويلاً، يرجى إعادة المحاولة.' : 'Request timed out, please try again.'
+          }]);
+        }
+        return;
+      }
+      console.error('[AI Chat Client Error]:', err);
+      setMessages(prev => [...prev, { 
+        role: 'model', 
+        content: isRtl ? 'تعذر إرسال الرسالة، يرجى المحاولة مرة أخرى.' : 'Could not send message, please try again.' 
+      }]);
     } finally {
+      isSendingRef.current = false;
       setIsLoading(false);
+      activeChatAbortRef.current = null;
     }
   };
 
@@ -294,69 +504,161 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onNavigate, currentPath = '' }
     sendMessageFromInput(inputValue);
   };
 
-  const handleToggleSound = () => {
-    setIsSoundOn(prev => {
-      const next = !prev;
-      if (next && 'speechSynthesis' in window) {
-        const utterance = new SpeechSynthesisUtterance('');
-        window.speechSynthesis.speak(utterance);
-      }
-      return next;
-    });
-  };
-
   const handleSuggestionClick = (suggestion: string) => {
-    setInputValue(suggestion);
     sendMessageFromInput(suggestion);
   };
 
-  const generalSuggestionsAr = ["اقترح لي منتجًا", "ماذا يناسبني؟", "قارن المنتجات", "أرني البدائل", "ما المنتجات المخفضة؟", "ساعدني في اختيار منتج"];
-  const generalSuggestionsEn = ["Recommend a product", "What suits me?", "Compare products", "Show alternatives", "Show discounted products", "Help me choose a product"];
+  // Category-specific quick actions
+  const getCategorySuggestions = (cat: string | undefined): string[] => {
+    if (!cat) return [];
+    const lower = cat.toLowerCase();
+    if (lower.includes('bag') || lower.includes('شنط') || lower.includes('حقائب')) {
+      return isRtl 
+        ? ['للابتدائي', 'للمتوسط', 'شنط خفيفة', 'للكتب الكثيرة', 'أبي الأرخص']
+        : ['Elementary', 'Middle School', 'Lightweight', 'High Capacity', 'Lowest Price'];
+    }
+    if (lower.includes('office') || lower.includes('stationery') || lower.includes('مكتب')) {
+      return isRtl
+        ? ['ملفات ومنظمات', 'أدوات مكتبية أساسية', 'دفاتر ومذكرات', 'ستاندات مكتب']
+        : ['Folders & Binders', 'Office Essentials', 'Notebooks', 'Desk Stands'];
+    }
+    if (lower.includes('art') || lower.includes('رسم') || lower.includes('لوحات')) {
+      return isRtl
+        ? ['ألوان وفرش', 'لوحات كانفس', 'ستاندات عرض', 'أدوات هندسية']
+        : ['Paints & Brushes', 'Canvas Boards', 'Display Stands', 'Geometry Tools'];
+    }
+    if (lower.includes('book') || lower.includes('قصص') || lower.includes('كتب')) {
+      return isRtl
+        ? ['قصص أطفال', 'كتب تعليمية', 'دفاتر تلوين']
+        : ['Children Stories', 'Educational Books', 'Coloring Books'];
+    }
+    return [];
+  };
+
+  // General fallback suggestions
+  const generalSuggestionsAr = [
+    'اقترح لي منتجاً',
+    'أبي ستاند لكتاب A4',
+    'شنط وأدوات مدرسية',
+    'أقلام ودفاتر مميزة',
+    'عروض وخصومات اليوم',
+    'طرق الدفع والتوصيل'
+  ];
+  const generalSuggestionsEn = [
+    'Recommend a product',
+    'Looking for an A4 book stand',
+    'School bags & supplies',
+    'Premium pens & notebooks',
+    'Today\'s special offers',
+    'Payment & Delivery'
+  ];
   
-  const productSuggestionsAr = ["أبي تفاصيل أكثر", "هل يناسبني؟", "ما الخيارات المتوفرة؟", "أضفه للسلة"];
-  const productSuggestionsEn = ["More details", "Is it suitable for me?", "What are the options?", "Add to cart"];
+  const productSuggestionsAr = [
+    'شنو تفاصيل ومقاسات المنتج؟',
+    'هل متوفر ألوان أو خيارات ثانية؟',
+    'أضف هذا المنتج للسلة',
+    'اقترح لي منتجات مشابهة'
+  ];
+  const productSuggestionsEn = [
+    'Product details and sizes?',
+    'Are other colors available?',
+    'Add this product to cart',
+    'Suggest similar items'
+  ];
+
+  const categorySuggestions = getCategorySuggestions(currentCategoryHandle);
 
   const suggestions = dynamicSuggestions.length > 0
     ? dynamicSuggestions
     : (currentProductHandle
-       ? (isRtl ? productSuggestionsAr : productSuggestionsEn)
-       : (isRtl ? generalSuggestionsAr : generalSuggestionsEn));
+        ? (isRtl ? productSuggestionsAr : productSuggestionsEn)
+        : (categorySuggestions.length > 0 
+            ? categorySuggestions 
+            : (isRtl ? generalSuggestionsAr : generalSuggestionsEn)));
 
   if (storeSettings?.aiChatEnabled === false) return null;
-  const isVoiceEnabled = storeSettings?.voiceAssistantEnabled !== false;
 
   return (
     <>
-      {welcomeBubble && !isOpen && (
+      {/* Floating Smart Mini-Recommendation Card (Non-intrusive, real data) */}
+      {floatingRec && !isOpen && (
         <motion.div
-          initial={{ opacity: 0, y: 10, scale: 0.9 }}
+          initial={{ opacity: 0, y: 15, scale: 0.94 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 10, scale: 0.9 }}
-          onClick={() => { setIsOpen(true); setWelcomeBubble(null); }}
-          className={`fixed bottom-40 ${isRtl ? 'left-4' : 'right-4'} z-40 bg-white dark:bg-slate-900 p-3.5 rounded-2xl shadow-xl border border-slate-200 dark:border-slate-700 w-64 cursor-pointer hover:shadow-2xl transition-all`}
+          exit={{ opacity: 0, y: 15, scale: 0.94 }}
+          className={`fixed bottom-24 ${isRtl ? 'left-20' : 'right-20'} z-40 bg-white dark:bg-slate-900 p-3.5 rounded-2xl shadow-xl border border-sky-100 dark:border-slate-800 w-80 max-w-[calc(100vw-100px)]`}
+          dir={isRtl ? 'rtl' : 'ltr'}
         >
-          <div className="flex gap-3 items-start">
-            <div className="w-8 h-8 rounded-full bg-sky-100 dark:bg-sky-900 flex items-center justify-center shrink-0">
-              <Bot className="w-4 h-4 text-sky-600" />
+          {/* Header of the recommendation */}
+          <div className="flex items-center justify-between gap-2 mb-2 pb-1.5 border-b border-slate-100 dark:border-slate-800">
+            <div className="flex items-center gap-1.5 text-sky-600 dark:text-sky-400">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span className="text-[11px] font-bold">
+                {isRtl ? 'توصية ذكية مبنية على المنتج' : 'Smart Recommendation'}
+              </span>
             </div>
-            <p className="text-xs text-slate-700 dark:text-slate-200 leading-relaxed font-medium mt-1">{welcomeBubble}</p>
+            <button
+              onClick={() => {
+                recommendedHandlesRef.current.add(floatingRec.product.handle);
+                setFloatingRec(null);
+              }}
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 p-1 rounded-full transition-colors cursor-pointer"
+              aria-label={isRtl ? 'إغلاق' : 'Close'}
+            >
+              <X className="w-3.5 h-3.5" />
+            </button>
           </div>
-          {/* Notification Indicator */}
-          <span className={`absolute top-2 ${isRtl ? 'left-2' : 'right-2'} flex h-2.5 w-2.5`}>
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-sky-500"></span>
-          </span>
-          {/* Pointer tail */}
-          <div className={`absolute -bottom-2 ${isRtl ? 'left-8' : 'right-8'} w-4 h-4 bg-white dark:bg-slate-900 border-b border-r border-slate-200 dark:border-slate-700 transform rotate-45`}></div>
+
+          {/* Product Thumbnail & Rationale */}
+          <div className="flex gap-2.5 items-start">
+            <img
+              src={floatingRec.product.images?.[0]?.src || 'https://assets.wuiltstore.com/clqvb10wk0zhh01o1ed177fz2__D8_B4_D8_B9_D8_A7_D8_B14.png'}
+              alt={translateProductTitle(floatingRec.product)}
+              className="w-12 h-12 rounded-xl object-contain bg-slate-50 dark:bg-slate-800 border border-slate-200/60 dark:border-slate-700/60 p-1 shrink-0"
+            />
+            <div className="flex-1 min-w-0">
+              <h5 className="text-[11px] font-bold text-slate-800 dark:text-white truncate">
+                {translateProductTitle(floatingRec.product)}
+              </h5>
+              <p className="text-[11px] text-slate-600 dark:text-slate-300 mt-1 leading-snug">
+                {floatingRec.recommendation}
+              </p>
+            </div>
+          </div>
+
+          {/* CTA: Expands into Chat */}
+          <div className="mt-3 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
+            <span className="text-xs font-black text-sky-700 dark:text-sky-400">
+              {formatPrice(floatingRec.product.price)}
+            </span>
+            <button
+              onClick={handleAdoptRecommendationIntoChat}
+              className="px-3 py-1.5 bg-sky-600 hover:bg-sky-700 text-white rounded-xl text-[11px] font-bold transition-all shadow-xs flex items-center gap-1 cursor-pointer active:scale-95"
+            >
+              <span>{isRtl ? 'شوف التوصية بالشات' : 'View in Chat'}</span>
+              {isRtl ? <ChevronLeft className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+            </button>
+          </div>
         </motion.div>
       )}
+
+      {/* Floating Open Chat Button */}
       <button
-        onClick={() => { setIsOpen(true); setWelcomeBubble(null); }}
-        className={`fixed bottom-24 ${isRtl ? 'left-4' : 'right-4'} z-40 bg-sky-600 text-white p-3.5 rounded-full shadow-xl hover:bg-sky-700 transition-all hover:scale-110 cursor-pointer ${isOpen ? 'scale-0 opacity-0' : 'scale-100 opacity-100'}`}
+        ref={buttonRef}
+        onClick={handleOpenChat}
+        className={`fixed bottom-24 ${isRtl ? 'left-4' : 'right-4'} z-40 bg-sky-600 hover:bg-sky-700 text-white p-3.5 rounded-full shadow-xl transition-all hover:scale-110 cursor-pointer flex items-center justify-center ${isOpen ? 'scale-0 opacity-0 pointer-events-none' : 'scale-100 opacity-100'}`}
+        aria-label={isRtl ? 'فتح المحادثة مع المساعد الذكي' : 'Open Shopping Assistant'}
+        title={isRtl ? 'مساعد التسوق الذكي' : 'Smart Shopping Assistant'}
       >
-        <MessageCircle className="w-7 h-7" />
+        <MessageCircle className="w-6 h-6" />
+        {/* Subtle breathing live sync indicator */}
+        <span className="absolute -top-1 -right-1 flex h-3 w-3">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500 border border-white dark:border-slate-900"></span>
+        </span>
       </button>
 
+      {/* Main Draggable Chat Window */}
       {isOpen && (
         <motion.div 
           ref={chatRef}
@@ -364,175 +666,189 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onNavigate, currentPath = '' }
           dragControls={dragControls}
           dragListener={false}
           dragMomentum={false}
-          initial={{ opacity: 0, y: 20, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          exit={{ opacity: 0, y: 20, scale: 0.95 }}
-          style={{ x, y, touchAction: "none" }}
-          className={`fixed bottom-24 ${isRtl ? 'left-4' : 'right-4'} z-50 w-[380px] max-w-[calc(100vw-32px)] h-[600px] max-h-[80vh] bg-white dark:bg-slate-900 rounded-2xl shadow-2xl flex flex-col border border-slate-200 dark:border-slate-800 overflow-hidden`}
+          dragElastic={0.1}
+          initial={{ opacity: 0, y: 20, scale: 0.96 }}
+          animate={{ 
+            opacity: 1, 
+            y: chatPosition.y, 
+            x: chatPosition.x, 
+            scale: 1 
+          }}
+          transition={{ type: "spring", damping: 25, stiffness: 350 }}
+          onDragEnd={(_, info) => {
+            setChatPosition(prev => ({
+              x: prev.x + info.offset.x,
+              y: prev.y + info.offset.y
+            }));
+          }}
+          className={`fixed bottom-20 ${isRtl ? 'left-4' : 'right-4'} z-50 w-[410px] max-w-[calc(100vw-24px)] h-[620px] max-h-[82vh] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl flex flex-col border border-slate-200/90 dark:border-slate-800 overflow-hidden`}
+          dir={isRtl ? 'rtl' : 'ltr'}
         >
-          {/* Header */}
+          {/* Header (Drag Handle) */}
           <div 
             onPointerDown={(e) => dragControls.start(e)}
-            className="bg-sky-600 text-white p-3 flex items-center justify-between shadow-sm cursor-move touch-none"
+            className="bg-gradient-to-r from-sky-700 via-sky-600 to-sky-700 text-white p-3.5 flex items-center justify-between shadow-sm cursor-move touch-none select-none"
           >
-            <div className="flex items-center gap-3">
-              <GripHorizontal className="w-5 h-5 opacity-60 text-white" />
-              <div className="bg-white/20 p-2 rounded-full pointer-events-none">
-                <Bot className="w-5 h-5" />
+            <div className="flex items-center gap-2.5">
+              <GripHorizontal className="w-4 h-4 opacity-70 text-white" />
+              <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-xs flex items-center justify-center pointer-events-none shadow-xs">
+                <Bot className="w-4 h-4 text-white" />
               </div>
               <div className="pointer-events-none">
-                <h3 className="font-bold text-sm">
-                  {isRtl ? 'مساعد التسوق الذكي' : 'AI Shopping Assistant'}
+                <h3 className="font-bold text-xs sm:text-sm leading-tight flex items-center gap-1.5">
+                  <span>{isRtl ? 'مساعد التسوق الذكي' : 'Smart Shopping Assistant'}</span>
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
                 </h3>
-                <p className="text-[10px] text-sky-100 opacity-90">
-                  {isRtl ? 'مكتبة الشاطئ الأزرق' : 'Blue Beach Stationery'}
-                </p>
+                <div className="flex items-center gap-1.5 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  <p className="text-[10px] text-sky-100 opacity-90">
+                    {isRtl ? 'متصل بقاعدة بيانات المتجر' : 'Connected to Store Truth'}
+                  </p>
+                </div>
               </div>
             </div>
+            
             <div className="flex items-center gap-1">
-              {isVoiceEnabled && (
-                <button 
-                  onPointerDown={(e) => e.stopPropagation()} 
-                  onClick={() => setIsSoundOn(!isSoundOn)} 
-                  className={`hover:bg-white/20 p-1.5 rounded-full transition-colors cursor-pointer ${isSoundOn ? 'text-white' : 'text-sky-200 opacity-70'}`}
-                  title={isRtl ? "تشغيل/إيقاف الصوت" : "Toggle Sound"}
-                >
-                  {isSoundOn ? <Volume2 className="w-5 h-5" /> : <VolumeX className="w-5 h-5" />}
-                </button>
-              )}
               <button 
                 onPointerDown={(e) => e.stopPropagation()} 
-                onClick={() => setIsOpen(false)} 
-                className="text-white hover:bg-white/20 p-1.5 rounded-full transition-colors cursor-pointer ml-1"
+                onClick={() => {
+                  setChatPosition({ x: 0, y: 0 });
+                  setIsOpen(false);
+                }} 
+                className="text-white hover:bg-white/20 p-1.5 rounded-full transition-colors cursor-pointer"
+                aria-label={isRtl ? 'إغلاق المحادثة' : 'Close chat'}
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
           </div>
 
-          {/* Messages */}
-          <div className="flex-1 overflow-y-auto p-4 space-y-4" dir={isRtl ? 'rtl' : 'ltr'}>
+          {/* Messages Stream */}
+          <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50/50 dark:bg-slate-950/40">
             {messages.map((msg, idx) => (
-              <div key={idx} className={`flex flex-col gap-2`}>
-                <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} gap-2`}>
+              <div key={idx} className="flex flex-col gap-2">
+                <div className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'} gap-2.5 items-start`}>
                   {msg.role === 'model' && (
-                    <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 mt-1">
-                      <Bot className="w-4 h-4 text-sky-600" />
+                    <div className="w-7 h-7 rounded-full bg-sky-100 dark:bg-sky-900/60 border border-sky-200 dark:border-sky-800 flex items-center justify-center shrink-0 mt-0.5 shadow-xs">
+                      <Bot className="w-4 h-4 text-sky-600 dark:text-sky-400" />
                     </div>
                   )}
-                  <div className={`max-w-[85%] p-3 text-sm whitespace-pre-wrap rounded-2xl ${
+                  
+                  <div className={`max-w-[85%] p-3.5 text-xs sm:text-sm leading-relaxed whitespace-pre-wrap rounded-2xl shadow-xs ${
                     msg.role === 'user' 
-                      ? 'bg-sky-600 text-white rounded-br-sm' 
-                      : 'bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 rounded-bl-sm'
+                      ? 'bg-sky-600 text-white rounded-br-xs font-medium' 
+                      : 'bg-white dark:bg-slate-800 text-slate-800 dark:text-slate-100 border border-slate-200/70 dark:border-slate-700/60 rounded-bl-xs'
                   }`}>
                     {msg.content}
                   </div>
                 </div>
-                {/* Render Product Cards if available */}
+
+                {/* In-Chat Interactive Product Cards Carousel */}
                 {msg.productCards && msg.productCards.length > 0 && (
-                  <div className={`flex gap-3 overflow-x-auto pb-4 pt-1 px-1 snap-x ${isRtl ? 'mr-10' : 'ml-10'}`}>
-                    {msg.productCards.map(p => (
-                      <div key={p.id} className="w-[220px] shrink-0 snap-center">
-                        <ProductCard product={p} onNavigate={onNavigate || (() => {})} />
-                      </div>
-                    ))}
+                  <div className={`pt-1 pb-2 ${isRtl ? 'mr-9' : 'ml-9'}`}>
+                    <div className="flex items-center justify-between mb-1.5 px-0.5">
+                      <span className="text-[11px] font-bold text-slate-600 dark:text-slate-300">
+                        {isRtl ? 'المنتجات المقترحة:' : 'Recommended Products:'}
+                      </span>
+                      <span className="text-[10px] text-slate-400">
+                        {msg.productCards.length} {isRtl ? 'منتجات' : 'items'}
+                      </span>
+                    </div>
+
+                    <div className="flex gap-2.5 overflow-x-auto pb-2 pt-0.5 px-0.5 snap-x scrollbar-thin">
+                      {msg.productCards.map((p) => (
+                        <div key={p.id} className="snap-center">
+                          <InChatProductCard 
+                            product={p} 
+                            onNavigate={onNavigate} 
+                            onCloseChat={() => setIsOpen(false)}
+                          />
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
             ))}
+
+            {/* Thinking / Loading visual state */}
             {isLoading && (
-              <div className="flex justify-start gap-2">
-                <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0">
-                  <Bot className="w-4 h-4 text-sky-600" />
+              <motion.div 
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex justify-start gap-2.5 items-center"
+              >
+                <div className="w-7 h-7 rounded-full bg-sky-100 dark:bg-sky-900/60 border border-sky-200 dark:border-sky-800 flex items-center justify-center shrink-0">
+                  <Bot className="w-4 h-4 text-sky-600 dark:text-sky-400" />
                 </div>
-                <div className="bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 p-3 rounded-2xl rounded-bl-sm">
-                  <Loader2 className="w-4 h-4 animate-spin text-sky-600" />
+                <div className="bg-white dark:bg-slate-800 border border-slate-200/70 dark:border-slate-700/60 text-slate-600 dark:text-slate-300 px-3.5 py-2.5 rounded-2xl rounded-bl-xs shadow-xs flex items-center gap-2.5">
+                  <div className="flex items-center gap-1">
+                    <span className="w-2 h-2 rounded-full bg-sky-600 animate-bounce"></span>
+                    <span className="w-2 h-2 rounded-full bg-sky-500 animate-bounce [animation-delay:0.2s]"></span>
+                    <span className="w-2 h-2 rounded-full bg-sky-400 animate-bounce [animation-delay:0.4s]"></span>
+                  </div>
+                  <span className="text-xs font-medium">
+                    {isRtl ? 'جاري فحص قاعدة بيانات المتجر...' : 'Querying store database...'}
+                  </span>
                 </div>
-              </div>
+              </motion.div>
             )}
             
-            {/* Quick Suggestions */}
-            {!isLoading && (
-              <div className={`flex flex-wrap gap-2 mt-4 ${isRtl ? 'pr-10' : 'pl-10'}`}>
-                {suggestions.map((suggestion, i) => (
-                  <button
-                    key={i}
-                    onClick={() => handleSuggestionClick(suggestion)}
-                    className="px-3 py-1.5 bg-slate-50 hover:bg-slate-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-sky-600 dark:text-sky-400 border border-slate-200 dark:border-slate-700 rounded-full text-[11px] font-medium transition-colors cursor-pointer text-start"
-                  >
-                    {suggestion}
-                  </button>
-                ))}
+            {/* Contextual Quick Actions (Suggestions) */}
+            {!isLoading && suggestions.length > 0 && (
+              <div className={`pt-2 ${isRtl ? 'pr-9' : 'pl-9'} space-y-1.5`}>
+                <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider flex items-center gap-1">
+                  <Tag className="w-3 h-3 text-sky-500" />
+                  <span>{isRtl ? 'خيارات سريعة مقترحة' : 'Quick Actions'}</span>
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {suggestions.map((suggestion, i) => (
+                    <button
+                      key={i}
+                      onClick={() => handleSuggestionClick(suggestion)}
+                      className="px-3 py-1.5 bg-white hover:bg-sky-50 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-sky-700 dark:text-sky-300 border border-sky-200/80 dark:border-sky-800/80 rounded-full text-[11px] font-medium shadow-2xs hover:shadow-xs transition-all cursor-pointer text-start active:scale-95"
+                    >
+                      {suggestion}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
+
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Voice active indicator & stop speaking */}
-          {(isListening || isSpeaking) && (
-            <div className="px-4 py-2 bg-slate-50 dark:bg-slate-800 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs font-medium text-sky-600 dark:text-sky-400">
-                <span className="relative flex h-2.5 w-2.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-sky-400 opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-sky-500"></span>
-                </span>
-                {isListening ? (isRtl ? 'جاري الاستماع...' : 'Listening...') : (isRtl ? 'المساعد يتحدث...' : 'Assistant speaking...')}
-              </div>
-              {isSpeaking && (
-                <button 
-                  onClick={stopSpeaking}
-                  className="flex items-center gap-1 text-[10px] bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 px-2 py-1 rounded-md transition-colors cursor-pointer"
-                >
-                  <Square className="w-3 h-3" />
-                  {isRtl ? 'إيقاف' : 'Stop'}
-                </button>
-              )}
-            </div>
-          )}
-
-          {/* Input */}
-          <div className="p-3 border-t border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900">
-            <div className="flex gap-2" dir={isRtl ? 'rtl' : 'ltr'}>
-              {isVoiceEnabled && (
-                <div className="flex bg-slate-100 dark:bg-slate-800 rounded-xl overflow-hidden">
-                  <button
-                    onClick={() => setMicLang(prev => prev === 'ar' ? 'en' : 'ar')}
-                    className="px-2 text-[10px] font-bold text-slate-500 hover:text-sky-600 transition-colors"
-                    title={isRtl ? 'تغيير لغة الميكروفون' : 'Change Mic Language'}
-                  >
-                    {micLang === 'ar' ? 'AR' : 'EN'}
-                  </button>
-                  <button
-                    onClick={toggleListening}
-                    className={`p-3 flex items-center justify-center transition-colors cursor-pointer ${
-                      isListening 
-                        ? 'bg-red-500 text-white animate-pulse' 
-                        : 'text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700'
-                    }`}
-                  >
-                    {isListening ? <MicOff className="w-5 h-5" /> : <Mic className="w-5 h-5" />}
-                  </button>
-                </div>
-              )}
+          {/* Text Input Area (Strictly text only, no mic/sound) */}
+          <div className="p-3 border-t border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm">
+            <div className="flex gap-2 items-center">
               <input
                 type="text"
                 value={inputValue}
                 onChange={(e) => setInputValue(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
-                placeholder={isRtl ? 'اكتب أو تحدث للبحث...' : 'Type or speak to search...'}
-                className="flex-1 bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 text-sm focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 dark:text-white"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+                    e.preventDefault();
+                    if (!isLoading && !isSendingRef.current && inputValue.trim()) {
+                      sendMessage();
+                    }
+                  }
+                }}
+                placeholder={isRtl ? 'اكتب استفسارك أو ابحث عن منتج...' : 'Type your inquiry or search products...'}
+                className="flex-1 bg-slate-50 dark:bg-slate-800/90 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 text-slate-900 dark:text-white placeholder-slate-400 transition-colors"
                 disabled={isLoading}
               />
               <button
                 onClick={sendMessage}
                 disabled={isLoading || !inputValue.trim()}
-                className={`p-3 rounded-xl flex items-center justify-center transition-colors cursor-pointer ${
+                className={`p-2.5 sm:px-3.5 sm:py-2.5 rounded-xl flex items-center justify-center transition-all cursor-pointer ${
                   isLoading || !inputValue.trim() 
-                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-400' 
-                    : 'bg-sky-600 text-white hover:bg-sky-700 shadow-sm'
+                    ? 'bg-slate-100 dark:bg-slate-800 text-slate-400 cursor-not-allowed' 
+                    : 'bg-sky-600 text-white hover:bg-sky-700 shadow-xs active:scale-95'
                 }`}
+                title={isRtl ? 'إرسال' : 'Send'}
+                aria-label={isRtl ? 'إرسال الرسالة' : 'Send message'}
               >
-                <Send className={`w-5 h-5 ${isRtl ? 'rotate-180' : ''}`} />
+                <Send className={`w-4 h-4 ${isRtl ? 'rotate-180' : ''}`} />
               </button>
             </div>
           </div>

@@ -32,7 +32,7 @@ export const ChallengeModal: React.FC<ChallengeModalProps> = ({
   onNavigateToShop,
 }) => {
   const { userId, displayName, refreshGamification, playSound } = useGamification();
-  const { t, dir, isRtl, formatPrice, storeName } = useLanguage();
+  const { language, t, dir, isRtl, formatPrice, storeName } = useLanguage();
 
   const [gameState, setGameState] = useState<'intro' | 'playing' | 'answered' | 'completed' | 'cancelled' | 'error'>('intro');
   const [sessionToken, setSessionToken] = useState<string | null>(null);

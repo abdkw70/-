@@ -1,8 +1,6 @@
 {
   "name": "مكتبة الشاطئ الازرق | Blue Beach Stationery",
   "description": "متجر إلكتروني متكامل للقرطاسية والأدوات المدرسية والمكتبية والفنية في الكويت مع نظام تحدّيات ومسابقات الألغاز البصرية (Visual Challenges)، كوبونات الخصومات الفورية، المحفظة الرقمية، ومركز التحكم الإداري",
-  "requestFramePermissions": [
-    "microphone"
-  ],
+  "requestFramePermissions": [],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }

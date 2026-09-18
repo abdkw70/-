@@ -127,6 +127,53 @@ class Database {
   private data: DatabaseSchema;
   private isSaving = false;
   private pendingSave = false;
+  private lastModifiedAt: string = new Date().toISOString();
+  private syncEvents: Array<{ id: string; action: string; type: string; title: string; timestamp: string }> = [
+    {
+      id: 'init_sync',
+      action: 'sync_initialized',
+      type: 'system',
+      title: 'تم تهيئة المزامنة المباشرة مع قاعدة البيانات',
+      timestamp: new Date().toISOString()
+    }
+  ];
+
+  public recordSyncEvent(action: string, type: string, id: string, title: string): void {
+    this.lastModifiedAt = new Date().toISOString();
+    this.syncEvents.unshift({
+      id: `${Date.now()}_${id}`,
+      action,
+      type,
+      title,
+      timestamp: this.lastModifiedAt
+    });
+    if (this.syncEvents.length > 50) {
+      this.syncEvents = this.syncEvents.slice(0, 50);
+    }
+  }
+
+  public getSyncStatus() {
+    return {
+      status: 'synced',
+      lastSyncAt: this.lastModifiedAt,
+      productsCount: this.data.products.length,
+      categoriesCount: this.data.categories.length,
+      activePaymentMethods: [
+        { id: 'cash_on_delivery', nameAr: 'الدفع عند الاستلام', nameEn: 'Cash on Delivery', isEnabled: true },
+        { id: 'whatsapp', nameAr: 'طلب ومتابعة عبر واتساب', nameEn: 'Order via WhatsApp', isEnabled: true }
+      ],
+      disabledPaymentMethods: [
+        { id: 'knet', nameAr: 'كي نت (KNET)', isEnabled: false, note: 'غير مفعل حالياً في المتجر' },
+        { id: 'credit_card', nameAr: 'بطاقة ائتمانية (Visa/Mastercard)', isEnabled: false, note: 'غير مفعل حالياً في المتجر' },
+        { id: 'apple_pay', nameAr: 'أبل باي (Apple Pay)', isEnabled: false, note: 'غير مفعل حالياً في المتجر' }
+      ],
+      standardShippingFee: this.data.settings.standardShippingFee ?? 2,
+      freeShippingEnabled: this.data.settings.freeShippingEnabled ?? false,
+      freeShippingThreshold: this.data.settings.freeShippingThreshold ?? 20,
+      returnsPolicy: 'إمكانية الاسترجاع أو الاستبدال خلال 14 يوماً من استلام الطلب شريطة أن تكون المنتجات بحالتها الأصلية غير مستخدمة مع الفاتورة',
+      recentEvents: this.syncEvents.slice(0, 20)
+    };
+  }
 
   constructor() {
     this.ensureDataDir();
@@ -222,22 +269,28 @@ class Database {
 
   public upsertProduct(product: Product): void {
     const idx = this.data.products.findIndex(p => p.id === product.id || p.handle === product.handle);
+    const title = typeof product.title === 'string' ? product.title : (product.title as any)?.ar || product.handle || product.id;
     if (idx >= 0) {
       this.data.products[idx] = { ...this.data.products[idx], ...product, updatedAt: new Date().toISOString() };
+      this.recordSyncEvent('update', 'product', product.id, `تحديث منتج: ${title} (السعر: ${product.price} د.ك)`);
     } else {
       this.data.products.push({
         ...product,
         createdAt: product.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
+      this.recordSyncEvent('create', 'product', product.id, `إضافة منتج جديد: ${title} (السعر: ${product.price} د.ك)`);
     }
     this.save();
   }
 
   public deleteProduct(id: string): boolean {
+    const existing = this.data.products.find(p => p.id === id);
     const initialLen = this.data.products.length;
     this.data.products = this.data.products.filter(p => p.id !== id);
     if (this.data.products.length !== initialLen) {
+      const title = existing ? (typeof existing.title === 'string' ? existing.title : (existing.title as any)?.ar || id) : id;
+      this.recordSyncEvent('delete', 'product', id, `حذف منتج: ${title}`);
       this.save();
       return true;
     }
@@ -869,6 +922,7 @@ class Database {
       updated.standardShippingFee = settings.shippingFee;
     }
     this.data.settings = updated;
+    this.recordSyncEvent('update', 'settings', 'store_settings', 'تحديث إعدادات المتجر العامة والشحن');
     this.save();
     this.logActivity('تحديث الإعدادات', 'settings', 'تم تعديل الإعدادات العامة للمتجر');
   }

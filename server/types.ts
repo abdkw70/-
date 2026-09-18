@@ -213,14 +213,16 @@ export interface StoreSettings {
 // GAMIFICATION, QUIZ & WALLET TYPES
 // ==========================================
 
+export type LocalizedText = string | { ar: string; en: string };
+
 export interface QuizQuestion {
   id: string;
-  question: string;
-  options: string[]; // 2 to 4 options
+  question: LocalizedText;
+  options: LocalizedText[]; // 2 to 4 options
   correctAnswerIndex: number; // 0-based index, kept server-side
   rewardAmount: number; // in KWD e.g. 0.250, 0.500, 1.000
   xpAmount: number; // e.g. 25, 50, 100
-  category: string; // 'قرطاسية وأدوات مكتبية' | 'الكويت وتاريخها' | 'ثقافة عامة' | 'لغة عربية' | 'علوم وتكنولوجيا'
+  category: LocalizedText; // 'قرطاسية وأدوات مكتبية' | 'الكويت وتاريخها' | 'ثقافة عامة' | 'لغة عربية' | 'علوم وتكنولوجيا'
   difficulty: 'easy' | 'medium' | 'hard';
   isActive: boolean;
   timesShown: number;
@@ -239,7 +241,7 @@ export interface QuestionSessionState {
   isCorrect?: boolean;
   rewardEarned: number;
   xpEarned: number;
-  shuffledOptions?: string[];
+  shuffledOptions?: LocalizedText[];
   correctAnswerIndexInShuffled?: number;
   answeredAt?: string;
   transactionId?: string;
@@ -279,7 +281,7 @@ export interface ChallengeActivityItem {
   userId: string;
   challengeSessionId: string;
   questionId: string;
-  questionText?: string;
+  questionText?: LocalizedText;
   result: 'correct' | 'wrong' | 'timeout' | 'rejected_duplicate';
   reward: number;
   xp: number;

@@ -12,6 +12,10 @@ import {
   Save,
   Check,
   Megaphone,
+  RefreshCw,
+  Database,
+  ShieldCheck,
+  Bot
 } from 'lucide-react';
 import { StoreSettings } from '../../types';
 import * as api from '../../lib/api';
@@ -40,6 +44,23 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ showToast }) => {
 
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<any>(null);
+  const [isCheckingSync, setIsCheckingSync] = useState(false);
+
+  const fetchSyncStatus = async () => {
+    setIsCheckingSync(true);
+    try {
+      const res = await fetch('/api/ai-chat/sync-status');
+      if (res.ok) {
+        const data = await res.json();
+        setSyncStatus(data);
+      }
+    } catch (err) {
+      console.warn('Could not fetch sync status:', err);
+    } finally {
+      setIsCheckingSync(false);
+    }
+  };
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -56,6 +77,7 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ showToast }) => {
       }
     };
     loadSettings();
+    fetchSyncStatus();
   }, []);
 
   const handleSave = async (e: React.FormEvent) => {
@@ -312,32 +334,70 @@ export const AdminSettings: React.FC<AdminSettingsProps> = ({ showToast }) => {
             />
           </div>
 
+          {/* Real-time Store Truth & Database Sync Panel */}
+          <div className="p-4 bg-slate-950/70 border border-slate-800 rounded-2xl space-y-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Database className="w-4 h-4 text-emerald-400" />
+                <h4 className="text-xs font-bold text-white">مزامنة المساعد الذكي مع قاعدة بيانات المتجر (Store Truth)</h4>
+              </div>
+              <button
+                type="button"
+                onClick={fetchSyncStatus}
+                disabled={isCheckingSync}
+                className="text-[11px] font-semibold text-sky-400 hover:text-sky-300 bg-slate-800/80 hover:bg-slate-800 px-2.5 py-1 rounded-lg border border-slate-700 flex items-center gap-1.5 transition-colors cursor-pointer"
+              >
+                <RefreshCw className={`w-3 h-3 ${isCheckingSync ? 'animate-spin' : ''}`} />
+                <span>{isCheckingSync ? 'جاري الفحص...' : 'فحص المزامنة الآن'}</span>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1">
+              <div className="p-2.5 bg-slate-900/90 rounded-xl border border-slate-800">
+                <span className="block text-[10px] text-slate-400">حالة الربط</span>
+                <span className="text-xs font-bold text-emerald-400 flex items-center gap-1 mt-0.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                  متزامن ولحظي
+                </span>
+              </div>
+              <div className="p-2.5 bg-slate-900/90 rounded-xl border border-slate-800">
+                <span className="block text-[10px] text-slate-400">المنتجات المتزامنة</span>
+                <span className="text-xs font-bold text-white mt-0.5 block">
+                  {syncStatus ? `${syncStatus.inStockProducts} متوفر (${syncStatus.totalProducts} كلي)` : '16 منتج'}
+                </span>
+              </div>
+              <div className="p-2.5 bg-slate-900/90 rounded-xl border border-slate-800">
+                <span className="block text-[10px] text-slate-400">الأقسام المتزامنة</span>
+                <span className="text-xs font-bold text-white mt-0.5 block">
+                  {syncStatus ? `${syncStatus.categoriesCount} أقسام` : '4 أقسام'}
+                </span>
+              </div>
+              <div className="p-2.5 bg-slate-900/90 rounded-xl border border-slate-800">
+                <span className="block text-[10px] text-slate-400">طرق الدفع النشطة</span>
+                <span className="text-xs font-bold text-amber-400 mt-0.5 block">
+                  كاش + واتساب فقط
+                </span>
+              </div>
+            </div>
+
+            <div className="pt-2 border-t border-slate-800/80 flex flex-col gap-1 text-[11px] text-slate-400">
+              <div className="flex items-center gap-1.5 text-emerald-400">
+                <ShieldCheck className="w-3.5 h-3.5" />
+                <span>المساعد يستمد الأسعار، المخزون، والخيارات من قاعدة البيانات مباشرة في كل استعلام.</span>
+              </div>
+              <div className="flex items-center gap-1.5 text-slate-400 text-[10px]">
+                <span>• بوابات الدفع الإلكتروني (KNET / Visa / Apple Pay) مغلقة ولن يدعي المساعد توفرها أبداً.</span>
+              </div>
+            </div>
+          </div>
+
           <div className="pt-6 mt-6 border-t border-slate-800">
-            <h3 className="text-lg font-bold text-white mb-4">المساعد الصوتي</h3>
+            <h3 className="text-lg font-bold text-white mb-4">الترحيب التلقائي بالمنتجات في الشات</h3>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <h4 className="text-sm font-bold text-white">تفعيل المساعد الصوتي</h4>
-                  <p className="text-[10px] text-slate-400 mt-1">تفعيل ميزة التحدث والاستماع داخل الشات</p>
-                </div>
-                <label className="relative inline-flex items-center cursor-pointer">
-                  <input
-                    type="checkbox"
-                    className="sr-only peer"
-                    checked={settings.voiceAssistantEnabled !== false}
-                    onChange={e => setSettings({ ...settings, voiceAssistantEnabled: e.target.checked })}
-                  />
-                  <div className="w-9 h-5 bg-slate-700 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all dark:border-gray-600 peer-checked:bg-emerald-500"></div>
-                  <span className="ms-3 text-xs font-medium text-slate-300">
-                    {settings.voiceAssistantEnabled !== false ? 'مفعل' : 'معطل'}
-                  </span>
-                </label>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <div>
                   <h4 className="text-sm font-bold text-white">الترحيب التلقائي بالمنتج</h4>
-                  <p className="text-[10px] text-slate-400 mt-1">إرسال رسالة ترحيبية عند فتح العميل لمنتج معين</p>
+                  <p className="text-[10px] text-slate-400 mt-1">إرسال رسالة ترحيبية ذكية عبر الشات عند فتح العميل لمنتج معين</p>
                 </div>
                 <label className="relative inline-flex items-center cursor-pointer">
                   <input

@@ -42,6 +42,7 @@ import {
 } from 'lucide-react';
 import * as api from '../../lib/api';
 import { VisualPuzzleRenderer } from '../freeChallenge/VisualPuzzleRenderer';
+import { LocalizedInput } from './LocalizedInput';
 
 export const AdminFreeChallenge: React.FC = () => {
   const [subTab, setSubTab] = useState<'games' | 'wheel' | 'settings' | 'ticker' | 'puzzles' | 'analytics' | 'security'>('games');
