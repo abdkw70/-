@@ -6,6 +6,7 @@ import { GamificationProvider, useGamification } from './context/GamificationCon
 import { FreeChallengeProvider } from './context/FreeChallengeContext';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
+import { BottomNav } from './components/BottomNav';
 import { CartDrawer } from './components/CartDrawer';
 import { QuickViewModal } from './components/QuickViewModal';
 import { ChallengeModal } from './components/gamification/ChallengeModal';
@@ -38,8 +39,8 @@ const ToastContainer: React.FC = () => {
 
   return (
     <div
-      className={`fixed bottom-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none ${
-        isRtl ? 'left-5' : 'right-5'
+      className={`fixed bottom-20 sm:bottom-5 z-50 flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 ${
+        isRtl ? 'left-0 sm:left-5' : 'right-0 sm:right-5'
       }`}
       dir={dir}
     >
@@ -217,10 +218,11 @@ const MainApp: React.FC = () => {
         {!isAdminRoute && <LiveWinnersTicker />}
         {!isAdminRoute && <EntryChallengeBanner />}
         {!isAdminRoute && <Header categories={categories} currentPath={currentPath} onNavigate={navigate} />}
-        <main className={isAdminRoute ? "min-h-screen" : "min-h-[70vh]"}>{renderCurrentView()}</main>
+        <main className={isAdminRoute ? "min-h-screen" : "min-h-[70vh] pb-20 md:pb-0"}>{renderCurrentView()}</main>
       </div>
 
       {!isAdminRoute && <Footer categories={categories} onNavigate={navigate} />}
+      {!isAdminRoute && <BottomNav currentPath={currentPath} onNavigate={navigate} />}
       {!isAdminRoute && <Chatbot onNavigate={navigate} currentPath={currentPath} />}
 
       {/* Global Modals & Drawers */}

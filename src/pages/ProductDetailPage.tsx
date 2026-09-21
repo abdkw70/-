@@ -156,9 +156,11 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ idOrHandle
   const currentPrice = selectedVariant?.price ?? product.price;
   const currentComparePrice = selectedVariant?.compareAtPrice ?? product.compareAtPrice;
   const currentSku = selectedVariant?.sku || product.sku;
+
+  // Robust stock check: variant is in stock if not explicitly disabled or out of stock
   const currentInStock = selectedVariant
-    ? (selectedVariant.stock !== undefined ? selectedVariant.stock > 0 : (selectedVariant.enabled !== false && product.isInStock))
-    : product.isInStock;
+    ? (selectedVariant.enabled !== false && selectedVariant.isInStock !== false && (selectedVariant.stock === undefined || selectedVariant.stock === null || selectedVariant.stock > 0 || product.isInStock !== false))
+    : (product.isInStock !== false);
 
   const variantImgSrc = typeof selectedVariant?.image === 'string' 
     ? selectedVariant.image 
@@ -313,7 +315,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ idOrHandle
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
         {/* Images Gallery */}
         <div className="space-y-4">
-          <div className="aspect-square bg-slate-50 rounded-3xl overflow-hidden border border-slate-200/80 p-6 relative flex items-center justify-center shadow-xs">
+          <div className="aspect-square bg-slate-50 rounded-2xl sm:rounded-3xl overflow-hidden border border-slate-200/80 p-3 sm:p-6 relative flex items-center justify-center shadow-xs">
             <img
               src={activeImage.src}
               alt={localizedTitle}
@@ -321,31 +323,31 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ idOrHandle
             />
 
             {/* Badges */}
-            <div className={`absolute top-4 ${isRtl ? 'right-4' : 'left-4'} flex flex-col gap-1.5`}>
+            <div className={`absolute top-3 sm:top-4 ${isRtl ? 'right-3 sm:right-4' : 'left-3 sm:left-4'} flex flex-col gap-1.5`}>
               {product.discountPercentage && product.discountPercentage > 0 && (
-                <span className="bg-rose-600 text-white text-xs font-extrabold px-3 py-1 rounded-full shadow-md">
+                <span className="bg-rose-600 text-white text-[11px] sm:text-xs font-extrabold px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md">
                   {isRtl ? `وفر ${product.discountPercentage}%` : `Save ${product.discountPercentage}%`}
                 </span>
               )}
               {product.isNewArrival && (
-                <span className="bg-emerald-600 text-white text-xs font-extrabold px-3 py-1 rounded-full shadow-md">
+                <span className="bg-emerald-600 text-white text-[11px] sm:text-xs font-extrabold px-2.5 sm:px-3 py-0.5 sm:py-1 rounded-full shadow-md">
                   {t('common.new_badge')}
                 </span>
               )}
             </div>
 
             {/* Action buttons */}
-            <div className={`absolute top-4 ${isRtl ? 'left-4' : 'right-4'} flex items-center gap-2`}>
+            <div className={`absolute top-3 sm:top-4 ${isRtl ? 'left-3 sm:left-4' : 'right-3 sm:right-4'} flex items-center gap-2`}>
               <button
                 onClick={handleShare}
-                className="p-2.5 rounded-full bg-white/80 hover:bg-white text-slate-600 shadow-md backdrop-blur-xs transition-colors cursor-pointer"
+                className="p-2 sm:p-2.5 min-w-[38px] min-h-[38px] flex items-center justify-center rounded-full bg-white/80 hover:bg-white text-slate-600 shadow-md backdrop-blur-xs transition-colors cursor-pointer touch-manipulation"
                 title={t('product.share')}
               >
                 <Share2 className="w-4 h-4" />
               </button>
               <button
                 onClick={() => toggleWishlist(product.id)}
-                className={`p-2.5 rounded-full bg-white/80 hover:bg-white shadow-md backdrop-blur-xs transition-colors cursor-pointer ${
+                className={`p-2 sm:p-2.5 min-w-[38px] min-h-[38px] flex items-center justify-center rounded-full bg-white/80 hover:bg-white shadow-md backdrop-blur-xs transition-colors cursor-pointer touch-manipulation ${
                   isFavorite ? 'text-rose-600' : 'text-slate-400 hover:text-rose-600'
                 }`}
                 title={t('common.wishlist')}
@@ -508,7 +510,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ idOrHandle
               <div className="flex flex-wrap gap-2.5">
                 {product.variants.map(v => {
                   const isSelected = selectedVariantId === v.id;
-                  const isAvailable = v.stock !== undefined ? v.stock > 0 : v.enabled !== false && product.isInStock;
+                  const isAvailable = v.enabled !== false && v.isInStock !== false && (v.stock === undefined || v.stock === null || v.stock > 0 || product.isInStock !== false);
                   const displayTitle = translateOptionValue(v.selectedOptions?.[0]?.valueName || v.title);
 
                   return (
@@ -585,22 +587,22 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ idOrHandle
               <button
                 onClick={handleAddToCart}
                 disabled={!currentInStock || isAdding}
-                className={`flex-1 py-3.5 px-6 rounded-2xl text-sm font-bold flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer ${
+                className={`flex-1 py-3.5 px-6 min-h-[48px] rounded-2xl text-sm font-extrabold flex items-center justify-center gap-2 transition-all shadow-md cursor-pointer touch-manipulation active:scale-[0.98] ${
                   !currentInStock
-                    ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                    ? 'bg-slate-200 text-slate-500 border border-slate-300 cursor-not-allowed'
                     : addedSuccess
-                    ? 'bg-emerald-600 text-white'
-                    : 'bg-sky-700 hover:bg-sky-800 text-white hover:shadow-lg'
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white shadow-emerald-600/20'
+                    : 'bg-sky-800 hover:bg-sky-900 text-white shadow-sky-800/25 ring-2 ring-sky-800/10 hover:shadow-lg'
                 }`}
               >
                 {addedSuccess ? (
                   <>
-                    <Check className="w-5 h-5" />
+                    <Check className="w-5 h-5 text-white" />
                     <span>{t('product.added')}</span>
                   </>
                 ) : (
                   <>
-                    <ShoppingBag className="w-5 h-5" />
+                    <ShoppingBag className="w-5 h-5 text-white stroke-[2.2]" />
                     <span>{t('product.add_to_cart')}</span>
                   </>
                 )}
@@ -609,7 +611,7 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ idOrHandle
               <button
                 onClick={handleBuyNow}
                 disabled={!currentInStock}
-                className="bg-amber-400 hover:bg-amber-300 disabled:opacity-50 text-slate-950 font-bold py-3.5 px-6 rounded-2xl text-sm transition-all shadow-xs cursor-pointer text-center"
+                className="bg-amber-400 hover:bg-amber-300 disabled:bg-slate-200 disabled:text-slate-400 text-slate-950 font-black py-3.5 px-6 min-h-[48px] rounded-2xl text-sm transition-all shadow-sm hover:shadow-md cursor-pointer text-center touch-manipulation active:scale-[0.98] border border-amber-500/30"
               >
                 {t('product.buy_now')}
               </button>

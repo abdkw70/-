@@ -13,7 +13,7 @@ export const Footer: React.FC<FooterProps> = ({ categories, onNavigate }) => {
   const rootCategories = categories.filter(c => !c.parentId).slice(0, 6);
 
   return (
-    <footer className="bg-slate-950 text-slate-300 pt-12 pb-8 border-t border-slate-800" dir={dir}>
+    <footer className="bg-slate-950 text-slate-300 pt-10 sm:pt-12 pb-8 pb-safe border-t border-slate-800" dir={dir}>
       {/* Value Proposition Features Banner */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 border-b border-slate-800/80">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -274,8 +274,8 @@ export const Footer: React.FC<FooterProps> = ({ categories, onNavigate }) => {
               : `All Rights Reserved © ${new Date().getFullYear()} Blue Beach Stationery`}
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] text-slate-400 mx-2">
+          <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2">
+            <span className="text-[11px] text-slate-400 mx-1 sm:mx-2">
               {language === 'ar' ? 'طرق الدفع المعتمدة:' : 'Payment Methods:'}
             </span>
             <div className="bg-slate-900 border border-slate-800 px-2.5 py-1 rounded text-[11px] font-bold text-emerald-400 flex items-center gap-1">

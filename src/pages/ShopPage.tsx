@@ -470,11 +470,11 @@ export const ShopPage: React.FC<ShopPageProps> = ({
             className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
             onClick={() => setIsMobileFilterOpen(false)}
           />
-          <div className={`fixed inset-y-0 ${isRtl ? 'right-0' : 'left-0'} max-w-xs w-full bg-white shadow-2xl p-5 flex flex-col justify-between overflow-y-auto`}>
+          <div className={`fixed inset-y-0 ${isRtl ? 'right-0' : 'left-0'} w-[min(320px,85vw)] max-w-xs bg-white shadow-2xl p-5 pt-safe pb-safe flex flex-col justify-between overflow-y-auto overscroll-contain`}>
             <div className="space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <h3 className="font-bold text-sm text-slate-900">{t('shop.filter')}</h3>
-                <button onClick={() => setIsMobileFilterOpen(false)} className="p-1 text-slate-400 cursor-pointer">
+                <button onClick={() => setIsMobileFilterOpen(false)} className="p-2 min-w-[40px] min-h-[40px] flex items-center justify-center text-slate-400 hover:text-slate-700 cursor-pointer touch-manipulation">
                   <X className="w-5 h-5" />
                 </button>
               </div>

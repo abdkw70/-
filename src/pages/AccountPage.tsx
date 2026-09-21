@@ -413,10 +413,11 @@ export const AccountPage: React.FC<AccountPageProps> = ({ onNavigate }) => {
             </button>
             <button
               onClick={logout}
-              className="p-2.5 rounded-xl border border-slate-700 bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors cursor-pointer"
+              className="py-2.5 px-3.5 rounded-xl border border-slate-700 bg-slate-800/80 text-slate-300 hover:text-white hover:bg-slate-700 transition-colors cursor-pointer flex items-center gap-1.5 text-xs font-bold"
               title={t('auth.logout')}
             >
-              <LogOut className="w-4 h-4" />
+              <LogOut className="w-4 h-4 text-rose-400" />
+              <span>{t('auth.logout')}</span>
             </button>
           </div>
         </div>

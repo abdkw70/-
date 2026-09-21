@@ -18,9 +18,11 @@ import {
   User,
   CreditCard,
   Layers,
+  Eye,
 } from 'lucide-react';
 import { Order } from '../../types';
 import * as api from '../../lib/api';
+import { getProductImageUrl, handleImageError } from '../../lib/imageHelper';
 
 interface AdminOrdersProps {
   formatPrice: (price: number) => string;
@@ -197,132 +199,218 @@ ${itemsSummary}
             <p className="text-xs text-slate-500">جرب تغيير حالة الفلتر أو البحث</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-950/60 text-slate-400 border-b border-slate-800 font-bold uppercase">
-                <tr>
-                  <th className="p-4">رقم الطلب</th>
-                  <th className="p-4">العميل والتواصل</th>
-                  <th className="p-4">العنوان والمنطقة</th>
-                  <th className="p-4">المنتجات</th>
-                  <th className="p-4">الإجمالي</th>
-                  <th className="p-4">طريقة الدفع</th>
-                  <th className="p-4">حالة الطلب</th>
-                  <th className="p-4 text-left">التفاصيل</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {orders.map(order => (
-                  <tr
-                    key={order.id}
-                    className="hover:bg-slate-800/40 transition-colors group cursor-pointer"
-                    onClick={() => setSelectedOrder(order)}
-                  >
-                    {/* Order Number & Date */}
-                    <td className="p-4 whitespace-nowrap">
-                      <div className="space-y-0.5">
-                        <span className="font-bold text-white group-hover:text-sky-400 transition-colors">
-                          #{order.orderNumber}
-                        </span>
-                        <div className="text-[10px] text-slate-500">
-                          {new Date(order.createdAt).toLocaleDateString('ar-KW', {
-                            day: 'numeric',
-                            month: 'short',
-                            year: 'numeric',
-                          })}
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full text-right text-xs">
+                <thead className="bg-slate-950/60 text-slate-400 border-b border-slate-800 font-bold uppercase">
+                  <tr>
+                    <th className="p-4">رقم الطلب</th>
+                    <th className="p-4">العميل والتواصل</th>
+                    <th className="p-4">العنوان والمنطقة</th>
+                    <th className="p-4">المنتجات</th>
+                    <th className="p-4">الإجمالي</th>
+                    <th className="p-4">طريقة الدفع</th>
+                    <th className="p-4">حالة الطلب</th>
+                    <th className="p-4 text-left">التفاصيل</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {orders.map(order => (
+                    <tr
+                      key={order.id}
+                      className="hover:bg-slate-800/40 transition-colors group cursor-pointer"
+                      onClick={() => setSelectedOrder(order)}
+                    >
+                      {/* Order Number & Date */}
+                      <td className="p-4 whitespace-nowrap">
+                        <div className="space-y-0.5">
+                          <span className="font-bold text-white group-hover:text-sky-400 transition-colors">
+                            #{order.orderNumber}
+                          </span>
+                          <div className="text-[10px] text-slate-500">
+                            {new Date(order.createdAt).toLocaleDateString('ar-KW', {
+                              day: 'numeric',
+                              month: 'short',
+                              year: 'numeric',
+                            })}
+                          </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Customer */}
-                    <td className="p-4 whitespace-nowrap">
-                      <div className="space-y-0.5">
-                        <span className="font-bold text-white block">{order.customerName}</span>
-                        <span className="text-[11px] text-slate-400 font-mono" dir="ltr">
-                          {order.customerPhone}
+                      {/* Customer */}
+                      <td className="p-4 whitespace-nowrap">
+                        <div className="space-y-0.5">
+                          <span className="font-bold text-white block">{order.customerName}</span>
+                          <span className="text-[11px] text-slate-400 font-mono" dir="ltr">
+                            {order.customerPhone}
+                          </span>
+                        </div>
+                      </td>
+
+                      {/* Address */}
+                      <td className="p-4">
+                        <div className="text-[11px] text-slate-300">
+                          <span>{order.area}</span>
+                          <span className="text-slate-500 mr-1">({order.governorate})</span>
+                        </div>
+                      </td>
+
+                      {/* Items */}
+                      <td className="p-4 whitespace-nowrap">
+                        <span className="inline-block px-2 py-0.5 bg-slate-950 text-slate-300 rounded-md border border-slate-800 text-[10px] font-bold">
+                          {order.items.length} منتجات
                         </span>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Address */}
-                    <td className="p-4">
-                      <div className="text-[11px] text-slate-300">
-                        <span>{order.area}</span>
-                        <span className="text-slate-500 mr-1">({order.governorate})</span>
-                      </div>
-                    </td>
+                      {/* Total */}
+                      <td className="p-4 whitespace-nowrap">
+                        <span className="font-bold text-emerald-400 text-sm">
+                          {formatPrice(order.total)}
+                        </span>
+                      </td>
 
-                    {/* Items */}
-                    <td className="p-4 whitespace-nowrap">
-                      <span className="inline-block px-2 py-0.5 bg-slate-950 text-slate-300 rounded-md border border-slate-800 text-[10px] font-bold">
-                        {order.items.length} منتجات
+                      {/* Payment Method */}
+                      <td className="p-4 whitespace-nowrap">
+                        <span className="text-[11px] text-slate-300">
+                          {order.paymentMethod === 'whatsapp'
+                            ? 'طلب عبر الواتساب'
+                            : order.paymentMethod === 'cod'
+                            ? 'دفع عند الاستلام'
+                            : 'كي نت / إلكتروني'}
+                        </span>
+                      </td>
+
+                      {/* Status */}
+                      <td className="p-4 whitespace-nowrap">
+                        <span
+                          className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                            order.orderStatus === 'completed' || order.orderStatus === 'delivered'
+                              ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800'
+                              : order.orderStatus === 'processing'
+                              ? 'bg-sky-950/80 text-sky-400 border-sky-800'
+                              : order.orderStatus === 'shipped'
+                              ? 'bg-purple-950/80 text-purple-400 border-purple-800'
+                              : order.orderStatus === 'cancelled'
+                              ? 'bg-rose-950/80 text-rose-400 border-rose-800'
+                              : 'bg-amber-950/80 text-amber-400 border-amber-800'
+                          }`}
+                        >
+                          {order.orderStatus === 'pending'
+                            ? 'بانتظار المراجعة'
+                            : order.orderStatus === 'processing'
+                            ? 'قيد التجهيز'
+                            : order.orderStatus === 'shipped'
+                            ? 'تم الشحن'
+                            : order.orderStatus === 'delivered'
+                            ? 'تم التوصيل'
+                            : order.orderStatus === 'cancelled'
+                            ? 'ملغي'
+                            : order.orderStatus}
+                        </span>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="p-4 whitespace-nowrap text-left">
+                        <button
+                          onClick={e => {
+                            e.stopPropagation();
+                            setSelectedOrder(order);
+                          }}
+                          className="px-3 py-1.5 bg-slate-800 hover:bg-sky-600 text-slate-300 hover:text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
+                        >
+                          معاينة
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile & Tablet Card View */}
+            <div className="lg:hidden divide-y divide-slate-800/80">
+              {orders.map(order => (
+                <div key={order.id} className="p-4 space-y-3 bg-slate-900/90">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-bold text-white text-sm">#{order.orderNumber}</span>
+                      <span className="text-[10px] text-slate-400">
+                        {new Date(order.createdAt).toLocaleDateString('ar-KW', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric',
+                        })}
                       </span>
-                    </td>
+                    </div>
 
-                    {/* Total */}
-                    <td className="p-4 whitespace-nowrap">
-                      <span className="font-bold text-emerald-400 text-sm">
+                    <span
+                      className={`px-2.5 py-1 rounded-full text-[10px] font-bold border ${
+                        order.orderStatus === 'completed' || order.orderStatus === 'delivered'
+                          ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800'
+                          : order.orderStatus === 'processing'
+                          ? 'bg-sky-950/80 text-sky-400 border-sky-800'
+                          : order.orderStatus === 'shipped'
+                          ? 'bg-purple-950/80 text-purple-400 border-purple-800'
+                          : order.orderStatus === 'cancelled'
+                          ? 'bg-rose-950/80 text-rose-400 border-rose-800'
+                          : 'bg-amber-950/80 text-amber-400 border-amber-800'
+                      }`}
+                    >
+                      {order.orderStatus === 'pending'
+                        ? 'بانتظار المراجعة'
+                        : order.orderStatus === 'processing'
+                        ? 'قيد التجهيز'
+                        : order.orderStatus === 'shipped'
+                        ? 'تم الشحن'
+                        : order.orderStatus === 'delivered'
+                        ? 'تم التوصيل'
+                        : order.orderStatus === 'cancelled'
+                        ? 'ملغي'
+                        : order.orderStatus}
+                    </span>
+                  </div>
+
+                  {/* Customer Details */}
+                  <div className="bg-slate-950/60 p-3 rounded-2xl border border-slate-800/80 space-y-1.5">
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs font-bold text-white">{order.customerName}</span>
+                      <a
+                        href={`tel:${order.customerPhone}`}
+                        className="text-[11px] font-mono text-sky-400 hover:underline flex items-center gap-1"
+                        dir="ltr"
+                      >
+                        <Phone className="w-3 h-3" />
+                        <span>{order.customerPhone}</span>
+                      </a>
+                    </div>
+                    <div className="text-[11px] text-slate-400 flex items-center justify-between">
+                      <span>العنوان: {order.area} ({order.governorate})</span>
+                      <span className="text-[10px] text-slate-500">{order.items.length} منتجات</span>
+                    </div>
+                  </div>
+
+                  {/* Total & Action */}
+                  <div className="flex items-center justify-between gap-3 pt-1">
+                    <div>
+                      <span className="block text-[10px] text-slate-400">إجمالي الطلب:</span>
+                      <span className="text-sm font-bold text-emerald-400">
                         {formatPrice(order.total)}
                       </span>
-                    </td>
+                    </div>
 
-                    {/* Payment Method */}
-                    <td className="p-4 whitespace-nowrap">
-                      <span className="text-[11px] text-slate-300">
-                        {order.paymentMethod === 'whatsapp'
-                          ? 'طلب عبر الواتساب'
-                          : order.paymentMethod === 'cod'
-                          ? 'دفع عند الاستلام'
-                          : 'كي نت / إلكتروني'}
-                      </span>
-                    </td>
-
-                    {/* Status */}
-                    <td className="p-4 whitespace-nowrap">
-                      <span
-                        className={`inline-block px-2.5 py-1 rounded-full text-[10px] font-bold border ${
-                          order.orderStatus === 'completed' || order.orderStatus === 'delivered'
-                            ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800'
-                            : order.orderStatus === 'processing'
-                            ? 'bg-sky-950/80 text-sky-400 border-sky-800'
-                            : order.orderStatus === 'shipped'
-                            ? 'bg-purple-950/80 text-purple-400 border-purple-800'
-                            : order.orderStatus === 'cancelled'
-                            ? 'bg-rose-950/80 text-rose-400 border-rose-800'
-                            : 'bg-amber-950/80 text-amber-400 border-amber-800'
-                        }`}
-                      >
-                        {order.orderStatus === 'pending'
-                          ? 'بانتظار المراجعة'
-                          : order.orderStatus === 'processing'
-                          ? 'قيد التجهيز'
-                          : order.orderStatus === 'shipped'
-                          ? 'تم الشحن'
-                          : order.orderStatus === 'delivered'
-                          ? 'تم التوصيل'
-                          : order.orderStatus === 'cancelled'
-                          ? 'ملغي'
-                          : order.orderStatus}
-                      </span>
-                    </td>
-
-                    {/* Actions */}
-                    <td className="p-4 whitespace-nowrap text-left">
-                      <button
-                        onClick={e => {
-                          e.stopPropagation();
-                          setSelectedOrder(order);
-                        }}
-                        className="px-3 py-1.5 bg-slate-800 hover:bg-sky-600 text-slate-300 hover:text-white rounded-xl text-xs font-semibold transition-colors cursor-pointer"
-                      >
-                        معاينة
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    <button
+                      onClick={() => setSelectedOrder(order)}
+                      className="py-2.5 px-4 bg-sky-600/20 hover:bg-sky-600/30 border border-sky-500/30 text-sky-300 rounded-xl text-xs font-bold flex items-center gap-1.5 min-h-[44px] cursor-pointer touch-manipulation"
+                    >
+                      <Eye className="w-4 h-4" />
+                      <span>تفاصيل الطلب</span>
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
 
         {/* Pagination Footer */}
@@ -522,10 +610,12 @@ ${itemsSummary}
                     <div key={idx} className="p-3.5 flex items-center justify-between text-xs">
                       <div className="flex items-center gap-3">
                         <img
-                          src={item.image || 'https://placehold.co/100x100?text=Product'}
+                          src={getProductImageUrl(item.image)}
                           alt={item.title}
-                          className="w-12 h-12 rounded-xl object-contain bg-white p-1 border border-slate-800 shrink-0"
+                          className="w-12 h-12 rounded-xl object-contain bg-white p-1 border border-slate-700/70 shrink-0"
                           referrerPolicy="no-referrer"
+                          onError={handleImageError}
+                          loading="lazy"
                         />
                         <div>
                           <h4 className="font-bold text-white">{item.title}</h4>

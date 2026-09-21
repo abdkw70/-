@@ -20,8 +20,8 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
   const secondaryImage = product.images[1]?.src || primaryImage;
 
   const hasStock = product.variants?.length > 0 
-    ? product.variants.some(v => v.stock !== undefined ? v.stock > 0 : v.enabled !== false && product.isInStock)
-    : product.isInStock;
+    ? product.variants.some(v => v.enabled !== false && v.isInStock !== false && (v.stock === undefined || v.stock === null || v.stock > 0 || product.isInStock !== false))
+    : (product.isInStock !== false);
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -60,23 +60,23 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
       dir={dir}
     >
       {/* Top Media Container */}
-      <div className="relative aspect-square w-full bg-slate-50 overflow-hidden flex items-center justify-center p-3">
+      <div className="relative aspect-square w-full bg-slate-50 overflow-hidden flex items-center justify-center p-2.5 sm:p-3.5">
         {/* Badges */}
-        <div className={`absolute top-2.5 ${isRtl ? 'right-2.5' : 'left-2.5'} z-10 flex flex-col gap-1 items-start pointer-events-none`}>
+        <div className={`absolute top-2 ${isRtl ? 'right-2' : 'left-2'} z-10 flex flex-col gap-1 items-start pointer-events-none`}>
           {product.discountPercentage && product.discountPercentage > 0 ? (
-            <span className="bg-rose-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs">
+            <span className="bg-rose-600 text-white text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full shadow-xs">
               {t('product.discount_off', `خصم ${product.discountPercentage}%`, { percent: product.discountPercentage })}
             </span>
           ) : null}
 
           {product.isNewArrival && !product.discountPercentage && (
-            <span className="bg-emerald-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs">
+            <span className="bg-emerald-600 text-white text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full shadow-xs">
               {t('nav.new_arrivals', 'وصل حديثاً')}
             </span>
           )}
 
           {!hasStock && (
-            <span className="bg-slate-800/90 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-xs backdrop-blur-xs">
+            <span className="bg-slate-800/90 text-white text-[9px] sm:text-[10px] font-bold px-1.5 sm:px-2 py-0.5 rounded-full shadow-xs backdrop-blur-xs">
               {t('product.out_of_stock', 'نفذت الكمية')}
             </span>
           )}
@@ -85,7 +85,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
         {/* Wishlist Button */}
         <button
           onClick={handleToggleWishlist}
-          className={`absolute top-2.5 ${isRtl ? 'left-2.5' : 'right-2.5'} z-10 p-2 rounded-full backdrop-blur-xs transition-all ${
+          className={`absolute top-2 ${isRtl ? 'left-2' : 'right-2'} z-10 p-2 min-w-[36px] min-h-[36px] flex items-center justify-center rounded-full backdrop-blur-xs transition-all touch-manipulation cursor-pointer ${
             isFavorite
               ? 'bg-rose-50 text-rose-600'
               : 'bg-white/80 text-slate-400 hover:text-rose-600 hover:bg-white'
@@ -107,7 +107,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
         {/* Quick View Button on Hover */}
         <button
           onClick={handleQuickView}
-          className="absolute bottom-2.5 left-1/2 -translate-x-1/2 bg-white/90 hover:bg-white text-slate-800 text-xs font-semibold px-3 py-1.5 rounded-xl shadow-md backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-all duration-200 flex items-center gap-1.5 whitespace-nowrap z-10"
+          className="absolute bottom-2.5 left-1/2 -translate-x-1/2 bg-white/90 hover:bg-white text-slate-800 text-xs font-semibold px-3 py-1.5 rounded-xl shadow-md backdrop-blur-xs opacity-0 group-hover:opacity-100 transition-all duration-200 hidden sm:flex items-center gap-1.5 whitespace-nowrap z-10"
         >
           <Eye className="w-3.5 h-3.5 text-sky-700" />
           <span>{t('product.quick_view', 'معاينة سريعة')}</span>
@@ -115,11 +115,11 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
       </div>
 
       {/* Product Content Details */}
-      <div className={`p-3.5 flex flex-col flex-1 justify-between gap-3 ${isRtl ? 'text-right' : 'text-left'}`}>
+      <div className={`p-2.5 sm:p-3.5 flex flex-col flex-1 justify-between gap-2 sm:gap-3 ${isRtl ? 'text-right' : 'text-left'}`}>
         <div>
           {/* Category Tag */}
           {displayCategory && (
-            <span className="inline-block text-[11px] font-medium text-slate-400 mb-1 truncate max-w-full">
+            <span className="inline-block text-[10px] sm:text-[11px] font-medium text-slate-400 mb-0.5 sm:mb-1 truncate max-w-full">
               {displayCategory}
             </span>
           )}
@@ -131,21 +131,21 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
         </div>
 
         {/* Price & Action Row */}
-        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+        <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-1.5 sm:gap-2">
           {/* Price Container */}
           <div className="flex flex-col">
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-sm sm:text-base font-extrabold text-sky-800">
+            <div className="flex items-baseline gap-1 sm:gap-1.5 flex-wrap">
+              <span className="text-xs sm:text-base font-extrabold text-sky-800">
                 {formatPrice(product.price)}
               </span>
               {product.compareAtPrice && product.compareAtPrice > product.price && (
-                <span className="text-[11px] text-slate-400 line-through">
+                <span className="text-[10px] sm:text-[11px] text-slate-400 line-through">
                   {formatPrice(product.compareAtPrice)}
                 </span>
               )}
             </div>
             {product.variants.length > 1 && (
-              <span className="text-[10px] text-slate-500">
+              <span className="text-[9px] sm:text-[10px] text-slate-500">
                 {language === 'ar' ? 'متعدد الخيارات' : 'Options Available'}
               </span>
             )}
@@ -155,7 +155,7 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onNavigate })
           <button
             onClick={handleAddToCart}
             disabled={!hasStock || isAdding}
-            className={`p-2 sm:px-3 sm:py-2 rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 shrink-0 ${
+            className={`p-2 sm:px-3 sm:py-2 min-w-[38px] min-h-[38px] sm:min-w-[40px] sm:min-h-[40px] rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-1 shrink-0 touch-manipulation cursor-pointer ${
               !hasStock
                 ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
                 : addedSuccess

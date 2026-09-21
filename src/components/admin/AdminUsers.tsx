@@ -141,20 +141,20 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ passcode }) => {
   return (
     <div className="space-y-6" dir="rtl">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-slate-900 p-5 rounded-3xl border border-slate-800 shadow-xl">
         <div>
-          <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
-            <Users className="w-5 h-5 text-amber-500" />
+          <h2 className="text-lg font-black text-white flex items-center gap-2">
+            <Users className="w-5 h-5 text-amber-400" />
             <span>إدارة حسابات المستخدمين والمشتركين</span>
           </h2>
-          <p className="text-xs text-slate-500 mt-1">
+          <p className="text-xs text-slate-400 mt-1">
             متابعة جميع حسابات العملاء المسجلين، أرصدة المحافظ، ومستويات ونشاط التحديات
           </p>
         </div>
         <button
           onClick={fetchUsers}
           disabled={loading}
-          className="inline-flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
+          className="inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-bold rounded-xl border border-slate-700 transition-colors cursor-pointer touch-manipulation min-h-[44px]"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${loading ? 'animate-spin' : ''}`} />
           <span>تحديث البيانات</span>
@@ -163,56 +163,56 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ passcode }) => {
 
       {/* KPI Cards Grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-          <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-2">
+        <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-sm">
+          <div className="w-8 h-8 rounded-xl bg-blue-950 text-blue-400 flex items-center justify-center mb-2 border border-blue-800/40">
             <Users className="w-4 h-4" />
           </div>
-          <div className="text-xl font-black text-slate-800">{totalUsersCount}</div>
+          <div className="text-xl font-black text-white">{totalUsersCount}</div>
           <div className="text-[11px] font-bold text-slate-400 mt-0.5">إجمالي المسجلين</div>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-          <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center mb-2">
+        <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-sm">
+          <div className="w-8 h-8 rounded-xl bg-amber-950 text-amber-400 flex items-center justify-center mb-2 border border-amber-800/40">
             <Trophy className="w-4 h-4" />
           </div>
-          <div className="text-xl font-black text-slate-800">{challengePlayersCount}</div>
+          <div className="text-xl font-black text-white">{challengePlayersCount}</div>
           <div className="text-[11px] font-bold text-slate-400 mt-0.5">المشاركون بالتحديات</div>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-          <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-2">
+        <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-sm">
+          <div className="w-8 h-8 rounded-xl bg-emerald-950 text-emerald-400 flex items-center justify-center mb-2 border border-emerald-800/40">
             <Coins className="w-4 h-4" />
           </div>
-          <div className="text-xl font-black text-slate-800">{totalDistributedKwd.toFixed(3)} <span className="text-xs font-bold">د.ك</span></div>
+          <div className="text-xl font-black text-white">{totalDistributedKwd.toFixed(3)} <span className="text-xs font-bold text-slate-400">د.ك</span></div>
           <div className="text-[11px] font-bold text-slate-400 mt-0.5">إجمالي مكافآت التحدي</div>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm">
-          <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center mb-2">
+        <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-sm">
+          <div className="w-8 h-8 rounded-xl bg-purple-950 text-purple-400 flex items-center justify-center mb-2 border border-purple-800/40">
             <Wallet className="w-4 h-4" />
           </div>
-          <div className="text-xl font-black text-slate-800">{totalActiveWalletBalance.toFixed(3)} <span className="text-xs font-bold">د.ك</span></div>
+          <div className="text-xl font-black text-white">{totalActiveWalletBalance.toFixed(3)} <span className="text-xs font-bold text-slate-400">د.ك</span></div>
           <div className="text-[11px] font-bold text-slate-400 mt-0.5">الرصيد النشط حالياً</div>
         </div>
 
-        <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm col-span-2 sm:col-span-1">
-          <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mb-2">
+        <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-sm col-span-2 sm:col-span-1">
+          <div className="w-8 h-8 rounded-xl bg-rose-950 text-rose-400 flex items-center justify-center mb-2 border border-rose-800/40">
             <CheckCircle2 className="w-4 h-4" />
           </div>
-          <div className="text-xl font-black text-slate-800">{totalUsedKwd.toFixed(3)} <span className="text-xs font-bold">د.ك</span></div>
+          <div className="text-xl font-black text-white">{totalUsedKwd.toFixed(3)} <span className="text-xs font-bold text-slate-400">د.ك</span></div>
           <div className="text-[11px] font-bold text-slate-400 mt-0.5">رصيد مستخدم بالطلبات</div>
         </div>
       </div>
 
       {/* Filter and Search */}
-      <div className="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm flex flex-col sm:flex-row gap-3">
+      <div className="bg-slate-900 p-4 rounded-2xl border border-slate-800 shadow-sm flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
           <input
             type="text"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="بحث بالاسم، البريد الإلكتروني، أو الهاتف..."
-            className="w-full pl-3 pr-9 py-2.5 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 focus:border-transparent text-slate-800"
+            className="w-full pl-3 pr-9 py-2.5 text-xs rounded-xl border border-slate-700 bg-slate-950 focus:outline-none focus:border-amber-500 text-white placeholder:text-slate-500"
           />
           <Search className="w-4 h-4 text-slate-400 absolute right-3 top-3" />
         </div>
@@ -222,7 +222,7 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ passcode }) => {
           <select
             value={selectedTier}
             onChange={(e) => setSelectedTier(e.target.value)}
-            className="py-2.5 px-3 text-xs rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-amber-500 text-slate-700 bg-white"
+            className="py-2.5 px-3 text-xs rounded-xl border border-slate-700 focus:outline-none focus:border-amber-500 text-slate-200 bg-slate-950 cursor-pointer"
           >
             <option value="all">جميع المستويات</option>
             <option value="المستوى البرونزي">المستوى البرونزي</option>

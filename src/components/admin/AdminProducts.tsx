@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Product, Category } from '../../types';
 import * as api from '../../lib/api';
+import { getProductImageUrl, handleImageError } from '../../lib/imageHelper';
 
 interface AdminProductsProps {
   categories: Category[];
@@ -289,146 +290,266 @@ export const AdminProducts: React.FC<AdminProductsProps> = ({
             <p className="text-xs text-slate-500">جرب تغيير كلمات البحث أو إعادة ضبط الفلاتر</p>
           </div>
         ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-950/60 text-slate-400 border-b border-slate-800 font-bold uppercase">
-                <tr>
-                  <th className="p-4 w-16">الصورة</th>
-                  <th className="p-4">اسم المنتج والبيانات</th>
-                  <th className="p-4">القسم</th>
-                  <th className="p-4">السعر</th>
-                  <th className="p-4">الخصم</th>
-                  <th className="p-4">المخزون والتوفر</th>
-                  <th className="p-4 text-left">الإجراءات</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60">
-                {products.map(product => (
-                  <tr
-                    key={product.id}
-                    className="hover:bg-slate-800/40 transition-colors group"
-                  >
-                    {/* Thumbnail Image */}
-                    <td className="p-4">
-                      <div className="w-12 h-12 bg-white rounded-xl overflow-hidden p-1 border border-slate-800 flex items-center justify-center shrink-0">
-                        <img
-                          src={product.images?.[0] || 'https://placehold.co/100x100?text=No+Image'}
-                          alt={product.title}
-                          className="w-full h-full object-contain"
-                          referrerPolicy="no-referrer"
-                        />
-                      </div>
-                    </td>
+          <>
+            {/* Desktop Table View */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full text-right text-xs">
+                <thead className="bg-slate-950/60 text-slate-400 border-b border-slate-800 font-bold uppercase">
+                  <tr>
+                    <th className="p-4 w-16">الصورة</th>
+                    <th className="p-4">اسم المنتج والبيانات</th>
+                    <th className="p-4">القسم</th>
+                    <th className="p-4">السعر</th>
+                    <th className="p-4">الخصم</th>
+                    <th className="p-4">المخزون والتوفر</th>
+                    <th className="p-4 text-left">الإجراءات</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-800/60">
+                  {products.map(product => (
+                    <tr
+                      key={product.id}
+                      className="hover:bg-slate-800/40 transition-colors group"
+                    >
+                      {/* Thumbnail Image */}
+                      <td className="p-4">
+                        <button
+                          type="button"
+                          onClick={() => onOpenEditModal(product)}
+                          title={`تعديل صور وبيانات: ${product.title}`}
+                          className="w-12 h-12 bg-white rounded-xl overflow-hidden p-1 border border-slate-700/70 hover:border-sky-500 hover:ring-2 hover:ring-sky-500/30 transition-all flex items-center justify-center shrink-0 cursor-pointer group/thumb shadow-sm"
+                        >
+                          <img
+                            src={getProductImageUrl(product.images?.[0])}
+                            alt={product.title}
+                            className="w-full h-full object-contain group-hover/thumb:scale-105 transition-transform"
+                            referrerPolicy="no-referrer"
+                            onError={handleImageError}
+                            loading="lazy"
+                          />
+                        </button>
+                      </td>
 
-                    {/* Title & Details */}
-                    <td className="p-4 max-w-xs">
-                      <div className="space-y-1">
-                        <span className="font-bold text-white group-hover:text-sky-400 transition-colors line-clamp-2">
-                          {product.title}
+                      {/* Title & Details */}
+                      <td className="p-4 max-w-xs">
+                        <div className="space-y-1">
+                          <span className="font-bold text-white group-hover:text-sky-400 transition-colors line-clamp-2">
+                            {product.title}
+                          </span>
+                          <div className="flex items-center gap-2 text-[10px] text-slate-500 font-mono">
+                            {product.sku && <span>SKU: {product.sku}</span>}
+                            <span>• {product.images?.length || 0} صور</span>
+                            {product.variants && product.variants.length > 0 && (
+                              <span className="text-indigo-400">
+                                • {product.variants.length} خيارات
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Category */}
+                      <td className="p-4 whitespace-nowrap">
+                        <span className="inline-block px-2.5 py-1 bg-slate-950 text-slate-300 rounded-lg border border-slate-800 font-medium text-[11px]">
+                          {product.categoryName || 'عام'}
                         </span>
-                        <div className="flex items-center gap-2 text-[10px] text-slate-500 font-mono">
-                          {product.sku && <span>SKU: {product.sku}</span>}
-                          <span>• {product.images?.length || 0} صور</span>
-                          {product.variants && product.variants.length > 0 && (
-                            <span className="text-indigo-400">
-                              • {product.variants.length} خيارات
-                            </span>
+                      </td>
+
+                      {/* Price */}
+                      <td className="p-4 whitespace-nowrap">
+                        <div className="space-y-0.5">
+                          <div className="font-bold text-emerald-400 text-sm">
+                            {formatPrice(product.price)}
+                          </div>
+                          {product.compareAtPrice && product.compareAtPrice > product.price && (
+                            <div className="text-[11px] text-slate-500 line-through">
+                              {formatPrice(product.compareAtPrice)}
+                            </div>
                           )}
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Category */}
-                    <td className="p-4 whitespace-nowrap">
-                      <span className="inline-block px-2.5 py-1 bg-slate-950 text-slate-300 rounded-lg border border-slate-800 font-medium text-[11px]">
-                        {product.categoryName || 'عام'}
-                      </span>
-                    </td>
+                      {/* Discount Badge */}
+                      <td className="p-4 whitespace-nowrap">
+                        {product.discountPercentage ? (
+                          <span className="inline-block px-2 py-0.5 bg-rose-950/80 text-rose-400 border border-rose-800 rounded-full text-[10px] font-bold">
+                            %{product.discountPercentage} خصم
+                          </span>
+                        ) : (
+                          <span className="text-slate-600 text-[11px]">-</span>
+                        )}
+                      </td>
 
-                    {/* Price */}
-                    <td className="p-4 whitespace-nowrap">
-                      <div className="space-y-0.5">
-                        <div className="font-bold text-emerald-400 text-sm">
-                          {formatPrice(product.price)}
+                      {/* Stock & Availability */}
+                      <td className="p-4 whitespace-nowrap">
+                        <div className="space-y-1">
+                          <button
+                            onClick={() => handleToggleStock(product)}
+                            className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors cursor-pointer ${
+                              product.isInStock
+                                ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800 hover:bg-emerald-900/60'
+                                : 'bg-rose-950/60 text-rose-400 border-rose-800 hover:bg-rose-900/60'
+                            }`}
+                          >
+                            {product.isInStock ? (
+                              <>
+                                <CheckCircle2 className="w-3 h-3" />
+                                <span>متوفر ({product.stockQuantity ?? 10})</span>
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="w-3 h-3" />
+                                <span>غير متوفر</span>
+                              </>
+                            )}
+                          </button>
                         </div>
-                        {product.compareAtPrice && product.compareAtPrice > product.price && (
-                          <div className="text-[11px] text-slate-500 line-through">
-                            {formatPrice(product.compareAtPrice)}
-                          </div>
+                      </td>
+
+                      {/* Actions */}
+                      <td className="p-4 whitespace-nowrap text-left">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => onOpenEditModal(product)}
+                            className="p-2 bg-slate-800 hover:bg-sky-600 text-slate-300 hover:text-white rounded-xl transition-colors cursor-pointer"
+                            title="تعديل المنتج والأسعار والصور"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            onClick={() => onViewProductInStore(product.handle || product.id)}
+                            className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-sky-400 rounded-xl transition-colors cursor-pointer"
+                            title="معاينة المنتج في المتجر"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            onClick={() => setProductToDelete(product)}
+                            className="p-2 bg-slate-800 hover:bg-rose-900/60 text-slate-400 hover:text-rose-400 rounded-xl transition-colors cursor-pointer"
+                            title="حذف المنتج"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Mobile & Tablet Card View */}
+            <div className="lg:hidden divide-y divide-slate-800/80">
+              {products.map(product => (
+                <div key={product.id} className="p-4 space-y-3 bg-slate-900/90">
+                  <div className="flex items-start gap-3">
+                    <button
+                      type="button"
+                      onClick={() => onOpenEditModal(product)}
+                      className="w-14 h-14 bg-white rounded-xl overflow-hidden p-1 border border-slate-700 shrink-0 flex items-center justify-center cursor-pointer shadow-sm"
+                    >
+                      <img
+                        src={getProductImageUrl(product.images?.[0])}
+                        alt={product.title}
+                        className="w-full h-full object-contain"
+                        referrerPolicy="no-referrer"
+                        onError={handleImageError}
+                        loading="lazy"
+                      />
+                    </button>
+
+                    <div className="flex-1 min-w-0 space-y-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="text-xs font-bold text-white line-clamp-2">
+                          {product.title}
+                        </h3>
+                        <span className="shrink-0 px-2 py-0.5 bg-slate-950 text-slate-300 rounded-md border border-slate-800 text-[10px] font-semibold">
+                          {product.categoryName || 'عام'}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 text-[10px] text-slate-400 font-mono">
+                        {product.sku && <span>SKU: {product.sku}</span>}
+                        <span>• {product.images?.length || 0} صور</span>
+                        {product.variants && product.variants.length > 0 && (
+                          <span className="text-indigo-400">• {product.variants.length} خيارات</span>
                         )}
                       </div>
-                    </td>
+                    </div>
+                  </div>
 
-                    {/* Discount Badge */}
-                    <td className="p-4 whitespace-nowrap">
+                  {/* Pricing & Stock Row */}
+                  <div className="flex items-center justify-between pt-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-bold text-emerald-400">
+                        {formatPrice(product.price)}
+                      </span>
+                      {product.compareAtPrice && product.compareAtPrice > product.price && (
+                        <span className="text-xs text-slate-500 line-through">
+                          {formatPrice(product.compareAtPrice)}
+                        </span>
+                      )}
                       {product.discountPercentage ? (
-                        <span className="inline-block px-2 py-0.5 bg-rose-950/80 text-rose-400 border border-rose-800 rounded-full text-[10px] font-bold">
+                        <span className="px-1.5 py-0.5 bg-rose-950/80 text-rose-400 border border-rose-800 rounded-full text-[10px] font-bold">
                           %{product.discountPercentage} خصم
                         </span>
+                      ) : null}
+                    </div>
+
+                    <button
+                      onClick={() => handleToggleStock(product)}
+                      className={`min-h-[38px] px-3 py-1.5 rounded-xl text-xs font-bold border flex items-center gap-1.5 transition-colors cursor-pointer touch-manipulation ${
+                        product.isInStock
+                          ? 'bg-emerald-950/80 text-emerald-400 border-emerald-800'
+                          : 'bg-rose-950/80 text-rose-400 border-rose-800'
+                      }`}
+                    >
+                      {product.isInStock ? (
+                        <>
+                          <CheckCircle2 className="w-3.5 h-3.5" />
+                          <span>متوفر ({product.stockQuantity ?? 10})</span>
+                        </>
                       ) : (
-                        <span className="text-slate-600 text-[11px]">-</span>
+                        <>
+                          <XCircle className="w-3.5 h-3.5" />
+                          <span>غير متوفر</span>
+                        </>
                       )}
-                    </td>
+                    </button>
+                  </div>
 
-                    {/* Stock & Availability */}
-                    <td className="p-4 whitespace-nowrap">
-                      <div className="space-y-1">
-                        <button
-                          onClick={() => handleToggleStock(product)}
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-bold border transition-colors cursor-pointer ${
-                            product.isInStock
-                              ? 'bg-emerald-950/60 text-emerald-400 border-emerald-800 hover:bg-emerald-900/60'
-                              : 'bg-rose-950/60 text-rose-400 border-rose-800 hover:bg-rose-900/60'
-                          }`}
-                        >
-                          {product.isInStock ? (
-                            <>
-                              <CheckCircle2 className="w-3 h-3" />
-                              <span>متوفر ({product.stockQuantity ?? 10})</span>
-                            </>
-                          ) : (
-                            <>
-                              <XCircle className="w-3 h-3" />
-                              <span>غير متوفر</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    </td>
+                  {/* Actions Row */}
+                  <div className="flex items-center justify-between gap-2 pt-2 border-t border-slate-800/60">
+                    <button
+                      onClick={() => onOpenEditModal(product)}
+                      className="flex-1 py-2.5 px-3 bg-sky-600/20 hover:bg-sky-600/30 border border-sky-500/30 text-sky-300 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 min-h-[44px] cursor-pointer touch-manipulation"
+                    >
+                      <Edit2 className="w-3.5 h-3.5" />
+                      <span>تعديل المنتج والأسعار</span>
+                    </button>
 
-                    {/* Actions */}
-                    <td className="p-4 whitespace-nowrap text-left">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => onOpenEditModal(product)}
-                          className="p-2 bg-slate-800 hover:bg-sky-600 text-slate-300 hover:text-white rounded-xl transition-colors cursor-pointer"
-                          title="تعديل المنتج والأسعار والصور"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </button>
+                    <button
+                      onClick={() => onViewProductInStore(product.handle || product.id)}
+                      className="p-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer touch-manipulation"
+                      title="معاينة بالمتجر"
+                    >
+                      <ExternalLink className="w-4 h-4" />
+                    </button>
 
-                        <button
-                          onClick={() => onViewProductInStore(product.handle || product.id)}
-                          className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-sky-400 rounded-xl transition-colors cursor-pointer"
-                          title="معاينة المنتج في المتجر"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </button>
-
-                        <button
-                          onClick={() => setProductToDelete(product)}
-                          className="p-2 bg-slate-800 hover:bg-rose-900/60 text-slate-400 hover:text-rose-400 rounded-xl transition-colors cursor-pointer"
-                          title="حذف المنتج"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    <button
+                      onClick={() => setProductToDelete(product)}
+                      className="p-2.5 bg-rose-950/40 hover:bg-rose-900/60 border border-rose-800/40 text-rose-400 rounded-xl min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer touch-manipulation"
+                      title="حذف"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
         )}
 
         {/* Pagination Footer */}

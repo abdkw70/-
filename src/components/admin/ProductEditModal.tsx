@@ -19,6 +19,7 @@ import {
 } from 'lucide-react';
 import { Product, Category, ProductVariant } from '../../types';
 import * as api from '../../lib/api';
+import { getProductImageUrl, handleImageError } from '../../lib/imageHelper';
 
 interface ProductEditModalProps {
   product: Partial<Product> | null;
@@ -345,15 +346,30 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
 
     setIsSaving(true);
     try {
+      const normalizedImages = (formData.images || []).map((img, idx) => {
+        const src = getProductImageUrl(img);
+        return {
+          id: typeof img === 'object' && img?.id ? img.id : `img_${Date.now()}_${idx}`,
+          src,
+          altText: typeof img === 'object' && img?.altText ? img.altText : '',
+          isPrimary: idx === 0,
+        };
+      });
+
+      const payload = {
+        ...formData,
+        images: normalizedImages,
+      };
+
       if (isNew) {
-        const res = await api.saveAdminProduct(formData);
+        const res = await api.saveAdminProduct(payload);
         if (res.success) {
           showToast(`تمت إضافة المنتج "${res.product.title}" بنجاح`, 'success');
           onSaved(res.product);
           onClose();
         }
       } else {
-        const res = await api.updateAdminProduct(formData.id!, formData);
+        const res = await api.updateAdminProduct(formData.id!, payload);
         if (res.success) {
           showToast(`تم حفظ تعديلات المنتج "${res.product.title}" بنجاح`, 'success');
           onSaved(res.product);
@@ -368,32 +384,32 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto" dir="rtl">
-      <div className="bg-slate-900 border border-slate-800 w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[92vh] my-auto">
+    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-2 sm:p-4 overflow-y-auto" dir="rtl">
+      <div className="bg-slate-900 border border-slate-800 w-full max-w-4xl rounded-2xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[96dvh] sm:max-h-[92vh] my-auto">
         {/* Header */}
-        <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
+        <div className="p-4 sm:p-6 border-b border-slate-800 flex items-center justify-between bg-slate-950/40">
           <div>
-            <h2 className="text-lg font-bold text-white">
+            <h2 className="text-base sm:text-lg font-bold text-white">
               {isNew ? 'إضافة منتج جديد' : `تعديل المنتج: ${formData.title}`}
             </h2>
-            <p className="text-xs text-slate-400 mt-0.5">
+            <p className="text-[11px] sm:text-xs text-slate-400 mt-0.5">
               {isNew ? 'أدخل تفاصيل وسعر وصور المنتج الجديد' : `معرف المنتج: ${formData.id}`}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer"
+            className="p-2 text-slate-400 hover:text-white rounded-xl hover:bg-slate-800 transition-colors cursor-pointer min-h-[44px] min-w-[44px] flex items-center justify-center"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex border-b border-slate-800 bg-slate-950/20 px-6 gap-6 text-xs font-bold">
+        <div className="flex border-b border-slate-800 bg-slate-950/20 px-4 sm:px-6 gap-4 sm:gap-6 text-xs font-bold overflow-x-auto no-scrollbar whitespace-nowrap">
           <button
             type="button"
             onClick={() => setActiveTab('info')}
-            className={`py-3.5 border-b-2 transition-all cursor-pointer ${
+            className={`py-3 sm:py-3.5 border-b-2 transition-all cursor-pointer ${
               activeTab === 'info'
                 ? 'border-sky-500 text-sky-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -404,7 +420,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('images')}
-            className={`py-3.5 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`py-3 sm:py-3.5 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'images'
                 ? 'border-sky-500 text-sky-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -418,7 +434,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
           <button
             type="button"
             onClick={() => setActiveTab('variants')}
-            className={`py-3.5 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
+            className={`py-3 sm:py-3.5 border-b-2 transition-all cursor-pointer flex items-center gap-1.5 ${
               activeTab === 'variants'
                 ? 'border-sky-500 text-sky-400'
                 : 'border-transparent text-slate-400 hover:text-slate-200'
@@ -702,29 +718,33 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                    {formData.images.map((imgUrl, idx) => (
-                      <div
-                        key={idx}
-                        className={`relative rounded-2xl overflow-hidden border p-2 bg-slate-950 group flex flex-col justify-between ${
-                          idx === 0 ? 'border-sky-500 ring-2 ring-sky-500/20' : 'border-slate-800'
-                        }`}
-                      >
-                        {/* Primary Badge */}
-                        {idx === 0 && (
-                          <div className="absolute top-3 right-3 bg-sky-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md z-10 flex items-center gap-1">
-                            <Star className="w-3 h-3 fill-white" />
-                            <span>رئيسية</span>
-                          </div>
-                        )}
+                    {formData.images.map((imgItem, idx) => {
+                      const imgSrc = getProductImageUrl(imgItem);
+                      return (
+                        <div
+                          key={idx}
+                          className={`relative rounded-2xl overflow-hidden border p-2 bg-slate-950 group flex flex-col justify-between ${
+                            idx === 0 ? 'border-sky-500 ring-2 ring-sky-500/20' : 'border-slate-800'
+                          }`}
+                        >
+                          {/* Primary Badge */}
+                          {idx === 0 && (
+                            <div className="absolute top-3 right-3 bg-sky-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-md z-10 flex items-center gap-1">
+                              <Star className="w-3 h-3 fill-white" />
+                              <span>رئيسية</span>
+                            </div>
+                          )}
 
-                        <div className="aspect-square bg-white rounded-xl overflow-hidden p-2 flex items-center justify-center">
-                          <img
-                            src={imgUrl}
-                            alt={`صورة ${idx + 1}`}
-                            className="w-full h-full object-contain"
-                            referrerPolicy="no-referrer"
-                          />
-                        </div>
+                          <div className="aspect-square bg-white rounded-xl overflow-hidden p-2 flex items-center justify-center">
+                            <img
+                              src={imgSrc}
+                              alt={`صورة ${idx + 1}`}
+                              className="w-full h-full object-contain"
+                              referrerPolicy="no-referrer"
+                              onError={handleImageError}
+                              loading="lazy"
+                            />
+                          </div>
 
                         {/* Image Actions */}
                         <div className="flex items-center justify-between pt-2 mt-2 border-t border-slate-800/80 gap-1">
@@ -771,8 +791,9 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                           </button>
                         </div>
                       </div>
-                    ))}
-                  </div>
+                    );
+                  })}
+                </div>
                 )}
               </div>
             </div>
@@ -967,11 +988,14 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                           className="w-full sm:w-1/2 px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-xs text-white cursor-pointer"
                         >
                           <option value="">-- اختر من صور المنتج المرفوعة --</option>
-                          {formData.images.map((img, idx) => (
-                            <option key={idx} value={img}>
-                              صورة رقم {idx + 1}
-                            </option>
-                          ))}
+                          {formData.images.map((img, idx) => {
+                            const src = getProductImageUrl(img);
+                            return (
+                              <option key={idx} value={src}>
+                                صورة رقم {idx + 1}
+                              </option>
+                            );
+                          })}
                         </select>
                       )}
                       <input
@@ -984,7 +1008,13 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                     </div>
                     {newVariant.imageStr && (
                       <div className="w-12 h-12 bg-white rounded-lg p-1 border border-slate-700 overflow-hidden mt-1">
-                        <img src={newVariant.imageStr} alt="Preview" className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                        <img
+                          src={getProductImageUrl(newVariant.imageStr)}
+                          alt="Preview"
+                          className="w-full h-full object-contain"
+                          referrerPolicy="no-referrer"
+                          onError={handleImageError}
+                        />
                       </div>
                     )}
                   </div>
@@ -1017,7 +1047,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                 <div className="divide-y divide-slate-800 border border-slate-800 rounded-2xl overflow-hidden bg-slate-950/40">
                   {formData.variants.map((v, i) => {
                     const isEditing = editingVariantId === v.id;
-                    const vImg = typeof v.image === 'string' ? v.image : v.image?.src;
+                    const vImg = v.image ? getProductImageUrl(v.image) : '';
 
                     if (isEditing) {
                       return (
@@ -1101,9 +1131,12 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                                   className="w-1/3 px-2 py-1.5 bg-slate-950 border border-slate-700 rounded-lg text-xs text-white"
                                 >
                                   <option value="">-- اختر من صور المنتج --</option>
-                                  {formData.images.map((img, idx) => (
-                                    <option key={idx} value={img}>صورة {idx + 1}</option>
-                                  ))}
+                                  {formData.images.map((img, idx) => {
+                                    const src = getProductImageUrl(img);
+                                    return (
+                                      <option key={idx} value={src}>صورة {idx + 1}</option>
+                                    );
+                                  })}
                                 </select>
                               )}
                               <input
@@ -1142,7 +1175,13 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
                         <div className="flex items-center gap-3">
                           {vImg ? (
                             <div className="w-10 h-10 bg-white rounded-xl p-1 border border-slate-700 overflow-hidden shrink-0">
-                              <img src={vImg} alt={v.title} className="w-full h-full object-contain" referrerPolicy="no-referrer" />
+                              <img
+                                src={vImg}
+                                alt={v.title}
+                                className="w-full h-full object-contain"
+                                referrerPolicy="no-referrer"
+                                onError={handleImageError}
+                              />
                             </div>
                           ) : (
                             <div className="w-10 h-10 bg-slate-800 rounded-xl flex items-center justify-center text-slate-500 shrink-0">

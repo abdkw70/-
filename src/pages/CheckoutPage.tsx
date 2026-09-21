@@ -380,7 +380,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
           )}
 
           {/* 1. Customer Information */}
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+          <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 p-4 sm:p-6 shadow-xs space-y-4">
             <h2 className="text-sm font-bold text-slate-900 pb-2 border-b border-slate-100 flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-sky-700 text-white text-xs flex items-center justify-center font-bold">1</span>
               <span>{isRtl ? 'معلومات العميل للتواصل' : 'Customer Contact Information'}</span>
@@ -433,7 +433,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
           </div>
 
           {/* 2. Delivery Address in Kuwait */}
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+          <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 p-4 sm:p-6 shadow-xs space-y-4">
             <h2 className="text-sm font-bold text-slate-900 pb-2 border-b border-slate-100 flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-sky-700 text-white text-xs flex items-center justify-center font-bold">2</span>
               <span>{t('checkout.shipping_address')}</span>
@@ -570,7 +570,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
 
           {/* 3. Wallet Balance Redemption */}
           {activeWalletBalance > 0 && (
-            <div className="bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-teal-500/10 border-2 border-emerald-500/40 rounded-3xl p-6 shadow-xs space-y-4">
+            <div className="bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-teal-500/10 border-2 border-emerald-500/40 rounded-2xl sm:rounded-3xl p-4 sm:p-6 shadow-xs space-y-4">
               <div className="flex items-center justify-between">
                 <div className={`flex items-center gap-2.5 ${isRtl ? 'text-right' : 'text-left'}`}>
                   <div className="w-8 h-8 rounded-xl bg-emerald-500 text-slate-950 flex items-center justify-center font-bold shadow-sm">
@@ -617,7 +617,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
           )}
 
           {/* 4. Payment Method */}
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4">
+          <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 p-4 sm:p-6 shadow-xs space-y-4">
             <h2 className="text-sm font-bold text-slate-900 pb-2 border-b border-slate-100 flex items-center gap-2">
               <span className="w-5 h-5 rounded-full bg-sky-700 text-white text-xs flex items-center justify-center font-bold">
                 {activeWalletBalance > 0 ? '4' : '3'}
@@ -679,7 +679,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
 
         {/* Order Review Sidebar */}
         <div className="space-y-6">
-          <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-4 sticky top-24">
+          <div className="bg-white rounded-2xl sm:rounded-3xl border border-slate-200/80 p-4 sm:p-6 shadow-xs space-y-4 sticky top-24">
             <h3 className="text-sm font-bold text-slate-900 pb-3 border-b border-slate-100">
               {isRtl
                 ? `ملخص الأصناف (${items.reduce((s, i) => s + i.quantity, 0)})`
@@ -818,7 +818,7 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold py-3.5 px-4 rounded-2xl text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold py-3.5 px-4 min-h-[48px] rounded-2xl text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer touch-manipulation active:scale-[0.99]"
             >
               {paymentMethod === 'whatsapp' ? (
                 <>

@@ -14,7 +14,9 @@ import {
   Tag,
   ShieldCheck,
   ChevronRight,
-  ChevronLeft
+  ChevronLeft,
+  Maximize2,
+  Minimize2
 } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext';
 import { Product, ProductVariant } from '../types';
@@ -224,10 +226,76 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onNavigate = () => {}, current
   
   // UI & Positioning states
   const [isOpen, setIsOpen] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
   const [chatPosition, setChatPosition] = useState({ x: 0, y: 0 });
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' ? window.innerWidth < 640 : false);
   const dragControls = useDragControls();
   const chatRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+
+  // Dynamic Drag Boundaries based on viewport, chat dimensions, safe areas & orientation
+  const [dragBounds, setDragBounds] = useState({ top: -350, bottom: 40, left: -500, right: 10 });
+
+  const calculateDragBounds = useCallback(() => {
+    if (typeof window === 'undefined') return;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const isSm = vw >= 640;
+    setIsMobile(!isSm);
+
+    if (!isSm) {
+      setDragBounds({ top: 0, bottom: 0, left: 0, right: 0 });
+      return;
+    }
+
+    // Default or measured dimensions
+    const rect = chatRef.current?.getBoundingClientRect();
+    const currentW = rect?.width || (isExpanded ? 440 : 360);
+    const currentH = rect?.height || (isExpanded ? 600 : 480);
+
+    const safeMargin = 16;
+    const bottomOffset = 96; // 6rem from bottom
+    const sideOffset = 24; // 1.5rem from left/right
+    const topNavSafety = 75; // keep safely below top header
+
+    // Maximum distance chat can travel upwards without penetrating top margin
+    const maxUp = Math.min(0, -(vh - bottomOffset - currentH - topNavSafety));
+    // Maximum distance chat can travel downwards without penetrating bottom margin
+    const maxDown = Math.max(0, bottomOffset - safeMargin);
+
+    if (isRtl) {
+      // Anchored at left: 24px
+      const maxLeft = -(sideOffset - safeMargin); // ~ -8px
+      const maxRight = Math.max(0, vw - sideOffset - currentW - safeMargin);
+      setDragBounds({
+        top: maxUp,
+        bottom: maxDown,
+        left: maxLeft,
+        right: maxRight
+      });
+    } else {
+      // Anchored at right: 24px
+      const maxRight = sideOffset - safeMargin; // ~ 8px
+      const maxLeft = Math.min(0, -(vw - sideOffset - currentW - safeMargin));
+      setDragBounds({
+        top: maxUp,
+        bottom: maxDown,
+        left: maxLeft,
+        right: maxRight
+      });
+    }
+  }, [isExpanded, isRtl]);
+
+  // Responsive device listener & boundary updater
+  useEffect(() => {
+    calculateDragBounds();
+    window.addEventListener('resize', calculateDragBounds);
+    window.addEventListener('orientationchange', calculateDragBounds);
+    return () => {
+      window.removeEventListener('resize', calculateDragBounds);
+      window.removeEventListener('orientationchange', calculateDragBounds);
+    };
+  }, [calculateDragBounds]);
 
   // Smart Mini-Recommendation Floating Bubble
   const [floatingRec, setFloatingRec] = useState<SmartRecommendationData | null>(null);
@@ -293,10 +361,18 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onNavigate = () => {}, current
     };
   }, [isOpen, chatPosition]);
 
-  // When opening chat, ensure it starts at its docking origin
+  // When opening chat, ensure it starts at its docking origin and medium comfortable size
   const handleOpenChat = () => {
     setChatPosition({ x: 0, y: 0 });
+    setIsExpanded(false);
     setIsOpen(true);
+  };
+
+  // Close chat and reset to initial compact state
+  const handleCloseChat = () => {
+    setChatPosition({ x: 0, y: 0 });
+    setIsExpanded(false);
+    setIsOpen(false);
   };
 
   // Initialize initial greeting
@@ -370,8 +446,9 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onNavigate = () => {}, current
     setFloatingRec(null);
     recommendedHandlesRef.current.add(rec.product.handle);
 
-    // Open chat at origin
+    // Open chat at origin in default medium size
     setChatPosition({ x: 0, y: 0 });
+    setIsExpanded(false);
     setIsOpen(true);
 
     // Append to messages stream
@@ -586,7 +663,11 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onNavigate = () => {}, current
           initial={{ opacity: 0, y: 15, scale: 0.94 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
           exit={{ opacity: 0, y: 15, scale: 0.94 }}
-          className={`fixed bottom-24 ${isRtl ? 'left-20' : 'right-20'} z-40 bg-white dark:bg-slate-900 p-3.5 rounded-2xl shadow-xl border border-sky-100 dark:border-slate-800 w-80 max-w-[calc(100vw-100px)]`}
+          className={`fixed bottom-[calc(76px+env(safe-area-inset-bottom,0px))] sm:bottom-24 ${
+            isRtl 
+              ? 'left-[max(0.75rem,env(safe-area-inset-left,0.75rem))] sm:left-20' 
+              : 'right-[max(0.75rem,env(safe-area-inset-right,0.75rem))] sm:right-20'
+          } z-40 bg-white dark:bg-slate-900 p-3.5 rounded-2xl shadow-xl border border-sky-100 dark:border-slate-800 w-[min(320px,calc(100vw-24px))] max-w-[calc(100vw-24px)]`}
           dir={isRtl ? 'rtl' : 'ltr'}
         >
           {/* Header of the recommendation */}
@@ -646,7 +727,11 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onNavigate = () => {}, current
       <button
         ref={buttonRef}
         onClick={handleOpenChat}
-        className={`fixed bottom-24 ${isRtl ? 'left-4' : 'right-4'} z-40 bg-sky-600 hover:bg-sky-700 text-white p-3.5 rounded-full shadow-xl transition-all hover:scale-110 cursor-pointer flex items-center justify-center ${isOpen ? 'scale-0 opacity-0 pointer-events-none' : 'scale-100 opacity-100'}`}
+        className={`fixed bottom-[calc(76px+env(safe-area-inset-bottom,0px))] md:bottom-6 ${
+          isRtl 
+            ? 'left-[max(0.75rem,env(safe-area-inset-left,0.75rem))] md:left-6' 
+            : 'right-[max(0.75rem,env(safe-area-inset-right,0.75rem))] md:right-6'
+        } z-50 bg-sky-700 hover:bg-sky-800 text-white p-3.5 min-w-[52px] min-h-[52px] rounded-full shadow-2xl ring-2 ring-white/80 transition-all hover:scale-110 active:scale-95 cursor-pointer flex items-center justify-center touch-manipulation ${isOpen ? 'scale-0 opacity-0 pointer-events-none' : 'scale-100 opacity-100'}`}
         aria-label={isRtl ? 'فتح المحادثة مع المساعد الذكي' : 'Open Shopping Assistant'}
         title={isRtl ? 'مساعد التسوق الذكي' : 'Smart Shopping Assistant'}
       >
@@ -658,65 +743,89 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onNavigate = () => {}, current
         </span>
       </button>
 
-      {/* Main Draggable Chat Window */}
+      {/* Main Floating Shopping Assistant Card */}
       {isOpen && (
         <motion.div 
           ref={chatRef}
-          drag
+          drag={!isMobile}
           dragControls={dragControls}
           dragListener={false}
           dragMomentum={false}
-          dragElastic={0.1}
-          initial={{ opacity: 0, y: 20, scale: 0.96 }}
+          dragElastic={0.05}
+          dragConstraints={dragBounds}
+          initial={{ opacity: 0, y: 16, scale: 0.96 }}
           animate={{ 
             opacity: 1, 
-            y: chatPosition.y, 
-            x: chatPosition.x, 
+            y: 0, 
             scale: 1 
           }}
-          transition={{ type: "spring", damping: 25, stiffness: 350 }}
-          onDragEnd={(_, info) => {
-            setChatPosition(prev => ({
-              x: prev.x + info.offset.x,
-              y: prev.y + info.offset.y
-            }));
-          }}
-          className={`fixed bottom-20 ${isRtl ? 'left-4' : 'right-4'} z-50 w-[410px] max-w-[calc(100vw-24px)] h-[620px] max-h-[82vh] bg-white dark:bg-slate-900 rounded-3xl shadow-2xl flex flex-col border border-slate-200/90 dark:border-slate-800 overflow-hidden`}
+          transition={{ type: "spring", damping: 26, stiffness: 360 }}
+          className={`fixed bottom-[calc(76px+env(safe-area-inset-bottom,0px))] sm:bottom-24 ${
+            isRtl 
+              ? 'left-[max(0.75rem,env(safe-area-inset-left,0.75rem))] sm:left-6' 
+              : 'right-[max(0.75rem,env(safe-area-inset-right,0.75rem))] sm:right-6'
+          } z-[45] transition-[width,height] duration-200 ease-out flex flex-col bg-white dark:bg-slate-900 rounded-2xl sm:rounded-3xl shadow-2xl border border-slate-200/90 dark:border-slate-800 overflow-hidden ${
+            isExpanded
+              ? 'w-[calc(100vw-24px)] max-w-[420px] sm:w-[440px] sm:max-w-[calc(100vw-32px)] h-[calc(100dvh-95px)] max-h-[calc(100dvh-85px)] sm:h-[600px] sm:max-h-[calc(100vh-100px)]'
+              : 'w-[calc(100vw-24px)] max-w-[360px] sm:w-[360px] sm:max-w-[calc(100vw-32px)] h-[460px] max-h-[calc(100dvh-130px)] sm:h-[480px] sm:max-h-[calc(100vh-120px)]'
+          }`}
           dir={isRtl ? 'rtl' : 'ltr'}
         >
-          {/* Header (Drag Handle) */}
+          {/* Header (Drag area on desktop, controls and status) */}
           <div 
-            onPointerDown={(e) => dragControls.start(e)}
-            className="bg-gradient-to-r from-sky-700 via-sky-600 to-sky-700 text-white p-3.5 flex items-center justify-between shadow-sm cursor-move touch-none select-none"
+            onPointerDown={(e) => {
+              if (!isMobile) dragControls.start(e);
+            }}
+            className="bg-gradient-to-r from-sky-700 via-sky-600 to-sky-700 text-white px-3.5 py-3 flex items-center justify-between shadow-sm select-none sm:cursor-grab sm:active:cursor-grabbing"
           >
-            <div className="flex items-center gap-2.5">
-              <GripHorizontal className="w-4 h-4 opacity-70 text-white" />
-              <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-xs flex items-center justify-center pointer-events-none shadow-xs">
+            <div className="flex items-center gap-2.5 min-w-0 pointer-events-none">
+              <div className="w-8 h-8 rounded-full bg-white/20 backdrop-blur-xs flex items-center justify-center shadow-xs shrink-0">
                 <Bot className="w-4 h-4 text-white" />
               </div>
-              <div className="pointer-events-none">
-                <h3 className="font-bold text-xs sm:text-sm leading-tight flex items-center gap-1.5">
-                  <span>{isRtl ? 'مساعد التسوق الذكي' : 'Smart Shopping Assistant'}</span>
-                  <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+              <div className="min-w-0">
+                <h3 className="font-bold text-xs sm:text-sm leading-tight flex items-center gap-1.5 truncate">
+                  <span className="truncate">{isRtl ? 'مساعد التسوق الذكي' : 'Smart Shopping Assistant'}</span>
+                  <Sparkles className="w-3.5 h-3.5 text-amber-300 shrink-0" />
                 </h3>
                 <div className="flex items-center gap-1.5 mt-0.5">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <p className="text-[10px] text-sky-100 opacity-90">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse shrink-0"></span>
+                  <p className="text-[10px] text-sky-100 opacity-90 truncate">
                     {isRtl ? 'متصل بقاعدة بيانات المتجر' : 'Connected to Store Truth'}
                   </p>
                 </div>
               </div>
             </div>
             
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 shrink-0">
+              {/* Drag Handle on desktop */}
+              <div
+                onPointerDown={(e) => {
+                  if (!isMobile) dragControls.start(e);
+                }}
+                className="hidden sm:flex items-center justify-center p-1.5 rounded-lg text-white/70 hover:text-white hover:bg-white/15 cursor-grab active:cursor-grabbing transition-colors"
+                title={isRtl ? 'سحب وتحريك النافذة' : 'Drag window'}
+              >
+                <GripHorizontal className="w-4 h-4" />
+              </div>
+
+              {/* Expand / Minimize Toggle */}
+              <button
+                onPointerDown={(e) => e.stopPropagation()}
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="text-white/80 hover:text-white hover:bg-white/20 p-1.5 rounded-lg transition-colors cursor-pointer"
+                title={isExpanded ? (isRtl ? 'استعادة الحجم الطبيعي' : 'Restore normal size') : (isRtl ? 'تكبير النافذة' : 'Expand window')}
+                aria-label={isExpanded ? (isRtl ? 'استعادة الحجم الطبيعي' : 'Restore normal size') : (isRtl ? 'تكبير النافذة' : 'Expand window')}
+              >
+                {isExpanded ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+              </button>
+
+              {/* Close Button */}
               <button 
                 onPointerDown={(e) => e.stopPropagation()} 
-                onClick={() => {
-                  setChatPosition({ x: 0, y: 0 });
-                  setIsOpen(false);
-                }} 
-                className="text-white hover:bg-white/20 p-1.5 rounded-full transition-colors cursor-pointer"
+                onClick={handleCloseChat}
+                className="text-white hover:bg-white/20 p-1.5 rounded-lg transition-colors cursor-pointer"
                 aria-label={isRtl ? 'إغلاق المحادثة' : 'Close chat'}
+                title={isRtl ? 'إغلاق' : 'Close'}
               >
                 <X className="w-5 h-5" />
               </button>
@@ -761,7 +870,7 @@ export const Chatbot: React.FC<ChatbotProps> = ({ onNavigate = () => {}, current
                           <InChatProductCard 
                             product={p} 
                             onNavigate={onNavigate} 
-                            onCloseChat={() => setIsOpen(false)}
+                            onCloseChat={handleCloseChat}
                           />
                         </div>
                       ))}

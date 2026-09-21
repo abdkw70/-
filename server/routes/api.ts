@@ -1163,6 +1163,35 @@ apiRouter.get('/admin/products', requireAdminAuth, (req, res) => {
   }
 });
 
+function normalizeProductImages(images: any[]): any[] {
+  if (!Array.isArray(images)) return [];
+  return images.map((img: any, idx: number) => {
+    if (!img) return null;
+    if (typeof img === 'string') {
+      const src = img.trim();
+      return src ? {
+        id: `img_${Date.now()}_${idx}`,
+        src,
+        altText: '',
+        isPrimary: idx === 0,
+      } : null;
+    }
+    if (typeof img === 'object') {
+      const src = (img.src || img.url || img.originalUrl || '').trim();
+      if (!src) return null;
+      return {
+        id: img.id || `img_${Date.now()}_${idx}`,
+        src,
+        altText: img.altText || '',
+        width: img.width,
+        height: img.height,
+        isPrimary: idx === 0 || Boolean(img.isPrimary),
+      };
+    }
+    return null;
+  }).filter(Boolean);
+}
+
 // 3. Update / Edit Product
 apiRouter.patch('/admin/products/:id', requireAdminAuth, (req, res) => {
   const { id } = req.params;
@@ -1185,7 +1214,7 @@ apiRouter.patch('/admin/products/:id', requireAdminAuth, (req, res) => {
     compareAtPrice: updates.compareAtPrice !== undefined ? (updates.compareAtPrice ? Number(updates.compareAtPrice) : null) : existingProduct.compareAtPrice,
     stockQuantity: updates.stockQuantity !== undefined ? Number(updates.stockQuantity) : existingProduct.stockQuantity,
     isInStock: updates.isInStock !== undefined ? Boolean(updates.isInStock) : existingProduct.isInStock,
-    images: Array.isArray(updates.images) ? updates.images : existingProduct.images,
+    images: Array.isArray(updates.images) ? normalizeProductImages(updates.images) : existingProduct.images,
     variants: Array.isArray(updates.variants) ? updates.variants : existingProduct.variants,
     updatedAt: new Date().toISOString(),
   };
@@ -1252,7 +1281,7 @@ apiRouter.post('/admin/products', requireAdminAuth, (req, res) => {
     categoryId: productData.categoryId || null,
     categoryName: productData.categoryName || 'الادوات المدرسية',
     subcategoryName: productData.subcategoryName || null,
-    images: Array.isArray(productData.images) ? productData.images : [],
+    images: Array.isArray(productData.images) ? normalizeProductImages(productData.images) : [],
     variants: Array.isArray(productData.variants) ? productData.variants : [],
     isFeatured: Boolean(productData.isFeatured),
     isBestSeller: Boolean(productData.isBestSeller),

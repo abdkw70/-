@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { Product, Category, Order, ImporterStats } from '../types';
 import * as api from '../lib/api';
+import { Menu, Store, ExternalLink } from 'lucide-react';
 
 import { AdminLogin } from '../components/admin/AdminLogin';
 import { AdminSidebar, AdminTab } from '../components/admin/AdminSidebar';
@@ -29,6 +30,7 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
   // Authentication State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => Boolean(api.getAdminToken()));
   const [activeTab, setActiveTab] = useState<AdminTab>('overview');
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Shared Data
   const [stats, setStats] = useState<any>(null);
@@ -136,12 +138,44 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col md:flex-row text-slate-100 font-sans" dir="rtl">
+      {/* Mobile Admin Header Bar */}
+      <header className="md:hidden bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between sticky top-0 z-30 pt-safe">
+        <div className="flex items-center gap-3">
+          <button
+            onClick={() => setIsMobileSidebarOpen(true)}
+            className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center text-slate-300 hover:text-white rounded-xl bg-slate-800/90 hover:bg-slate-800 transition-colors cursor-pointer touch-manipulation"
+            aria-label="فتح القائمة الجانبية"
+          >
+            <Menu className="w-5 h-5" />
+          </button>
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-lg bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-xs">
+              <Store className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="block text-xs font-bold text-white">مركز التحكم</span>
+              <span className="block text-[10px] text-slate-400">مكتبة الشاطئ الازرق</span>
+            </div>
+          </div>
+        </div>
+
+        <button
+          onClick={() => onNavigate('/')}
+          className="px-3 py-1.5 text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/80 hover:bg-slate-800 border border-slate-700/60 rounded-lg flex items-center gap-1.5 transition-colors cursor-pointer touch-manipulation"
+        >
+          <ExternalLink className="w-3.5 h-3.5 text-sky-400" />
+          <span>المتجر</span>
+        </button>
+      </header>
+
       {/* Sidebar Navigation */}
       <AdminSidebar
         activeTab={activeTab}
         onSelectTab={setActiveTab}
         onLogout={handleLogout}
         onViewStore={() => onNavigate('/')}
+        isOpenMobile={isMobileSidebarOpen}
+        onCloseMobile={() => setIsMobileSidebarOpen(false)}
         stats={{
           totalProducts: stats?.totalProducts ?? 443,
           pendingOrders: stats?.pendingOrders ?? 0,
@@ -150,8 +184,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
       />
 
       {/* Main Content Area */}
-      <main className="flex-1 min-w-0 p-4 sm:p-6 lg:p-8 overflow-y-auto max-h-screen">
-        <div className="max-w-7xl mx-auto space-y-6">
+      <main className="flex-1 min-w-0 p-3 sm:p-6 lg:p-8 overflow-y-auto md:max-h-dvh pb-12 sm:pb-8">
+        <div className="max-w-7xl mx-auto space-y-6 min-w-0">
           {activeTab === 'overview' && (
             <AdminOverview
               stats={stats}

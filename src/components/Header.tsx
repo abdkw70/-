@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
 import {
   Search,
   ShoppingBag,
@@ -100,29 +101,29 @@ export const Header: React.FC<HeaderProps> = ({ categories, currentPath, onNavig
   return (
     <header className="sticky top-0 z-40 bg-white shadow-xs" dir={dir}>
       {/* Top Announcement Bar */}
-      <div className="bg-slate-900 text-slate-100 text-xs py-2 px-4 border-b border-slate-800">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-4 text-xs font-medium">
+      <div className="bg-slate-900 text-slate-100 text-xs py-1.5 px-3 sm:px-4 border-b border-slate-800">
+        <div className="max-w-7xl mx-auto flex flex-wrap sm:flex-nowrap items-center justify-between gap-x-3 gap-y-1 min-w-0">
+          <div className="flex items-center gap-2.5 text-[11px] sm:text-xs font-medium min-w-0">
             <span className="flex items-center gap-1.5 text-amber-400">
               <Truck className="w-3.5 h-3.5 shrink-0" />
-              <span>{t('topbar.free_shipping_notice')}</span>
+              <span className="leading-tight">{t('topbar.free_shipping_notice')}</span>
             </span>
-            <span className="hidden sm:flex items-center gap-1 text-slate-300">
+            <span className="hidden md:flex items-center gap-1 text-slate-300 shrink-0">
               <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <span>{t('checkout.cod')}</span>
             </span>
           </div>
 
-          <div className="flex items-center gap-3 sm:gap-4 text-xs">
+          <div className="flex items-center gap-2 sm:gap-4 text-xs shrink-0 ms-auto sm:ms-0">
             {/* Clear Language Switcher Segmented Control */}
             <div
               id="language-switcher-topbar"
-              className="inline-flex items-center p-0.5 rounded-lg bg-slate-800 border border-slate-700 text-[11px] font-bold"
+              className="inline-flex items-center p-0.5 rounded-lg bg-slate-800 border border-slate-700 text-[11px] font-bold shrink-0"
             >
               <button
                 type="button"
                 onClick={() => setLanguage('ar')}
-                className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
+                className={`px-1.5 sm:px-2 py-0.5 rounded transition-all cursor-pointer ${
                   language === 'ar'
                     ? 'bg-amber-400 text-slate-950 shadow-xs'
                     : 'text-slate-300 hover:text-white'
@@ -135,7 +136,7 @@ export const Header: React.FC<HeaderProps> = ({ categories, currentPath, onNavig
               <button
                 type="button"
                 onClick={() => setLanguage('en')}
-                className={`px-2 py-0.5 rounded transition-all cursor-pointer ${
+                className={`px-1.5 sm:px-2 py-0.5 rounded transition-all cursor-pointer ${
                   language === 'en'
                     ? 'bg-amber-400 text-slate-950 shadow-xs'
                     : 'text-slate-300 hover:text-white'
@@ -150,7 +151,7 @@ export const Header: React.FC<HeaderProps> = ({ categories, currentPath, onNavig
               href="https://maps.app.goo.gl/KNmkE9nq7CbD2Ws69?g_st=ic"
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-1 text-sky-400 hover:text-sky-300 font-medium transition-colors"
+              className="hidden sm:flex items-center gap-1 text-sky-400 hover:text-sky-300 font-medium transition-colors shrink-0"
             >
               <MapPin className="w-3.5 h-3.5" />
               <span>{t('topbar.our_location')}</span>
@@ -159,7 +160,7 @@ export const Header: React.FC<HeaderProps> = ({ categories, currentPath, onNavig
               href="https://wa.me/96597123698"
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-1 text-emerald-400 hover:text-emerald-300 font-bold transition-colors"
+              className="hidden xs:flex items-center gap-1 text-emerald-400 hover:text-emerald-300 font-bold transition-colors shrink-0"
             >
               <MessageCircle className="w-3.5 h-3.5" />
               <span dir="ltr">+965 97123698</span>
@@ -169,27 +170,29 @@ export const Header: React.FC<HeaderProps> = ({ categories, currentPath, onNavig
       </div>
 
       {/* Main Header Container */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
-        <div className="flex items-center justify-between gap-4 md:gap-8">
+      <div className="max-w-7xl mx-auto px-2.5 sm:px-6 lg:px-8 py-2 sm:py-3.5">
+        <div className="flex items-center justify-between gap-1.5 sm:gap-4 md:gap-8 min-w-0">
           {/* Mobile menu toggle & Logo */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 sm:gap-3 min-w-0 shrink-0">
             <button
+              id="btn_mobile_menu_toggle"
               onClick={() => setIsMobileMenuOpen(true)}
-              className="lg:hidden p-2 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors"
+              className="lg:hidden p-1.5 sm:p-2 min-w-[38px] min-h-[38px] flex items-center justify-center rounded-xl text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer touch-manipulation shrink-0 active:scale-95"
               aria-label={t('nav.menu')}
             >
-              <Menu className="w-6 h-6" />
+              <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
             </button>
 
             {/* Store Brand / Logo */}
             <button
               onClick={() => onNavigate('/')}
-              className={`flex items-center gap-2.5 cursor-pointer group ${isRtl ? 'text-right' : 'text-left'}`}
+              className={`flex items-center gap-1.5 sm:gap-2 cursor-pointer group shrink-0 ${isRtl ? 'text-right' : 'text-left'}`}
+              aria-label={storeName}
             >
               <img
                 src="https://assets.wuiltstore.com/clqvb10wk0zhh01o1ed177fz2__D8_B4_D8_B9_D8_A7_D8_B14.png"
                 alt={storeName}
-                className="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-105"
+                className="h-8 sm:h-12 w-auto max-w-[100px] xs:max-w-[125px] sm:max-w-none object-contain shrink-0 transition-transform group-hover:scale-105"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   if (!target.src.includes('/favicon.svg')) {
@@ -198,10 +201,10 @@ export const Header: React.FC<HeaderProps> = ({ categories, currentPath, onNavig
                 }}
               />
               <div className={`hidden sm:block ${isRtl ? 'text-right' : 'text-left'}`}>
-                <span className="block text-base font-bold text-slate-900 leading-tight">
+                <span className="block text-sm sm:text-base font-bold text-slate-900 leading-tight">
                   {storeName}
                 </span>
-                <span className="block text-[11px] font-semibold text-sky-700 uppercase tracking-wide">
+                <span className="block text-[10px] sm:text-[11px] font-semibold text-sky-700 uppercase tracking-wide">
                   {isRtl ? 'مكتبة ومستلزمات مدرسية في الكويت' : 'STATIONERY & SCHOOL SUPPLIES KUWAIT'}
                 </span>
               </div>
@@ -309,21 +312,24 @@ export const Header: React.FC<HeaderProps> = ({ categories, currentPath, onNavig
           </div>
 
           {/* Quick Actions (Gamification, Wishlist, Track Order, Cart) */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <HeaderGamificationWidget onNavigate={(p) => onNavigate(p.startsWith('/') ? p : `/${p}`)} />
 
             <button
+              id="btn_header_track_order"
               onClick={() => onNavigate('/track-order')}
-              className="hidden md:flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-sky-700 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer"
+              className="hidden md:flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-sky-700 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer shrink-0"
             >
               <Package className="w-4 h-4 text-slate-500" />
               <span>{t('nav.track_order')}</span>
             </button>
 
             <button
+              id="btn_header_wishlist"
               onClick={() => onNavigate('/shop', { wishlist: 'true' })}
-              className="relative p-2 text-slate-700 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"
+              className="relative hidden sm:flex p-1.5 sm:p-2 min-w-[36px] min-h-[36px] items-center justify-center text-slate-700 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer shrink-0 touch-manipulation active:scale-95"
               title={t('nav.wishlist')}
+              aria-label={t('nav.wishlist')}
             >
               <Heart className="w-5 h-5" />
               {wishlist.length > 0 && (
@@ -334,18 +340,20 @@ export const Header: React.FC<HeaderProps> = ({ categories, currentPath, onNavig
             </button>
 
             <button
+              id="btn_header_cart"
               onClick={openCart}
-              className="flex items-center gap-2 bg-sky-700 hover:bg-sky-800 text-white px-3.5 py-2 rounded-xl text-sm font-semibold transition-colors shadow-xs hover:shadow cursor-pointer"
+              className="flex items-center gap-1.5 sm:gap-2 bg-sky-700 hover:bg-sky-800 text-white p-2 sm:px-3.5 sm:py-2 rounded-xl text-sm font-semibold transition-colors shadow-xs hover:shadow cursor-pointer shrink-0 touch-manipulation min-w-[40px] min-h-[40px] justify-center active:scale-95"
+              aria-label={t('nav.cart')}
             >
-              <div className="relative">
-                <ShoppingBag className="w-5 h-5" />
+              <div className="relative flex items-center justify-center">
+                <ShoppingBag className="w-5 h-5 stroke-[2.2]" />
                 {totalItemsCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-amber-400 text-slate-900 text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center shadow-xs">
+                  <span className="absolute -top-2 -right-2 bg-amber-400 text-slate-900 text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs ring-1.5 ring-white">
                     {totalItemsCount}
                   </span>
                 )}
               </div>
-              <span className="hidden sm:inline">{t('nav.cart')}</span>
+              <span className="hidden sm:inline font-bold">{t('nav.cart')}</span>
             </button>
           </div>
         </div>
@@ -493,17 +501,26 @@ export const Header: React.FC<HeaderProps> = ({ categories, currentPath, onNavig
       </nav>
 
       {/* Mobile Slide-Out Navigation Drawer */}
-      {isMobileMenuOpen && (
-        <div className="fixed inset-0 z-50 lg:hidden" dir={dir}>
-          <div
-            className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs transition-opacity"
-            onClick={() => setIsMobileMenuOpen(false)}
-          />
-          <div
-            className={`fixed inset-y-0 max-w-xs w-full bg-white shadow-2xl p-4 flex flex-col justify-between overflow-y-auto duration-200 ${
-              isRtl ? 'right-0 animate-in slide-in-from-right' : 'left-0 animate-in slide-in-from-left'
-            }`}
-          >
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <div className="fixed inset-0 z-50 lg:hidden" dir={dir}>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.2 }}
+              className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs"
+              onClick={() => setIsMobileMenuOpen(false)}
+            />
+            <motion.div
+              initial={{ x: isRtl ? '100%' : '-100%' }}
+              animate={{ x: 0 }}
+              exit={{ x: isRtl ? '100%' : '-100%' }}
+              transition={{ type: 'spring', damping: 28, stiffness: 300 }}
+              className={`fixed inset-y-0 w-[min(340px,88vw)] max-w-sm bg-white shadow-2xl p-4 pt-safe pb-safe flex flex-col justify-between overflow-y-auto overscroll-contain z-10 ${
+                isRtl ? 'right-0' : 'left-0'
+              }`}
+            >
             <div>
               <div className="flex items-center justify-between pb-3 border-b border-slate-100">
                 <div className="flex items-center gap-2">
@@ -516,7 +533,7 @@ export const Header: React.FC<HeaderProps> = ({ categories, currentPath, onNavig
                 </div>
                 <button
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className="p-1 rounded-lg text-slate-500 hover:bg-slate-100 cursor-pointer"
+                  className="p-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 cursor-pointer touch-manipulation"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -780,9 +797,10 @@ export const Header: React.FC<HeaderProps> = ({ categories, currentPath, onNavig
                 <span>{t('topbar.our_location')}</span>
               </a>
             </div>
-          </div>
+          </motion.div>
         </div>
       )}
-    </header>
+    </AnimatePresence>
+  </header>
   );
 };

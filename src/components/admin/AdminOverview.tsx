@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { Product, Order } from '../../types';
 import { AdminTab } from './AdminSidebar';
+import { getProductImageUrl, handleImageError } from '../../lib/imageHelper';
 
 interface AdminOverviewProps {
   stats: any;
@@ -325,10 +326,12 @@ export const AdminOverview: React.FC<AdminOverviewProps> = ({
               >
                 <div className="flex items-center gap-3 overflow-hidden">
                   <img
-                    src={prod.images?.[0] || 'https://placehold.co/100x100?text=Product'}
+                    src={getProductImageUrl(prod.images?.[0])}
                     alt={prod.title}
-                    className="w-11 h-11 rounded-lg object-contain bg-white shrink-0 p-1 border border-slate-800"
+                    className="w-11 h-11 rounded-lg object-contain bg-white shrink-0 p-1 border border-slate-700/70"
                     referrerPolicy="no-referrer"
+                    onError={handleImageError}
+                    loading="lazy"
                   />
                   <div className="overflow-hidden space-y-0.5">
                     <h3 className="text-xs font-bold text-white truncate group-hover:text-sky-400 transition-colors">

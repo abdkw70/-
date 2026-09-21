@@ -58,8 +58,8 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({ onNavigate }) =>
   const currentComparePrice = selectedVariant?.compareAtPrice ?? product.compareAtPrice;
   const currentSku = selectedVariant?.sku || product.sku;
   const currentInStock = selectedVariant
-    ? (selectedVariant.stock !== undefined ? selectedVariant.stock > 0 : (selectedVariant.enabled !== false && product.isInStock))
-    : product.isInStock;
+    ? (selectedVariant.enabled !== false && selectedVariant.isInStock !== false && (selectedVariant.stock === undefined || selectedVariant.stock === null || selectedVariant.stock > 0 || product.isInStock !== false))
+    : (product.isInStock !== false);
 
   const variantImgSrc = typeof selectedVariant?.image === 'string' 
     ? selectedVariant.image 
@@ -129,8 +129,8 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({ onNavigate }) =>
         onClick={closeQuickView}
       />
 
-      <div className="min-h-full flex items-center justify-center p-4">
-        <div className="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-6 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+      <div className="min-h-full flex items-center justify-center p-3 sm:p-4 pt-safe pb-safe">
+        <div className="relative bg-white rounded-2xl shadow-2xl max-w-3xl w-full p-4 sm:p-6 overflow-hidden max-h-[90dvh] overflow-y-auto overscroll-contain animate-in fade-in zoom-in-95 duration-150">
           {/* Close button */}
           <button
             onClick={closeQuickView}
