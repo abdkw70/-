@@ -235,7 +235,7 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ passcode }) => {
       </div>
 
       {/* Users Table / Mobile Cards */}
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+      <div className="bg-slate-900 rounded-2xl border border-slate-800 shadow-sm overflow-hidden">
         {loading ? (
           <div className="py-16 text-center text-slate-400 text-xs flex flex-col items-center gap-2">
             <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
@@ -243,13 +243,13 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ passcode }) => {
           </div>
         ) : filteredUsers.length === 0 ? (
           <div className="py-16 text-center text-slate-400 text-xs">
-            <Users className="w-8 h-8 mx-auto mb-2 text-slate-300" />
+            <Users className="w-8 h-8 mx-auto mb-2 text-slate-500" />
             <p>لا يوجد مستخدمون يطابقون شروط البحث</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="w-full text-right text-xs text-slate-700">
-              <thead className="bg-slate-50 text-slate-500 font-bold border-b border-slate-100">
+            <table className="w-full text-right text-xs text-slate-200">
+              <thead className="bg-slate-950/80 text-slate-400 font-bold border-b border-slate-800">
                 <tr>
                   <th className="py-3 px-4">المستخدم</th>
                   <th className="py-3 px-4">البريد والهاتف</th>
@@ -261,18 +261,18 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ passcode }) => {
                   <th className="py-3 px-4 text-center">الإجراءات</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100">
+              <tbody className="divide-y divide-slate-800">
                 {filteredUsers.map((u) => (
-                  <tr key={u.id} className="hover:bg-slate-50/70 transition-colors">
-                    <td className="py-3.5 px-4 font-bold text-slate-800">
+                  <tr key={u.id} className="hover:bg-slate-800/60 transition-colors">
+                    <td className="py-3.5 px-4 font-bold text-white">
                       <div className="flex items-center gap-2.5">
-                        <div className="w-8 h-8 rounded-full bg-amber-100 text-amber-800 flex items-center justify-center font-black text-xs shrink-0">
+                        <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 flex items-center justify-center font-black text-xs shrink-0">
                           {u.displayName.charAt(0)}
                         </div>
                         <div>
                           <div>{u.displayName}</div>
                           {u.role === 'admin' && (
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-700 bg-indigo-50 px-1.5 py-0.5 rounded-md mt-0.5">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-indigo-300 bg-indigo-900/50 border border-indigo-700/50 px-1.5 py-0.5 rounded-md mt-0.5">
                               <Shield className="w-2.5 h-2.5" />
                               مدير المتجر
                             </span>
@@ -280,26 +280,26 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ passcode }) => {
                         </div>
                       </div>
                     </td>
-                    <td className="py-3.5 px-4 text-slate-600">
-                      <div className="text-[11px] font-medium text-slate-700">{u.email}</div>
+                    <td className="py-3.5 px-4 text-slate-300">
+                      <div className="text-[11px] font-medium text-slate-200">{u.email}</div>
                       <div className="text-[10px] text-slate-400 font-mono mt-0.5">{u.phone !== '-' ? u.phone : 'غير محدد'}</div>
                     </td>
                     <td className="py-3.5 px-4">
-                      <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                      <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-500/20 text-amber-300 border border-amber-500/30">
                         {u.currentTier}
                       </span>
                       <div className="text-[10px] text-slate-400 font-mono mt-0.5 font-bold">{u.xp} XP</div>
                     </td>
-                    <td className="py-3.5 px-4 font-bold text-emerald-600">
+                    <td className="py-3.5 px-4 font-bold text-emerald-400">
                       {u.activeWalletBalance.toFixed(3)} د.ك
                     </td>
-                    <td className="py-3.5 px-4 text-slate-600">
-                      <div className="font-semibold text-slate-800">{u.totalRewardsEarnedKwd.toFixed(3)} د.ك</div>
+                    <td className="py-3.5 px-4 text-slate-300">
+                      <div className="font-semibold text-slate-100">{u.totalRewardsEarnedKwd.toFixed(3)} د.ك</div>
                       <div className="text-[10px] text-slate-400">مستهلك: {u.totalRewardsUsedKwd.toFixed(3)} د.ك</div>
                     </td>
                     <td className="py-3.5 px-4">
-                      <div className="font-semibold text-slate-800">{u.challengesPlayed} جولة</div>
-                      <div className="text-[10px] text-emerald-600 font-medium">مكتمل: {u.challengesCompleted}</div>
+                      <div className="font-semibold text-slate-100">{u.challengesPlayed} جولة</div>
+                      <div className="text-[10px] text-emerald-400 font-medium">مكتمل: {u.challengesCompleted}</div>
                     </td>
                     <td className="py-3.5 px-4 text-slate-400 text-[11px]">
                       {new Date(u.lastLoginAt || u.createdAt).toLocaleDateString('ar-KW', {
@@ -312,7 +312,7 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ passcode }) => {
                     <td className="py-3.5 px-4 text-center">
                       <button
                         onClick={() => viewUserDetail(u.id)}
-                        className="p-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-700 transition-colors cursor-pointer"
+                        className="p-1.5 rounded-lg bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 transition-colors cursor-pointer"
                         title="عرض الملف الكامل"
                       >
                         <Eye className="w-4 h-4" />
@@ -328,12 +328,12 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ passcode }) => {
 
       {/* User Detail Drawer / Modal */}
       {selectedUser && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm overflow-y-auto">
-          <div className="relative w-full max-w-2xl bg-white rounded-3xl shadow-2xl overflow-hidden border border-slate-100 my-8 max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md overflow-y-auto">
+          <div className="relative w-full max-w-2xl bg-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-800 my-8 max-h-[90vh] flex flex-col text-slate-100">
             {/* Header */}
-            <div className="bg-slate-900 text-white p-5 flex items-center justify-between">
+            <div className="bg-slate-950 text-white p-5 flex items-center justify-between border-b border-slate-800">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-500 text-white flex items-center justify-center font-black text-base shadow-md">
+                <div className="w-10 h-10 rounded-2xl bg-amber-500 text-slate-950 flex items-center justify-center font-black text-base shadow-md">
                   {selectedUser.profile.displayName.charAt(0)}
                 </div>
                 <div>
@@ -343,40 +343,40 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ passcode }) => {
               </div>
               <button
                 onClick={() => setSelectedUser(null)}
-                className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer"
+                className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white transition-colors cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
             {/* Scrollable Content */}
-            <div className="p-6 overflow-y-auto flex-1 space-y-6 text-xs text-slate-700">
+            <div className="p-6 overflow-y-auto flex-1 space-y-6 text-xs text-slate-300">
               {/* User Stats Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                <div className="bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800">
                   <div className="text-slate-400 text-[10px] font-bold mb-0.5">رصيد المحفظة النشط</div>
-                  <div className="text-base font-black text-emerald-600">{selectedUser.wallet.activeBalance.toFixed(3)} د.ك</div>
+                  <div className="text-base font-black text-emerald-400">{selectedUser.wallet.activeBalance.toFixed(3)} د.ك</div>
                 </div>
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                <div className="bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800">
                   <div className="text-slate-400 text-[10px] font-bold mb-0.5">المستوى الحالي</div>
-                  <div className="text-sm font-black text-amber-600">{selectedUser.profile.currentTier}</div>
+                  <div className="text-sm font-black text-amber-400">{selectedUser.profile.currentTier}</div>
                   <div className="text-[10px] text-slate-400 font-mono">{selectedUser.profile.xp} XP</div>
                 </div>
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                <div className="bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800">
                   <div className="text-slate-400 text-[10px] font-bold mb-0.5">إجمالي الأرباح</div>
-                  <div className="text-sm font-black text-slate-800">{selectedUser.wallet.totalEarned.toFixed(3)} د.ك</div>
+                  <div className="text-sm font-black text-slate-100">{selectedUser.wallet.totalEarned.toFixed(3)} د.ك</div>
                 </div>
-                <div className="bg-slate-50 p-3.5 rounded-2xl border border-slate-100">
+                <div className="bg-slate-950/60 p-3.5 rounded-2xl border border-slate-800">
                   <div className="text-slate-400 text-[10px] font-bold mb-0.5">الجولات المكتملة</div>
-                  <div className="text-sm font-black text-slate-800">{selectedUser.profile.challengesCompleted} / {selectedUser.profile.challengesPlayed}</div>
+                  <div className="text-sm font-black text-slate-100">{selectedUser.profile.challengesCompleted} / {selectedUser.profile.challengesPlayed}</div>
                 </div>
               </div>
 
               {/* User Account Info */}
-              <div className="bg-slate-50 p-4 rounded-2xl border border-slate-100 space-y-2">
-                <div className="font-bold text-slate-800 mb-2">معلومات الحساب:</div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-600">
-                  <div><strong>معرف المستخدم (UID):</strong> <span className="font-mono text-[10px] text-slate-500">{selectedUser.profile.id}</span></div>
+              <div className="bg-slate-950/60 p-4 rounded-2xl border border-slate-800 space-y-2">
+                <div className="font-bold text-white mb-2">معلومات الحساب:</div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-slate-300">
+                  <div><strong>معرف المستخدم (UID):</strong> <span className="font-mono text-[10px] text-slate-400">{selectedUser.profile.id}</span></div>
                   <div><strong>رقم الهاتف:</strong> {selectedUser.profile.phone || selectedUser.profile.phoneNumber || 'غير محدد'}</div>
                   <div><strong>تاريخ التسجيل:</strong> {new Date(selectedUser.profile.createdAt).toLocaleString('ar-KW')}</div>
                   <div><strong>آخر تسجيل دخول:</strong> {selectedUser.profile.lastLoginAt ? new Date(selectedUser.profile.lastLoginAt).toLocaleString('ar-KW') : 'غير متوفر'}</div>
@@ -387,25 +387,25 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ passcode }) => {
 
               {/* Wallet Active Items (48h Expiry) */}
               <div>
-                <div className="font-bold text-slate-800 mb-2 flex items-center justify-between">
+                <div className="font-bold text-white mb-2 flex items-center justify-between">
                   <span>أرصدة ومكافآت المحفظة الحالية ({selectedUser.wallet.items?.length || 0}):</span>
                 </div>
                 {(!selectedUser.wallet.items || selectedUser.wallet.items.length === 0) ? (
-                  <div className="p-4 bg-slate-50 rounded-xl text-center text-slate-400">لا توجد مكافآت مسجلة في المحفظة حالياً</div>
+                  <div className="p-4 bg-slate-950/60 rounded-xl text-center text-slate-500 border border-slate-800">لا توجد مكافآت مسجلة في المحفظة حالياً</div>
                 ) : (
                   <div className="space-y-2 max-h-40 overflow-y-auto">
                     {selectedUser.wallet.items.map((item: any) => (
-                      <div key={item.id} className="p-3 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between">
+                      <div key={item.id} className="p-3 bg-slate-950/60 rounded-xl border border-slate-800 flex items-center justify-between">
                         <div>
-                          <div className="font-bold text-slate-800">{item.amount.toFixed(3)} د.ك</div>
+                          <div className="font-bold text-white">{item.amount.toFixed(3)} د.ك</div>
                           <div className="text-[10px] text-slate-400">
                             صالح حتى: {new Date(item.expiresAt).toLocaleString('ar-KW')}
                           </div>
                         </div>
                         <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                          item.status === 'active' ? 'bg-emerald-50 text-emerald-700' :
-                          item.status === 'used' ? 'bg-slate-200 text-slate-700' :
-                          'bg-rose-50 text-rose-700'
+                          item.status === 'active' ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' :
+                          item.status === 'used' ? 'bg-slate-800 text-slate-400 border border-slate-700' :
+                          'bg-rose-500/20 text-rose-300 border border-rose-500/30'
                         }`}>
                           {item.status === 'active' && 'نشط'}
                           {item.status === 'used' && 'مستخدم'}
@@ -419,37 +419,37 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ passcode }) => {
 
               {/* Recent Challenge Activities */}
               <div>
-                <div className="font-bold text-slate-800 mb-2">سجل نشاط التحديات الأخير:</div>
+                <div className="font-bold text-white mb-2">سجل نشاط التحديات الأخير:</div>
                 {(!selectedUser.activities || selectedUser.activities.length === 0) ? (
-                  <div className="p-4 bg-slate-50 rounded-xl text-center text-slate-400">لا يوجد سجل نشاط مسجل</div>
+                  <div className="p-4 bg-slate-950/60 rounded-xl text-center text-slate-500 border border-slate-800">لا يوجد سجل نشاط مسجل</div>
                 ) : (
                   <div className="space-y-1.5 max-h-44 overflow-y-auto">
                     {selectedUser.activities.map((act: ChallengeActivityItem) => (
-                      <div key={act.id} className="p-2.5 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-between text-[11px]">
+                      <div key={act.id} className="p-2.5 bg-slate-950/60 rounded-xl border border-slate-800 flex items-center justify-between text-[11px]">
                         <div className="truncate max-w-[280px]">
-                          <span className="font-semibold text-slate-700">{act.questionText || act.questionId}</span>
+                          <span className="font-semibold text-slate-300">{act.questionText || act.questionId}</span>
                         </div>
                         <div className="flex items-center gap-2 shrink-0">
                           {act.result === 'correct' && (
-                            <span className="text-emerald-600 font-bold flex items-center gap-1">
+                            <span className="text-emerald-400 font-bold flex items-center gap-1">
                               <CheckCircle2 className="w-3.5 h-3.5" />
                               +{act.reward.toFixed(3)} د.ك
                             </span>
                           )}
                           {act.result === 'wrong' && (
-                            <span className="text-rose-600 font-bold flex items-center gap-1">
+                            <span className="text-rose-400 font-bold flex items-center gap-1">
                               <XCircle className="w-3.5 h-3.5" />
                               خطأ
                             </span>
                           )}
                           {act.result === 'timeout' && (
-                            <span className="text-amber-600 font-bold flex items-center gap-1">
+                            <span className="text-amber-400 font-bold flex items-center gap-1">
                               <Clock className="w-3.5 h-3.5" />
                               انتهاء الوقت
                             </span>
                           )}
                           {act.result === 'rejected_duplicate' && (
-                            <span className="text-purple-600 font-bold flex items-center gap-1">
+                            <span className="text-purple-400 font-bold flex items-center gap-1">
                               <AlertTriangle className="w-3.5 h-3.5" />
                               مكرر
                             </span>
@@ -463,10 +463,10 @@ export const AdminUsers: React.FC<AdminUsersProps> = ({ passcode }) => {
             </div>
 
             {/* Footer */}
-            <div className="p-4 bg-slate-50 border-t border-slate-100 flex justify-end">
+            <div className="p-4 bg-slate-950 border-t border-slate-800 flex justify-end">
               <button
                 onClick={() => setSelectedUser(null)}
-                className="px-5 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-xl transition-colors cursor-pointer"
+                className="px-5 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold text-xs rounded-xl transition-colors cursor-pointer"
               >
                 إغلاق
               </button>

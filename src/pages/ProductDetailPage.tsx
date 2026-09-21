@@ -10,6 +10,8 @@ import {
   Star,
   ChevronRight,
   ChevronLeft,
+  ArrowRight,
+  ArrowLeft,
   Share2,
   AlertCircle,
   Clock,
@@ -285,31 +287,46 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ idOrHandle
     <ChevronRight className="w-3.5 h-3.5 text-slate-400" />
   );
 
+  const BackIcon = isRtl ? ArrowRight : ArrowLeft;
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-10" dir={dir}>
-      {/* Breadcrumb Navigation */}
-      <nav className="flex items-center gap-1.5 text-xs text-slate-500 font-medium flex-wrap">
-        <button onClick={() => onNavigate('/')} className="hover:text-sky-700 cursor-pointer">
-          {t('nav.home')}
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-8" dir={dir}>
+      {/* Top Header Navigation with Prominent Continue Shopping Button */}
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-3 border-b border-slate-200">
+        <button
+          id="btn_continue_shopping_top"
+          type="button"
+          onClick={() => onNavigate('/shop')}
+          className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs sm:text-sm rounded-xl transition-all shadow-2xs hover:shadow-xs cursor-pointer touch-manipulation min-h-[40px]"
+        >
+          <BackIcon className="w-4 h-4 text-sky-700" />
+          <span>{isRtl ? 'العودة للتسوق' : 'Continue Shopping'}</span>
         </button>
-        {BreadcrumbSep}
-        <button onClick={() => onNavigate('/shop')} className="hover:text-sky-700 cursor-pointer">
-          {t('nav.shop')}
-        </button>
-        {product.categoryName && (
-          <>
-            {BreadcrumbSep}
-            <button
-              onClick={() => onNavigate('/shop', { category: product.categoryName || '' })}
-              className="hover:text-sky-700 cursor-pointer"
-            >
-              {localizedCategory}
-            </button>
-          </>
-        )}
-        {BreadcrumbSep}
-        <span className="text-slate-900 font-bold truncate max-w-xs">{localizedTitle}</span>
-      </nav>
+
+        {/* Breadcrumb Navigation */}
+        <nav className="flex items-center gap-1.5 text-xs text-slate-500 font-medium flex-wrap ms-auto">
+          <button onClick={() => onNavigate('/')} className="hover:text-sky-700 cursor-pointer">
+            {t('nav.home')}
+          </button>
+          {BreadcrumbSep}
+          <button onClick={() => onNavigate('/shop')} className="hover:text-sky-700 cursor-pointer">
+            {t('nav.shop')}
+          </button>
+          {product.categoryName && (
+            <>
+              {BreadcrumbSep}
+              <button
+                onClick={() => onNavigate('/shop', { category: product.categoryName || '' })}
+                className="hover:text-sky-700 cursor-pointer"
+              >
+                {localizedCategory}
+              </button>
+            </>
+          )}
+          {BreadcrumbSep}
+          <span className="text-slate-900 font-bold truncate max-w-[180px] sm:max-w-xs">{localizedTitle}</span>
+        </nav>
+      </div>
 
       {/* Main Product Details Section */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12">
@@ -637,6 +654,17 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({ idOrHandle
                 <span>{isRtl ? 'زيارة المتجر (خرائط جوجل)' : 'Visit Store (Google Maps)'}</span>
               </a>
             </div>
+
+            {/* Clear Action: Continue Shopping Button */}
+            <button
+              id="btn_continue_shopping_bottom"
+              type="button"
+              onClick={() => onNavigate('/shop')}
+              className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-3 px-4 rounded-2xl text-xs sm:text-sm transition-all flex items-center justify-center gap-2 shadow-2xs hover:shadow-xs cursor-pointer touch-manipulation min-h-[44px]"
+            >
+              <BackIcon className="w-4 h-4 text-sky-700" />
+              <span>{isRtl ? 'متابعة التسوق واستعراض باقي المنتجات' : 'Continue Shopping & Explore More'}</span>
+            </button>
           </div>
 
           {/* Guarantee Badges */}

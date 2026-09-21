@@ -1,16 +1,30 @@
 @import "tailwindcss";
 
 @layer base {
-  html[lang="ar"],
-  body[data-lang="ar"],
-  [dir="rtl"] {
-    font-family: 'Alexandria', 'Cairo', system-ui, -apple-system, sans-serif;
+  /* Global Typography Standard: Cairo 400 for Headings, Tajawal 400 for Body/Text */
+  html,
+  body,
+  button,
+  input,
+  select,
+  textarea,
+  label,
+  p,
+  span,
+  div,
+  a {
+    font-family: 'Tajawal', 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   }
 
-  html[lang="en"],
-  body[data-lang="en"],
-  [dir="ltr"] {
-    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6,
+  .font-heading {
+    font-family: 'Cairo', system-ui, -apple-system, sans-serif;
+    font-weight: 400;
   }
 
   html,
@@ -23,6 +37,7 @@
     overflow-x: clip;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-weight: 400;
   }
 
   /* Safe Area Support */

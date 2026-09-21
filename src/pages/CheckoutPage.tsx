@@ -268,22 +268,31 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
           </p>
         </div>
 
-        {/* Support quick buttons */}
+        {/* Support & Continue Shopping quick buttons */}
         <div className="flex flex-wrap items-center gap-2">
+          <button
+            id="btn_checkout_continue_shopping"
+            type="button"
+            onClick={() => onNavigate('/shop')}
+            className="flex items-center gap-1.5 text-xs sm:text-sm font-bold text-slate-800 bg-slate-100 hover:bg-slate-200 px-3.5 py-2 rounded-xl border border-slate-200 transition-all cursor-pointer min-h-[40px]"
+          >
+            <ShoppingBag className="w-4 h-4 text-sky-700" />
+            <span>{isRtl ? 'العودة للتسوق' : 'Continue Shopping'}</span>
+          </button>
           <a
             href="https://wa.me/96597123698"
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3.5 py-2 rounded-xl border border-emerald-200 transition-colors"
+            className="flex items-center gap-1.5 text-xs font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 px-3.5 py-2 rounded-xl border border-emerald-200 transition-colors min-h-[40px]"
           >
             <MessageCircle className="w-4 h-4 text-emerald-600" />
-            <span>{isRtl ? 'طلب أو استفسار بالواتساب' : 'WhatsApp Support'}</span>
+            <span>{isRtl ? 'استفسار بالواتساب' : 'WhatsApp Support'}</span>
           </a>
           <a
             href="https://maps.app.goo.gl/KNmkE9nq7CbD2Ws69?g_st=ic"
             target="_blank"
             rel="noreferrer"
-            className="flex items-center gap-1.5 text-xs font-bold text-sky-800 bg-sky-50 hover:bg-sky-100 px-3.5 py-2 rounded-xl border border-sky-200 transition-colors"
+            className="flex items-center gap-1.5 text-xs font-bold text-sky-800 bg-sky-50 hover:bg-sky-100 px-3.5 py-2 rounded-xl border border-sky-200 transition-colors min-h-[40px]"
           >
             <MapPin className="w-4 h-4 text-sky-600" />
             <span>{t('topbar.our_location')}</span>

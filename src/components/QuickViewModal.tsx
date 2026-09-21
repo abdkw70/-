@@ -379,16 +379,29 @@ export const QuickViewModal: React.FC<QuickViewModalProps> = ({ onNavigate }) =>
                   </button>
                 </div>
 
-                <button
-                  onClick={() => {
-                    closeQuickView();
-                    onNavigate(`/product/${encodeURIComponent(product.handle || product.id)}`);
-                  }}
-                  className="w-full text-center text-xs font-bold text-sky-700 hover:text-sky-900 py-1.5 flex items-center justify-center gap-1 cursor-pointer"
-                >
-                  <span>{t('product.view_details')}</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
-                </button>
+                <div className="grid grid-cols-2 gap-2 pt-1">
+                  <button
+                    onClick={() => {
+                      closeQuickView();
+                      onNavigate(`/product/${encodeURIComponent(product.handle || product.id)}`);
+                    }}
+                    className="w-full text-center text-xs font-bold text-sky-700 hover:text-sky-900 py-2 bg-sky-50 rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                  >
+                    <span>{t('product.view_details')}</span>
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </button>
+
+                  <button
+                    id="btn_quickview_continue_shopping"
+                    onClick={() => {
+                      closeQuickView();
+                      onNavigate('/shop');
+                    }}
+                    className="w-full text-center text-xs font-bold text-slate-700 hover:text-slate-900 py-2 bg-slate-100 hover:bg-slate-200 rounded-xl flex items-center justify-center gap-1 cursor-pointer transition-colors"
+                  >
+                    <span>{isRtl ? 'متابعة التسوق' : 'Continue Shopping'}</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>

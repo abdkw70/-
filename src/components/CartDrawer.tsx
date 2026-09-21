@@ -385,6 +385,19 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigate }) => {
                       {t('cart.view_cart')}
                     </button>
                   </div>
+
+                  <button
+                    id="btn_cart_drawer_continue_shopping"
+                    type="button"
+                    onClick={() => {
+                      closeCart();
+                      onNavigate('/shop');
+                    }}
+                    className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold py-2.5 px-3 rounded-xl text-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer touch-manipulation min-h-[40px]"
+                  >
+                    <span>{t('cart.continue_shopping', 'متابعة التسوق')}</span>
+                    <ArrowIcon className="w-3.5 h-3.5 text-sky-700" />
+                  </button>
                 </div>
               </div>
             )}
