@@ -448,8 +448,9 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
         </div>
 
         {/* Form Body */}
-        <form onSubmit={handleSave} className="overflow-y-auto p-6 flex-1 space-y-6">
-          {/* TAB 1: Basic Info & Prices */}
+        <form onSubmit={handleSave} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div className="overflow-y-auto p-4 sm:p-6 flex-1 space-y-6">
+            {/* TAB 1: Basic Info & Prices */}
           {activeTab === 'info' && (
             <div className="space-y-6">
               {/* Title & Handle */}
@@ -1238,8 +1239,10 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
             </div>
           )}
 
-          {/* Footer Submit Buttons */}
-          <div className="pt-6 border-t border-slate-800 flex items-center justify-between">
+          </div>
+
+          {/* Footer Submit Buttons - Pinned */}
+          <div className="p-4 sm:p-6 border-t border-slate-800 bg-slate-950/80 flex items-center justify-between shrink-0">
             <button
               type="button"
               onClick={onClose}
@@ -1251,7 +1254,7 @@ export const ProductEditModal: React.FC<ProductEditModalProps> = ({
             <button
               type="submit"
               disabled={isSaving}
-              className="px-6 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-sky-600/25 disabled:opacity-50 flex items-center gap-2 cursor-pointer active:scale-95"
+              className="px-6 py-2.5 bg-sky-600 hover:bg-sky-500 text-white rounded-xl text-xs font-bold transition-all shadow-lg shadow-sky-600/25 disabled:opacity-50 flex items-center gap-2 cursor-pointer active:scale-95 min-h-[40px]"
             >
               {isSaving ? (
                 <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />

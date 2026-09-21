@@ -144,10 +144,10 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
   };
 
   const renderNavContent = (isDrawer: boolean = false) => (
-    <div className="flex flex-col justify-between h-full">
-      {/* Brand Header */}
-      <div>
-        <div className="p-4 sm:p-5 border-b border-slate-800/80 flex items-center justify-between">
+    <div className="flex flex-col justify-between h-full min-h-0">
+      {/* Brand Header & Nav Group */}
+      <div className="flex flex-col flex-1 min-h-0 overflow-hidden">
+        <div className="p-4 sm:p-5 border-b border-slate-800/80 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-600 flex items-center justify-center text-white shadow-md shadow-sky-500/20 shrink-0">
               <Store className="w-5 h-5" />
@@ -174,8 +174,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
           )}
         </div>
 
-        {/* Navigation List */}
-        <nav className="p-3 space-y-1.5 flex-1 overflow-y-auto scrollbar-thin">
+        {/* Navigation List - Scrolls internally */}
+        <nav className="p-3 space-y-1.5 flex-1 min-h-0 overflow-y-auto scrollbar-thin">
           {navItems.map(item => {
             const Icon = item.icon;
             const isActive = activeTab === item.id;
@@ -209,8 +209,8 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
         </nav>
       </div>
 
-      {/* Footer controls */}
-      <div className="p-4 border-t border-slate-800/80 space-y-2 bg-slate-950/40 pb-safe">
+      {/* Footer controls - Pinned at bottom */}
+      <div className="p-4 border-t border-slate-800/80 space-y-2 bg-slate-950/40 pb-safe shrink-0">
         <button
           onClick={onViewStore}
           className="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 transition-all cursor-pointer"

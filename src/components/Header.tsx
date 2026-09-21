@@ -18,6 +18,8 @@ import {
   Award,
   Trophy,
   Globe,
+  User,
+  Shield,
 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
@@ -312,48 +314,67 @@ export const Header: React.FC<HeaderProps> = ({ categories, currentPath, onNavig
           </div>
 
           {/* Quick Actions (Gamification, Wishlist, Track Order, Cart) */}
-          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
             <HeaderGamificationWidget onNavigate={(p) => onNavigate(p.startsWith('/') ? p : `/${p}`)} />
 
             <button
               id="btn_header_track_order"
               onClick={() => onNavigate('/track-order')}
-              className="hidden md:flex items-center gap-1.5 px-3 py-2 text-xs font-medium text-slate-700 hover:text-sky-700 hover:bg-slate-50 rounded-lg transition-colors cursor-pointer shrink-0"
+              className="hidden md:flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-slate-700 bg-slate-100/90 hover:text-sky-700 hover:bg-slate-200/90 border border-slate-200 rounded-xl transition-all cursor-pointer shrink-0 min-h-[38px] shadow-2xs"
+              title={t('nav.track_order')}
             >
-              <Package className="w-4 h-4 text-slate-500" />
-              <span>{t('nav.track_order')}</span>
+              <Package className="w-4 h-4 text-slate-600 shrink-0" />
+              <span className="whitespace-nowrap">{t('nav.track_order')}</span>
             </button>
 
             <button
               id="btn_header_wishlist"
               onClick={() => onNavigate('/shop', { wishlist: 'true' })}
-              className="relative hidden sm:flex p-1.5 sm:p-2 min-w-[36px] min-h-[36px] items-center justify-center text-slate-700 hover:text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer shrink-0 touch-manipulation active:scale-95"
+              className="relative hidden sm:flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-rose-700 bg-rose-50/90 hover:bg-rose-100 border border-rose-200/90 rounded-xl transition-all cursor-pointer shrink-0 touch-manipulation active:scale-95 min-h-[38px] shadow-2xs"
               title={t('nav.wishlist')}
               aria-label={t('nav.wishlist')}
             >
-              <Heart className="w-5 h-5" />
-              {wishlist.length > 0 && (
-                <span className="absolute -top-1 -right-1 bg-rose-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center">
-                  {wishlist.length}
-                </span>
-              )}
+              <div className="relative flex items-center justify-center">
+                <Heart className="w-4 h-4 text-rose-600 fill-rose-500/20 shrink-0" />
+                {wishlist.length > 0 && (
+                  <span className="absolute -top-2.5 -right-2.5 bg-rose-600 text-white text-[10px] font-bold w-4 h-4 rounded-full flex items-center justify-center ring-2 ring-white">
+                    {wishlist.length}
+                  </span>
+                )}
+              </div>
+              <span className="whitespace-nowrap">{t('nav.wishlist', 'المفضلة')}</span>
             </button>
 
+            {/* Admin Link for Admin Users */}
+            {user && userProfile?.role === 'admin' && (
+              <button
+                id="btn_header_admin_dashboard_desktop"
+                onClick={() => onNavigate('/admin')}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-2 text-xs font-bold text-amber-300 bg-slate-900 hover:bg-slate-800 border border-amber-500/50 rounded-xl transition-all cursor-pointer shrink-0 shadow-xs min-h-[38px]"
+                title={isRtl ? 'مركز التحكم' : 'Admin'}
+              >
+                <Shield className="w-4 h-4 text-amber-400 shrink-0" />
+                <span className="whitespace-nowrap">{isRtl ? 'الإدارة' : 'Admin'}</span>
+              </button>
+            )}
+
+            {/* Shopping Cart Button */}
             <button
               id="btn_header_cart"
               onClick={openCart}
-              className="flex items-center gap-1.5 sm:gap-2 bg-sky-700 hover:bg-sky-800 text-white p-2 sm:px-3.5 sm:py-2 rounded-xl text-sm font-semibold transition-colors shadow-xs hover:shadow cursor-pointer shrink-0 touch-manipulation min-w-[40px] min-h-[40px] justify-center active:scale-95"
+              className="flex items-center gap-2 bg-sky-700 hover:bg-sky-800 text-white px-3.5 py-2 rounded-xl text-xs font-bold transition-all shadow-sm hover:shadow-md cursor-pointer shrink-0 touch-manipulation min-h-[38px] justify-center active:scale-95 border border-sky-600"
               aria-label={t('nav.cart')}
+              title={t('nav.cart')}
             >
               <div className="relative flex items-center justify-center">
-                <ShoppingBag className="w-5 h-5 stroke-[2.2]" />
+                <ShoppingBag className="w-4 h-4 stroke-[2.2] shrink-0" />
                 {totalItemsCount > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-amber-400 text-slate-900 text-[10px] font-black w-4 h-4 rounded-full flex items-center justify-center shadow-xs ring-1.5 ring-white">
+                  <span className="absolute -top-2.5 -right-2.5 bg-amber-400 text-slate-950 text-[10px] font-black w-4.5 h-4.5 rounded-full flex items-center justify-center shadow-xs ring-2 ring-sky-700">
                     {totalItemsCount}
                   </span>
                 )}
               </div>
-              <span className="hidden sm:inline font-bold">{t('nav.cart')}</span>
+              <span className="font-bold text-xs whitespace-nowrap">{t('nav.cart')}</span>
             </button>
           </div>
         </div>
