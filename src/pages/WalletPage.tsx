@@ -147,128 +147,33 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onNavigate }) => {
         </div>
       </div>
 
-      {/* Expiry Alert (if item expiring in < 6 hours) */}
-      {expiringSoonItem && (
-        <div className="p-4 rounded-2xl bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-800/60 flex items-start gap-3 text-rose-800 dark:text-rose-200 shadow-sm">
-          <AlertTriangle className="w-5 h-5 text-rose-600 dark:text-rose-400 shrink-0 mt-0.5" />
-          <div className="text-xs space-y-0.5">
-            <div className="font-bold text-sm">
-              {isRtl
-                ? `تنبيه: رصيد مكافأة بقيمة ${formatPrice(expiringSoonItem.amount)} قارب على الانتهاء!`
-                : `Warning: Reward balance of ${formatPrice(expiringSoonItem.amount)} is expiring soon!`}
-            </div>
-            <div>
-              {isRtl
-                ? `متبقي أقل من ${expiringSoonItem.remainingHours} ساعة و ${expiringSoonItem.remainingMinutes} دقيقة على انتهاء صلاحية هذا الرصيد. استخدمه في طلبك القادم قبل انتهاء مهلة الـ48 ساعة.`
-                : `Less than ${expiringSoonItem.remainingHours}h and ${expiringSoonItem.remainingMinutes}m left before this credit expires. Use it on your next order before the 48h limit.`}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Balance Summary Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        {/* Active Balance Card */}
-        <div className="p-6 rounded-2xl bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-teal-500/10 dark:from-emerald-950/40 dark:via-slate-900 dark:to-teal-950/30 border border-emerald-500/30 shadow-sm space-y-3 relative overflow-hidden">
-          <div className="flex items-center justify-between text-emerald-700 dark:text-emerald-400">
-            <span className="text-xs font-bold">
-              {isRtl ? 'الرصيد النشط المتاح للشراء' : 'Active Balance for Orders'}
-            </span>
-            <Coins className="w-5 h-5" />
-          </div>
-          <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white font-mono flex items-baseline gap-2">
-            <span>{(wallet?.activeBalance ?? 0).toFixed(3)}</span>
-            <span className="text-sm font-bold text-slate-500">{t('common.kwd')}</span>
-          </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 flex items-center justify-between pt-2 border-t border-emerald-500/20">
-            <span>{isRtl ? 'جاهز للخصم الفوري بالسلة' : 'Ready for checkout discount'}</span>
-            <span className="font-mono text-emerald-600 font-bold">
-              {isRtl
-                ? `خصم حتى ${settings?.maxWalletUsagePercent ?? 50}% من الطلب`
-                : `Up to ${settings?.maxWalletUsagePercent ?? 50}% off order`}
-            </span>
-          </div>
-        </div>
-
-        {/* Total Rewards Earned */}
-        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-          <div className="flex items-center justify-between text-amber-600 dark:text-amber-400">
-            <span className="text-xs font-bold">
-              {isRtl ? 'إجمالي المكافآت المكتسبة' : 'Total Rewards Earned'}
-            </span>
-            <Sparkles className="w-5 h-5" />
-          </div>
-          <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white font-mono flex items-baseline gap-2">
-            <span>{(profile?.totalRewardsEarnedKwd ?? wallet?.lifetimeEarned ?? 0).toFixed(3)}</span>
-            <span className="text-sm font-bold text-slate-500">{t('common.kwd')}</span>
-          </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <span>{isRtl ? 'من إجابات الألعاب والتحديات' : 'From challenge games'}</span>
-            <span className="font-bold text-amber-600 font-mono">
-              {profile?.correctAnswersCount || 0} {isRtl ? 'إجابة صحيحة' : 'correct answers'}
-            </span>
-          </div>
-        </div>
-
-        {/* Spent Rewards */}
-        <div className="p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
-          <div className="flex items-center justify-between text-sky-600 dark:text-sky-400">
-            <span className="text-xs font-bold">
-              {isRtl ? 'الرصيد المستخدم في الطلبات' : 'Credits Redeemed'}
-            </span>
-            <ShoppingBag className="w-5 h-5" />
-          </div>
-          <div className="text-3xl sm:text-4xl font-black text-slate-900 dark:text-white font-mono flex items-baseline gap-2">
-            <span>{(wallet?.lifetimeSpent ?? 0).toFixed(3)}</span>
-            <span className="text-sm font-bold text-slate-500">{t('common.kwd')}</span>
-          </div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between">
-            <span>{isRtl ? 'وفرته في فواتير مشترياتك' : 'Saved on your orders'}</span>
-            <span className="font-bold text-sky-600">
-              {isRtl ? 'وفورات فعلية ✓' : 'Real Savings ✓'}
-            </span>
-          </div>
-        </div>
-      </div>
-
       {/* Wallet Usage Rules Card */}
       <div className="p-5 rounded-2xl bg-slate-50 dark:bg-slate-850 border border-slate-200 dark:border-slate-700/60 space-y-3">
         <div className="flex items-center gap-2 text-slate-900 dark:text-white font-bold text-sm">
           <Info className="w-4 h-4 text-sky-600" />
-          <span>{isRtl ? 'كيف تعمل محفظة المكافآت؟' : 'How does the rewards wallet work?'}</span>
+          <span>{isRtl ? 'كيف تعمل محفظة المكافآت والمشتروات؟' : 'How does the Wallet & Rewards work?'}</span>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-slate-600 dark:text-slate-300">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-slate-600 dark:text-slate-300">
           <div className="p-3.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
             <div className="font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1.5">
               <Award className="w-4 h-4" />
-              <span>{isRtl ? '1. العب واكسب 1.000 د.ك' : '1. Play & Earn 1.000 KWD'}</span>
+              <span>{isRtl ? '1. المكافآت النقدية من الألعاب والفعاليات' : '1. Cash Rewards from Games & Events'}</span>
             </div>
             <p className="leading-relaxed">
               {isRtl
-                ? 'ادخل أي لعبة من الألعاب البصرية العشر، وأجب على 4/4 أسئلة بشكل صحيح لتضاف 1.000 د.ك مباشرة لمحفظتك.'
-                : 'Enter any of the 10 visual games and answer 4/4 questions correctly to add 1.000 KWD directly to your wallet.'}
+                ? 'تنافس في الألعاب المصغرة والمواسم واجمع نقاط XP. عند فوزك أو تحقيق مراتب متقدمة في لائحة المتصدرين، تودَع المكافآت المالية مباشرة في محفظتك.'
+                : 'Compete in mini-games and seasons to collect XP. Winning or ranking high on the leaderboard awards cash directly into your wallet.'}
             </p>
           </div>
           <div className="p-3.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
             <div className="font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1.5">
               <ShoppingBag className="w-4 h-4" />
-              <span>{isRtl ? '2. خصم فوري عند الدفع' : '2. Instant Checkout Discount'}</span>
+              <span>{isRtl ? '2. الاستخدام المباشر عند الشراء' : '2. Instant Payment at Checkout'}</span>
             </div>
             <p className="leading-relaxed">
               {isRtl
-                ? `عند إتمام الطلب، يتم تطبيق رصيد محفظتك المتاح تلقائياً لخصم حتى ${settings?.maxWalletUsagePercent ?? 50}% من قيمة الطلب.`
-                : `At checkout, your active balance is automatically applied to discount up to ${settings?.maxWalletUsagePercent ?? 50}% of your order.`}
-            </p>
-          </div>
-          <div className="p-3.5 bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 space-y-1">
-            <div className="font-bold text-indigo-600 dark:text-indigo-400 flex items-center gap-1.5">
-              <Clock className="w-4 h-4" />
-              <span>{isRtl ? '3. صلاحية المكافآت (48 ساعة)' : '3. Reward Validity (48 Hours)'}</span>
-            </div>
-            <p className="leading-relaxed">
-              {isRtl
-                ? 'كل مكافأة مكتسبة صالحة لمدة 48 ساعة من تاريخ الحصول عليها، ونظام السحب يستهلك المكافآت الأقدم أولاً (FIFO).'
-                : 'Each earned reward is valid for 48 hours from issuance, and older rewards are consumed first (FIFO).'}
+                ? `يمكنك استخدام رصيد محفظتك المتاح مباشرة لخصم وقضاء قيمة مشترياتك بالسلة بمرونة وسهولة عند إتمام الطلب.`
+                : `You can use your available wallet balance directly to pay for purchases at checkout easily.`}
             </p>
           </div>
         </div>

@@ -24,6 +24,20 @@ import {
 } from 'lucide-react';
 import { Season, GameConfig, XpRulesConfig, DailyChallengeConfig } from '../../types';
 
+import {
+  fetchAdminGamificationOverview,
+  fetchAdminSeasons,
+  fetchAdminGames,
+  fetchAdminXpRules,
+  fetchAdminAuditLogs,
+  saveAdminSeason,
+  saveAdminGame,
+  saveAdminXpRules,
+  grantAdminWalletReward,
+  confirmSeasonWinners,
+  fetchLeaderboard,
+} from '../../lib/api';
+
 interface AdminGamificationManagerProps {
   showToast: (msg: string, type?: 'success' | 'error' | 'info') => void;
   formatPrice: (p: number) => string;
@@ -31,8 +45,9 @@ interface AdminGamificationManagerProps {
 
 export const AdminGamificationManager: React.FC<AdminGamificationManagerProps> = ({
   showToast,
+  formatPrice,
 }) => {
-  const [activeTab, setActiveTab] = useState<'overview' | 'seasons' | 'games' | 'xprules' | 'challenges' | 'audit'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'seasons' | 'games' | 'xprules' | 'leaderboard_rewards' | 'audit'>('overview');
   const [loading, setLoading] = useState<boolean>(true);
 
   // Data states
@@ -40,7 +55,7 @@ export const AdminGamificationManager: React.FC<AdminGamificationManagerProps> =
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [games, setGames] = useState<GameConfig[]>([]);
   const [xpRules, setXpRules] = useState<XpRulesConfig | null>(null);
-  const [dailyChallenges, setDailyChallenges] = useState<DailyChallengeConfig[]>([]);
+  const [leaderboard, setLeaderboard] = useState<any[]>([]);
   const [auditLogs, setAuditLogs] = useState<any[]>([]);
 
   // Modals & Editing
@@ -50,24 +65,29 @@ export const AdminGamificationManager: React.FC<AdminGamificationManagerProps> =
   const [isGameModalOpen, setIsGameModalOpen] = useState<boolean>(false);
   const [saving, setSaving] = useState<boolean>(false);
 
+  // Reward Grant Modal State
+  const [rewardModalUser, setRewardModalUser] = useState<any | null>(null);
+  const [rewardAmount, setRewardAmount] = useState<number>(5);
+  const [rewardReason, setRewardReason] = useState<string>('مكافأة الفوز بالمركز المتقدم في ألعاب الموسم');
+
   const loadData = async () => {
     setLoading(true);
     try {
-      const [statsRes, seasonsRes, gamesRes, rulesRes, challengesRes, auditRes] = await Promise.all([
-        fetch('/api/admin/xp/stats').then(r => r.json()),
-        fetch('/api/seasons').then(r => r.json()),
-        fetch('/api/games').then(r => r.json()),
-        fetch('/api/admin/xp/rules').then(r => r.json()),
-        fetch('/api/admin/xp/challenges').then(r => r.json()),
-        fetch('/api/admin/xp/audit').then(r => r.json()),
+      const [overviewData, seasonsData, gamesData, rulesData, leaderData, auditData] = await Promise.all([
+        fetchAdminGamificationOverview().catch(() => ({ success: false, overview: null })),
+        fetchAdminSeasons().catch(() => ({ success: false, seasons: [], activeSeason: null })),
+        fetchAdminGames().catch(() => ({ success: false, games: [] })),
+        fetchAdminXpRules().catch(() => ({ success: false, rules: null })),
+        fetchLeaderboard().catch(() => ({ success: false, leaderboard: [] })),
+        fetchAdminAuditLogs().catch(() => ({ success: false, logs: [] })),
       ]);
 
-      if (statsRes.success) setStats(statsRes.stats);
-      if (seasonsRes.success) setSeasons(seasonsRes.seasons || []);
-      if (gamesRes.success) setGames(gamesRes.games || []);
-      if (rulesRes.success) setXpRules(rulesRes.xpRules);
-      if (challengesRes.success) setDailyChallenges(challengesRes.challenges || []);
-      if (auditRes.success) setAuditLogs(auditRes.logs || []);
+      if (overviewData.success) setStats(overviewData.overview);
+      if (seasonsData.success) setSeasons(seasonsData.seasons || []);
+      if (gamesData.success) setGames(gamesData.games || []);
+      if (rulesData.success) setXpRules(rulesData.rules);
+      if (leaderData.success) setLeaderboard(leaderData.leaderboard || []);
+      if (auditData.success) setAuditLogs(auditData.logs || []);
     } catch (err: any) {
       showToast('فشل تحميل بيانات نظام XP والفعاليات', 'error');
     } finally {
@@ -85,20 +105,15 @@ export const AdminGamificationManager: React.FC<AdminGamificationManagerProps> =
     if (!xpRules) return;
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/xp/rules', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(xpRules),
-      });
-      const data = await res.json();
+      const data = await saveAdminXpRules(xpRules);
       if (data.success) {
         showToast('تم حفظ قواعد وسقوف نقاط XP بنجاح', 'success');
-        setXpRules(data.xpRules);
+        setXpRules(data.rules);
       } else {
-        showToast(data.error || 'فشل حفظ القواعد', 'error');
+        showToast('فشل حفظ القواعد', 'error');
       }
-    } catch (err) {
-      showToast('حدث خطأ أثناء حفظ قواعد XP', 'error');
+    } catch (err: any) {
+      showToast(err.message || 'حدث خطأ أثناء حفظ قواعد XP', 'error');
     } finally {
       setSaving(false);
     }
@@ -113,22 +128,17 @@ export const AdminGamificationManager: React.FC<AdminGamificationManagerProps> =
     }
     setSaving(true);
     try {
-      const res = await fetch('/api/admin/seasons', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingSeason),
-      });
-      const data = await res.json();
+      const data = await saveAdminSeason(editingSeason);
       if (data.success) {
         showToast('تم حفظ بيانات الموسم بنجاح', 'success');
         setIsSeasonModalOpen(false);
         setEditingSeason(null);
         loadData();
       } else {
-        showToast(data.error || 'فشل حفظ الموسم', 'error');
+        showToast('فشل حفظ الموسم', 'error');
       }
-    } catch (err) {
-      showToast('خطأ بالاتصال بالسيرفر', 'error');
+    } catch (err: any) {
+      showToast(err.message || 'خطأ بالاتصال بالسيرفر', 'error');
     } finally {
       setSaving(false);
     }
@@ -137,25 +147,49 @@ export const AdminGamificationManager: React.FC<AdminGamificationManagerProps> =
   // Save Game Config
   const handleSaveGame = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingGame?.id) return;
+    if (!editingGame?.nameAr) return;
     setSaving(true);
     try {
-      const res = await fetch(`/api/admin/games/${editingGame.id}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(editingGame),
-      });
-      const data = await res.json();
+      const data = await saveAdminGame(editingGame);
       if (data.success) {
         showToast('تم تحديث إعدادات اللعبة بنجاح', 'success');
         setIsGameModalOpen(false);
         setEditingGame(null);
         loadData();
       } else {
-        showToast(data.error || 'فشل تحديث اللعبة', 'error');
+        showToast('فشل تحديث اللعبة', 'error');
       }
-    } catch (err) {
-      showToast('خطأ بالاتصال بالسيرفر', 'error');
+    } catch (err: any) {
+      showToast(err.message || 'خطأ بالاتصال بالسيرفر', 'error');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Grant Reward to User
+  const handleGrantReward = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!rewardModalUser || !rewardAmount || rewardAmount <= 0) {
+      showToast('يرجى تحديد مبلغ المكافأة الصحيح', 'error');
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await grantAdminWalletReward({
+        userId: rewardModalUser.userId,
+        amount: rewardAmount,
+        reason: rewardReason,
+        source: 'ADMIN_LEADERBOARD_REWARD',
+      });
+      if (res.success) {
+        showToast(res.message || 'تم إضافة المكافأة لمحفظة اللاعب بنجاح!', 'success');
+        setRewardModalUser(null);
+        loadData();
+      } else {
+        showToast('فشل إضافة المكافأة للمحفظة', 'error');
+      }
+    } catch (err: any) {
+      showToast(err.message || 'حدث خطأ أثناء منح المكافأة', 'error');
     } finally {
       setSaving(false);
     }
@@ -191,8 +225,8 @@ export const AdminGamificationManager: React.FC<AdminGamificationManagerProps> =
           { id: 'overview', label: 'لوحة الإحصائيات', icon: TrendingUp },
           { id: 'seasons', label: 'المواسم والجوائز', icon: Crown },
           { id: 'games', label: 'الألعاب المصغرة', icon: Gamepad2 },
+          { id: 'leaderboard_rewards', label: 'المتصدرين والمكافآت النقدية', icon: Award },
           { id: 'xprules', label: 'قواعد وسقوف XP', icon: Sliders },
-          { id: 'challenges', label: 'المهام اليومية', icon: Award },
           { id: 'audit', label: 'سجل الأنشطة والأمان', icon: Shield },
         ].map(tab => {
           const Icon = tab.icon;
@@ -201,7 +235,7 @@ export const AdminGamificationManager: React.FC<AdminGamificationManagerProps> =
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`flex items-center gap-2 px-4 py-3 font-bold text-sm rounded-t-xl transition-all border-b-2 whitespace-nowrap ${
+              className={`flex items-center gap-2 px-4 py-3 font-bold text-sm rounded-t-xl transition-all border-b-2 whitespace-nowrap cursor-pointer ${
                 isActive
                   ? 'border-indigo-600 text-indigo-600 bg-indigo-50/50'
                   : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-50'
@@ -442,6 +476,89 @@ export const AdminGamificationManager: React.FC<AdminGamificationManagerProps> =
             </form>
           )}
 
+          {/* 4. LEADERBOARD & WALLET REWARDS */}
+          {activeTab === 'leaderboard_rewards' && (
+            <div className="space-y-6">
+              <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+                  <div>
+                    <h2 className="text-lg font-black text-slate-800 flex items-center gap-2">
+                      <Crown className="w-5 h-5 text-amber-500" />
+                      لوحة المتصدرين وإضافة الجوائز المالية للمحفظة
+                    </h2>
+                    <p className="text-xs text-slate-500 mt-1">
+                      قم باختيار الفائزين والمتصدرين لمنحهم جوائز ومكافآت نقدية تضاف فوراً إلى محفظتهم الإلكترونية لاستخدامها في الشراء.
+                    </p>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full text-right text-xs">
+                    <thead>
+                      <tr className="bg-slate-50 text-slate-600 font-bold border-b border-slate-200">
+                        <th className="p-3">الترتيب</th>
+                        <th className="p-3">اسم اللاعب</th>
+                        <th className="p-3">مستوى XP</th>
+                        <th className="p-3">إجمالي نقاط XP</th>
+                        <th className="p-3">الجولات المكتملة</th>
+                        <th className="p-3 text-center">إجراءات الجوائز</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100">
+                      {leaderboard.length === 0 ? (
+                        <tr>
+                          <td colSpan={6} className="p-8 text-center text-slate-400 font-medium">
+                            لا يوجد نتائج متصدرين حتى الآن في هذا الموسم.
+                          </td>
+                        </tr>
+                      ) : (
+                        leaderboard.map((user, idx) => (
+                          <tr key={user.userId} className="hover:bg-slate-50/80 transition-colors">
+                            <td className="p-3 font-black text-slate-800">
+                              <span className={`inline-flex items-center justify-center w-7 h-7 rounded-full font-black text-xs ${
+                                idx === 0 ? 'bg-amber-400 text-slate-950 shadow-sm' :
+                                idx === 1 ? 'bg-slate-300 text-slate-900' :
+                                idx === 2 ? 'bg-amber-700 text-amber-100' : 'bg-slate-100 text-slate-700'
+                              }`}>
+                                #{idx + 1}
+                              </span>
+                            </td>
+                            <td className="p-3 font-bold text-slate-800">
+                              {user.displayName || user.userId}
+                            </td>
+                            <td className="p-3">
+                              <span className="px-2.5 py-1 rounded-lg bg-indigo-50 text-indigo-700 font-extrabold text-[11px]">
+                                المستوى {user.level || 1}
+                              </span>
+                            </td>
+                            <td className="p-3 font-black text-amber-600">
+                              {user.totalXp?.toLocaleString() || 0} XP
+                            </td>
+                            <td className="p-3 font-bold text-slate-600">
+                              {user.gamesPlayed || 0} جولة
+                            </td>
+                            <td className="p-3 text-center">
+                              <button
+                                onClick={() => {
+                                  setRewardModalUser(user);
+                                  setRewardAmount(idx === 0 ? 10 : idx === 1 ? 5 : 2);
+                                }}
+                                className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold text-xs shadow-sm transition-all flex items-center gap-1.5 mx-auto cursor-pointer"
+                              >
+                                <Sparkles className="w-3.5 h-3.5" />
+                                <span>إضافة مكافأة محفظة</span>
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* 5. AUDIT LOGS */}
           {activeTab === 'audit' && (
             <div className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm space-y-4">
@@ -605,6 +722,91 @@ export const AdminGamificationManager: React.FC<AdminGamificationManagerProps> =
                   className="px-5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl text-xs"
                 >
                   حفظ الإعدادات
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Grant Wallet Reward Modal */}
+      {rewardModalUser && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white w-full max-w-md rounded-2xl p-6 space-y-4 shadow-xl border border-slate-100 text-right">
+            <div className="flex items-center gap-2 text-emerald-600 font-bold border-b border-slate-100 pb-3">
+              <Sparkles className="w-5 h-5 text-amber-500" />
+              <h3 className="font-black text-slate-800 text-base">منح مكافأة محفظة نقدية للمستخدم</h3>
+            </div>
+
+            <form onSubmit={handleGrantReward} className="space-y-4">
+              <div className="bg-slate-50 p-3 rounded-xl space-y-1">
+                <span className="text-xs text-slate-500">المستخدم المستهدف:</span>
+                <p className="font-extrabold text-slate-800 text-sm">
+                  {rewardModalUser.displayName || rewardModalUser.userId}
+                </p>
+                <div className="flex items-center gap-2 text-xs text-slate-600 pt-1">
+                  <span>إجمالي XP: <strong className="text-amber-600">{rewardModalUser.totalXp}</strong></span>
+                  <span>|</span>
+                  <span>المستوى: <strong className="text-indigo-600">{rewardModalUser.level}</strong></span>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">مبلغ المكافأة المستحق (بالدينار الكويتي KWD)</label>
+                <div className="grid grid-cols-4 gap-2 mb-2">
+                  {[1, 2, 5, 10].map(amt => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => setRewardAmount(amt)}
+                      className={`py-2 rounded-xl font-black text-xs border transition-all cursor-pointer ${
+                        rewardAmount === amt
+                          ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                      }`}
+                    >
+                      {amt} د.ك
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="number"
+                  step="0.5"
+                  min="0.5"
+                  required
+                  value={rewardAmount}
+                  onChange={e => setRewardAmount(Number(e.target.value))}
+                  className="w-full p-2.5 border border-slate-200 rounded-xl text-sm font-bold text-slate-800"
+                  placeholder="أدخل مبلغ مخصص..."
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">سبب المكافأة / رسالة الإشعار للمستخدم</label>
+                <textarea
+                  rows={2}
+                  required
+                  value={rewardReason}
+                  onChange={e => setRewardReason(e.target.value)}
+                  className="w-full p-2.5 border border-slate-200 rounded-xl text-xs text-slate-800"
+                  placeholder="تمت إضافة مكافأة إلى محفظتك تقديرًا لفوزك ومشاركتك..."
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setRewardModalUser(null)}
+                  className="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl text-xs cursor-pointer"
+                >
+                  إلغاء
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  className="px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-md transition-all cursor-pointer flex items-center gap-1.5"
+                >
+                  <Sparkles className="w-3.5 h-3.5" />
+                  <span>اعتماد وإيداع بالمحفظة</span>
                 </button>
               </div>
             </form>

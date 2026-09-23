@@ -150,7 +150,504 @@
       "enabled": true
     }
   ],
-  "userXp": {},
-  "xpTransactions": [],
-  "auditLogs": []
+  "userXp": {
+    "guest_user": {
+      "userId": "guest_user",
+      "displayName": "متسابق المكتبة",
+      "totalXp": 470,
+      "level": 2,
+      "seasonXp": {
+        "season_1": 470
+      },
+      "dailyXp": {
+        "2026-09-23": 470
+      },
+      "dailyGameAttempts": {
+        "2026-09-23": {
+          "quiz_challenge": 1,
+          "stationery_catcher": 2,
+          "memory_cards": 1
+        }
+      },
+      "dailyLogin": {
+        "2026-09-23": true
+      },
+      "dailyProductBrowsingXp": {},
+      "dailyProductReviewXp": {},
+      "dailyChallengeProgress": {
+        "2026-09-23": {
+          "c_login": true,
+          "c_game": true
+        }
+      },
+      "updatedAt": "2026-09-23T15:03:03.164Z"
+    },
+    "عبدالله_الكندري": {
+      "userId": "عبدالله_الكندري",
+      "displayName": "عبدالله الكندري",
+      "totalXp": 0,
+      "level": 1,
+      "seasonXp": {},
+      "dailyXp": {},
+      "dailyGameAttempts": {},
+      "dailyLogin": {},
+      "dailyProductBrowsingXp": {},
+      "dailyProductReviewXp": {},
+      "dailyChallengeProgress": {},
+      "updatedAt": "2026-09-23T15:03:34.824Z"
+    },
+    "test_user_1": {
+      "userId": "test_user_1",
+      "displayName": "مستخدم_test_",
+      "totalXp": 10,
+      "level": 1,
+      "seasonXp": {
+        "season_1": 10
+      },
+      "dailyXp": {
+        "2026-09-23": 10
+      },
+      "dailyGameAttempts": {},
+      "dailyLogin": {},
+      "dailyProductBrowsingXp": {
+        "2026-09-23": 10
+      },
+      "dailyProductReviewXp": {},
+      "dailyChallengeProgress": {
+        "2026-09-23": {
+          "c_view": true
+        }
+      },
+      "updatedAt": "2026-09-23T15:10:42.064Z"
+    },
+    "test_adv_1": {
+      "userId": "test_adv_1",
+      "displayName": "مستخدم_test_",
+      "totalXp": 500,
+      "level": 3,
+      "seasonXp": {
+        "season_1": 500
+      },
+      "dailyXp": {
+        "2026-09-23": 500
+      },
+      "dailyGameAttempts": {
+        "2026-09-23": {
+          "wheel_spin": 5
+        }
+      },
+      "dailyLogin": {},
+      "dailyProductBrowsingXp": {},
+      "dailyProductReviewXp": {},
+      "dailyChallengeProgress": {
+        "2026-09-23": {
+          "c_game": true
+        }
+      },
+      "updatedAt": "2026-09-23T15:18:53.440Z"
+    },
+    "test_adv_2": {
+      "userId": "test_adv_2",
+      "displayName": "مستخدم_test_",
+      "totalXp": 10,
+      "level": 1,
+      "seasonXp": {
+        "season_1": 10
+      },
+      "dailyXp": {
+        "2026-09-23": 10
+      },
+      "dailyGameAttempts": {},
+      "dailyLogin": {},
+      "dailyProductBrowsingXp": {
+        "2026-09-23": 10
+      },
+      "dailyProductReviewXp": {},
+      "dailyChallengeProgress": {
+        "2026-09-23": {
+          "c_view": true
+        }
+      },
+      "updatedAt": "2026-09-23T15:18:57.217Z"
+    },
+    "audit_test_user_1790185678589": {
+      "userId": "audit_test_user_1790185678589",
+      "displayName": "Tester",
+      "totalXp": 50,
+      "level": 1,
+      "seasonXp": {
+        "season_1": 50
+      },
+      "dailyXp": {
+        "2026-09-23": 50
+      },
+      "dailyGameAttempts": {},
+      "dailyLogin": {},
+      "dailyProductBrowsingXp": {},
+      "dailyProductReviewXp": {},
+      "dailyChallengeProgress": {},
+      "updatedAt": "2026-09-23T17:47:58.688Z"
+    },
+    "audit_test_user_1790185689272": {
+      "userId": "audit_test_user_1790185689272",
+      "displayName": "Tester",
+      "totalXp": 50,
+      "level": 1,
+      "seasonXp": {
+        "season_1": 50
+      },
+      "dailyXp": {
+        "2026-09-23": 50
+      },
+      "dailyGameAttempts": {},
+      "dailyLogin": {},
+      "dailyProductBrowsingXp": {},
+      "dailyProductReviewXp": {},
+      "dailyChallengeProgress": {},
+      "updatedAt": "2026-09-23T17:48:09.273Z"
+    },
+    "test_idempotent_1790185694283": {
+      "userId": "test_idempotent_1790185694283",
+      "displayName": "مستخدم_test_",
+      "totalXp": 0,
+      "level": 1,
+      "seasonXp": {},
+      "dailyXp": {},
+      "dailyGameAttempts": {},
+      "dailyLogin": {},
+      "dailyProductBrowsingXp": {},
+      "dailyProductReviewXp": {},
+      "dailyChallengeProgress": {},
+      "updatedAt": "2026-09-23T17:48:14.373Z"
+    }
+  },
+  "xpTransactions": [
+    {
+      "id": "xp_tx_1790185689273_87un",
+      "userId": "audit_test_user_1790185689272",
+      "seasonId": "season_1",
+      "sourceType": "GAME",
+      "sourceId": "game_wheel",
+      "amount": 50,
+      "timestamp": "2026-09-23T17:48:09.273Z",
+      "validationStatus": "VALID"
+    },
+    {
+      "id": "xp_tx_1790185678688_vee1",
+      "userId": "audit_test_user_1790185678589",
+      "seasonId": "season_1",
+      "sourceType": "GAME",
+      "sourceId": "game_wheel",
+      "amount": 50,
+      "timestamp": "2026-09-23T17:47:58.688Z",
+      "validationStatus": "VALID"
+    },
+    {
+      "id": "xp_tx_1790176737217_yao6",
+      "userId": "test_adv_2",
+      "seasonId": "season_1",
+      "sourceType": "PRODUCT_VIEW",
+      "sourceId": "prod_race_1",
+      "amount": 10,
+      "timestamp": "2026-09-23T15:18:57.217Z",
+      "validationStatus": "VALID"
+    },
+    {
+      "id": "xp_tx_1790176733440_30l9",
+      "userId": "test_adv_1",
+      "seasonId": "season_1",
+      "sourceType": "GAME",
+      "sourceId": "wheel_spin",
+      "amount": 100,
+      "timestamp": "2026-09-23T15:18:53.440Z",
+      "validationStatus": "VALID"
+    },
+    {
+      "id": "xp_tx_1790176731002_jjh0",
+      "userId": "test_adv_1",
+      "seasonId": "season_1",
+      "sourceType": "GAME",
+      "sourceId": "wheel_spin",
+      "amount": 100,
+      "timestamp": "2026-09-23T15:18:51.002Z",
+      "validationStatus": "VALID"
+    },
+    {
+      "id": "xp_tx_1790176728491_aqdi",
+      "userId": "test_adv_1",
+      "seasonId": "season_1",
+      "sourceType": "GAME",
+      "sourceId": "wheel_spin",
+      "amount": 100,
+      "timestamp": "2026-09-23T15:18:48.491Z",
+      "validationStatus": "VALID"
+    },
+    {
+      "id": "xp_tx_1790176726084_az81",
+      "userId": "test_adv_1",
+      "seasonId": "season_1",
+      "sourceType": "GAME",
+      "sourceId": "wheel_spin",
+      "amount": 100,
+      "timestamp": "2026-09-23T15:18:46.084Z",
+      "validationStatus": "VALID"
+    },
+    {
+      "id": "xp_tx_1790176721513_2qyg",
+      "userId": "test_adv_1",
+      "seasonId": "season_1",
+      "sourceType": "GAME",
+      "sourceId": "wheel_spin",
+      "amount": 100,
+      "timestamp": "2026-09-23T15:18:41.513Z",
+      "metadata": {
+        "score": 999999,
+        "customXp": 999999
+      },
+      "validationStatus": "VALID"
+    },
+    {
+      "id": "xp_tx_1790176242064_4tzg",
+      "userId": "test_user_1",
+      "seasonId": "season_1",
+      "sourceType": "PRODUCT_VIEW",
+      "sourceId": "prod_101",
+      "amount": 10,
+      "timestamp": "2026-09-23T15:10:42.064Z",
+      "validationStatus": "VALID"
+    },
+    {
+      "id": "xp_tx_1790175783164_dwxl",
+      "userId": "guest_user",
+      "seasonId": "season_1",
+      "sourceType": "GAME",
+      "sourceId": "memory_cards",
+      "amount": 100,
+      "timestamp": "2026-09-23T15:03:03.164Z",
+      "metadata": {
+        "score": 138,
+        "moves": 11
+      },
+      "validationStatus": "VALID"
+    },
+    {
+      "id": "xp_tx_1790175756763_8g4s",
+      "userId": "guest_user",
+      "seasonId": "season_1",
+      "sourceType": "GAME",
+      "sourceId": "stationery_catcher",
+      "amount": 120,
+      "timestamp": "2026-09-23T15:02:36.763Z",
+      "metadata": {
+        "score": 30,
+        "caughtScore": 0
+      },
+      "validationStatus": "VALID"
+    },
+    {
+      "id": "xp_tx_1790175756761_ee5w",
+      "userId": "guest_user",
+      "seasonId": "season_1",
+      "sourceType": "GAME",
+      "sourceId": "stationery_catcher",
+      "amount": 120,
+      "timestamp": "2026-09-23T15:02:36.761Z",
+      "metadata": {
+        "score": 30,
+        "caughtScore": 0
+      },
+      "validationStatus": "VALID"
+    },
+    {
+      "id": "xp_tx_1790175727510_ycyx",
+      "userId": "guest_user",
+      "seasonId": "season_1",
+      "sourceType": "GAME",
+      "sourceId": "quiz_challenge",
+      "amount": 80,
+      "timestamp": "2026-09-23T15:02:07.510Z",
+      "metadata": {
+        "score": 32,
+        "correctAnswers": 2,
+        "totalQuestions": 5
+      },
+      "validationStatus": "VALID"
+    },
+    {
+      "id": "xp_tx_1790171931121_6cvl",
+      "userId": "guest_user",
+      "seasonId": "season_1",
+      "sourceType": "DAILY_LOGIN",
+      "sourceId": "login_2026-09-23",
+      "amount": 50,
+      "timestamp": "2026-09-23T13:58:51.121Z",
+      "validationStatus": "VALID"
+    }
+  ],
+  "auditLogs": [
+    {
+      "id": "audit_1790185689273_i6mj",
+      "userId": "audit_test_user_1790185689272",
+      "activity": "تم كسب +50 XP من المصدر GAME:game_wheel",
+      "source": "GAME",
+      "xp": 50,
+      "date": "2026-09-23T17:48:09.273Z",
+      "validationStatus": "VALID",
+      "reason": "Server verified XP award"
+    },
+    {
+      "id": "audit_1790185678688_kl0z",
+      "userId": "audit_test_user_1790185678589",
+      "activity": "تم كسب +50 XP من المصدر GAME:game_wheel",
+      "source": "GAME",
+      "xp": 50,
+      "date": "2026-09-23T17:47:58.688Z",
+      "validationStatus": "VALID",
+      "reason": "Server verified XP award"
+    },
+    {
+      "id": "audit_1790176737217_3x5y",
+      "userId": "test_adv_2",
+      "activity": "تم كسب +10 XP من المصدر PRODUCT_VIEW:prod_race_1",
+      "source": "PRODUCT_VIEW",
+      "xp": 10,
+      "date": "2026-09-23T15:18:57.217Z",
+      "validationStatus": "VALID",
+      "reason": "Server verified XP award",
+      "ip": "127.0.0.1",
+      "userAgent": "curl/7.88.1"
+    },
+    {
+      "id": "audit_1790176733440_fjy7",
+      "userId": "test_adv_1",
+      "activity": "تم كسب +100 XP من المصدر GAME:wheel_spin",
+      "source": "GAME",
+      "xp": 100,
+      "date": "2026-09-23T15:18:53.440Z",
+      "validationStatus": "VALID",
+      "reason": "Server verified XP award",
+      "ip": "127.0.0.1",
+      "userAgent": "curl/7.88.1"
+    },
+    {
+      "id": "audit_1790176731002_l040",
+      "userId": "test_adv_1",
+      "activity": "تم كسب +100 XP من المصدر GAME:wheel_spin",
+      "source": "GAME",
+      "xp": 100,
+      "date": "2026-09-23T15:18:51.002Z",
+      "validationStatus": "VALID",
+      "reason": "Server verified XP award",
+      "ip": "127.0.0.1",
+      "userAgent": "curl/7.88.1"
+    },
+    {
+      "id": "audit_1790176728491_cbr4",
+      "userId": "test_adv_1",
+      "activity": "تم كسب +100 XP من المصدر GAME:wheel_spin",
+      "source": "GAME",
+      "xp": 100,
+      "date": "2026-09-23T15:18:48.491Z",
+      "validationStatus": "VALID",
+      "reason": "Server verified XP award",
+      "ip": "127.0.0.1",
+      "userAgent": "curl/7.88.1"
+    },
+    {
+      "id": "audit_1790176726084_ojpw",
+      "userId": "test_adv_1",
+      "activity": "تم كسب +100 XP من المصدر GAME:wheel_spin",
+      "source": "GAME",
+      "xp": 100,
+      "date": "2026-09-23T15:18:46.084Z",
+      "validationStatus": "VALID",
+      "reason": "Server verified XP award",
+      "ip": "127.0.0.1",
+      "userAgent": "curl/7.88.1"
+    },
+    {
+      "id": "audit_1790176721513_53w0",
+      "userId": "test_adv_1",
+      "activity": "تم كسب +100 XP من المصدر GAME:wheel_spin",
+      "source": "GAME",
+      "xp": 100,
+      "date": "2026-09-23T15:18:41.513Z",
+      "validationStatus": "VALID",
+      "reason": "Server verified XP award",
+      "ip": "127.0.0.1",
+      "userAgent": "curl/7.88.1"
+    },
+    {
+      "id": "audit_1790176242064_i10f",
+      "userId": "test_user_1",
+      "activity": "تم كسب +10 XP من المصدر PRODUCT_VIEW:prod_101",
+      "source": "PRODUCT_VIEW",
+      "xp": 10,
+      "date": "2026-09-23T15:10:42.064Z",
+      "validationStatus": "VALID",
+      "reason": "Server verified XP award",
+      "ip": "127.0.0.1",
+      "userAgent": "curl/7.88.1"
+    },
+    {
+      "id": "audit_1790175783164_o6ir",
+      "userId": "guest_user",
+      "activity": "تم كسب +100 XP من المصدر GAME:memory_cards",
+      "source": "GAME",
+      "xp": 100,
+      "date": "2026-09-23T15:03:03.164Z",
+      "validationStatus": "VALID",
+      "reason": "Server verified XP award",
+      "ip": "37.34.183.148",
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0 Mobile/15E148 Safari/604.1"
+    },
+    {
+      "id": "audit_1790175756763_r6uz",
+      "userId": "guest_user",
+      "activity": "تم كسب +120 XP من المصدر GAME:stationery_catcher",
+      "source": "GAME",
+      "xp": 120,
+      "date": "2026-09-23T15:02:36.763Z",
+      "validationStatus": "VALID",
+      "reason": "Server verified XP award",
+      "ip": "37.34.183.148",
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0 Mobile/15E148 Safari/604.1"
+    },
+    {
+      "id": "audit_1790175756761_8vjb",
+      "userId": "guest_user",
+      "activity": "تم كسب +120 XP من المصدر GAME:stationery_catcher",
+      "source": "GAME",
+      "xp": 120,
+      "date": "2026-09-23T15:02:36.761Z",
+      "validationStatus": "VALID",
+      "reason": "Server verified XP award",
+      "ip": "37.34.183.148",
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0 Mobile/15E148 Safari/604.1"
+    },
+    {
+      "id": "audit_1790175727510_43ue",
+      "userId": "guest_user",
+      "activity": "تم كسب +80 XP من المصدر GAME:quiz_challenge",
+      "source": "GAME",
+      "xp": 80,
+      "date": "2026-09-23T15:02:07.510Z",
+      "validationStatus": "VALID",
+      "reason": "Server verified XP award",
+      "ip": "37.34.183.148",
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0 Mobile/15E148 Safari/604.1"
+    },
+    {
+      "id": "audit_1790171931121_y43p",
+      "userId": "guest_user",
+      "activity": "تم كسب +50 XP من المصدر DAILY_LOGIN:login_2026-09-23",
+      "source": "DAILY_LOGIN",
+      "xp": 50,
+      "date": "2026-09-23T13:58:51.121Z",
+      "validationStatus": "VALID",
+      "reason": "Server verified XP award",
+      "ip": "37.34.183.148",
+      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0 Mobile/15E148 Safari/604.1"
+    }
+  ]
 }

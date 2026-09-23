@@ -653,26 +653,61 @@ export async function fetchLeaderboard(): Promise<{ success: boolean; leaderboar
   return res.json();
 }
 
-// Admin Gamification
-export async function fetchAdminGamificationStats(): Promise<{ success: boolean; stats: any }> {
-  const res = await fetch('/api/admin/gamification/stats', {
+// Admin Gamification & XP Center API
+export async function fetchAdminGamificationOverview(): Promise<{ success: boolean; overview: any }> {
+  const res = await fetch('/api/admin/gamification/overview', {
     headers: { ...getAdminAuthHeaders() },
   });
-  if (!res.ok) throw new Error('فشل جلب إحصائيات التحديات والمكافآت');
+  if (!res.ok) throw new Error('فشل جلب إحصائيات لوحة التحكم');
   return res.json();
 }
 
-export async function fetchAdminQuestions(): Promise<{ success: boolean; questions: QuizQuestion[] }> {
-  const res = await fetch('/api/admin/gamification/questions', {
+export async function fetchAdminSeasons(): Promise<{ success: boolean; seasons: any[]; activeSeason: any }> {
+  const res = await fetch('/api/admin/gamification/seasons', {
     headers: { ...getAdminAuthHeaders() },
   });
-  if (!res.ok) throw new Error('فشل جلب بنك الأسئلة');
+  if (!res.ok) throw new Error('فشل جلب قائمة المواسم');
   return res.json();
 }
 
-export async function saveAdminQuestion(question: Partial<QuizQuestion>): Promise<{ success: boolean; question: QuizQuestion; message: string }> {
-  const isEdit = !!question.id;
-  const url = isEdit ? `/api/admin/gamification/questions/${encodeURIComponent(question.id!)}` : '/api/admin/gamification/questions';
+export async function saveAdminSeason(season: any): Promise<{ success: boolean; season: any }> {
+  const res = await fetch('/api/admin/gamification/seasons', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAdminAuthHeaders(),
+    },
+    body: JSON.stringify(season),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'فشل حفظ الموسم');
+  return data;
+}
+
+export async function confirmSeasonWinners(seasonId: string): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(`/api/admin/gamification/seasons/${encodeURIComponent(seasonId)}/confirm-winners`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAdminAuthHeaders(),
+    },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'فشل اعتماد فائزي الموسم');
+  return data;
+}
+
+export async function fetchAdminGames(): Promise<{ success: boolean; games: any[] }> {
+  const res = await fetch('/api/admin/gamification/games', {
+    headers: { ...getAdminAuthHeaders() },
+  });
+  if (!res.ok) throw new Error('فشل جلب قائمة الألعاب');
+  return res.json();
+}
+
+export async function saveAdminGame(game: any): Promise<{ success: boolean; game: any }> {
+  const isEdit = !!game.id;
+  const url = isEdit ? `/api/admin/gamification/games/${encodeURIComponent(game.id)}` : '/api/admin/gamification/games';
   const method = isEdit ? 'PUT' : 'POST';
 
   const res = await fetch(url, {
@@ -681,43 +716,78 @@ export async function saveAdminQuestion(question: Partial<QuizQuestion>): Promis
       'Content-Type': 'application/json',
       ...getAdminAuthHeaders(),
     },
-    body: JSON.stringify(question),
+    body: JSON.stringify(game),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'فشل حفظ السؤال');
+  if (!res.ok) throw new Error(data.error || 'فشل حفظ بيانات اللعبة');
   return data;
 }
 
-export async function deleteAdminQuestion(id: string): Promise<{ success: boolean; message: string }> {
-  const res = await fetch(`/api/admin/gamification/questions/${encodeURIComponent(id)}`, {
+export async function deleteAdminGame(id: string): Promise<{ success: boolean; message: string }> {
+  const res = await fetch(`/api/admin/gamification/games/${encodeURIComponent(id)}`, {
     method: 'DELETE',
     headers: { ...getAdminAuthHeaders() },
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'فشل حذف السؤال');
+  if (!res.ok) throw new Error(data.error || 'فشل حذف اللعبة');
   return data;
 }
 
-export async function fetchAdminGamificationSettings(): Promise<{ success: boolean; settings: GamificationSettings }> {
+export async function fetchAdminXpRules(): Promise<{ success: boolean; rules: any }> {
   const res = await fetch('/api/admin/gamification/settings', {
     headers: { ...getAdminAuthHeaders() },
   });
-  if (!res.ok) throw new Error('فشل جلب إعدادات التحديات والمكافآت');
+  if (!res.ok) throw new Error('فشل جلب قواعد XP');
   return res.json();
 }
 
-export async function saveAdminGamificationSettings(settings: Partial<GamificationSettings>): Promise<{ success: boolean; settings: GamificationSettings; message: string }> {
+export async function saveAdminXpRules(rules: any): Promise<{ success: boolean; rules: any; message: string }> {
   const res = await fetch('/api/admin/gamification/settings', {
     method: 'PUT',
     headers: {
       'Content-Type': 'application/json',
       ...getAdminAuthHeaders(),
     },
-    body: JSON.stringify(settings),
+    body: JSON.stringify(rules),
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || 'فشل حفظ إعدادات التحديات والمكافآت');
+  if (!res.ok) throw new Error(data.error || 'فشل حفظ قواعد XP');
   return data;
+}
+
+export async function fetchAdminAuditLogs(): Promise<{ success: boolean; logs: any[] }> {
+  const res = await fetch('/api/admin/gamification/audit', {
+    headers: { ...getAdminAuthHeaders() },
+  });
+  if (!res.ok) throw new Error('فشل جلب سجلات التدقيق والأمان');
+  return res.json();
+}
+
+export async function grantAdminWalletReward(params: { userId: string; amount: number; reason: string; source?: string }): Promise<{ success: boolean; message: string; transaction: any }> {
+  const res = await fetch('/api/admin/gamification/grant-reward', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      ...getAdminAuthHeaders(),
+    },
+    body: JSON.stringify(params),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || 'فشل منح مكافأة المحفظة');
+  return data;
+}
+
+export async function trackProductView(productId: string, userId?: string, displayName?: string): Promise<{ success: boolean; xpAwarded?: number }> {
+  try {
+    const res = await fetch('/api/xp/product-view', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ productId, userId: userId || 'guest', displayName }),
+    });
+    return res.json();
+  } catch (err) {
+    return { success: false };
+  }
 }
 
 // ==========================================

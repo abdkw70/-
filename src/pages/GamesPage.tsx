@@ -22,6 +22,8 @@ import {
 import { useGamification } from '../context/GamificationContext';
 import { useLanguage } from '../context/LanguageContext';
 
+import { getGameModule } from '../components/games/GameRegistry';
+
 interface GamesPageProps {
   onNavigate: (path: string) => void;
   showToast: (msg: string, type?: 'success' | 'error' | 'info') => void;
@@ -46,111 +48,6 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onNavigate, showToast }) =
 
   const [activeGameModal, setActiveGameModal] = useState<string | null>(null);
   const [claimingLogin, setClaimingLogin] = useState<boolean>(false);
-  const [playingGame, setPlayingGame] = useState<boolean>(false);
-
-  // Wheel Game state
-  const [wheelSpinning, setWheelSpinning] = useState<boolean>(false);
-  const [wheelRotation, setWheelRotation] = useState<number>(0);
-  const [wheelWonXp, setWheelWonXp] = useState<number | null>(null);
-
-  // Quiz Game state
-  const [quizAnswered, setQuizAnswered] = useState<boolean>(false);
-
-  // Memory Game state
-  const [memoryCards, setMemoryCards] = useState<Array<{ id: number; icon: string; matched: boolean; flipped: boolean }>>([]);
-  const [flippedCards, setFlippedCards] = useState<number[]>([]);
-  // Catcher Game state
-  const [catcherScore, setCatcherScore] = useState<number>(0);
-
-  const initMemoryGame = () => {
-    const icons = ['📚', '✏️', '🎨'];
-    const deck = [...icons, ...icons].map((icon, idx) => ({
-      id: idx,
-      icon,
-      matched: false,
-      flipped: false,
-    })).sort(() => Math.random() - 0.5);
-    setMemoryCards(deck);
-    setFlippedCards([]);
-  };
-
-  const handleFlipMemoryCard = async (cardId: number) => {
-    if (playingGame || flippedCards.length >= 2) return;
-    const card = memoryCards.find((c) => c.id === cardId);
-    if (!card || card.flipped || card.matched) return;
-
-    const updated = memoryCards.map((c) => (c.id === cardId ? { ...c, flipped: true } : c));
-    setMemoryCards(updated);
-
-    const newFlipped = [...flippedCards, cardId];
-    setFlippedCards(newFlipped);
-
-    if (newFlipped.length === 2) {
-      const card1 = updated.find((c) => c.id === newFlipped[0]);
-      const card2 = updated.find((c) => c.id === newFlipped[1]);
-
-      if (card1 && card2 && card1.icon === card2.icon) {
-        setTimeout(async () => {
-          const matchedDeck = updated.map((c) =>
-            c.id === card1.id || c.id === card2.id ? { ...c, matched: true, flipped: true } : c
-          );
-          setMemoryCards(matchedDeck);
-          setFlippedCards([]);
-
-          if (matchedDeck.every((c) => c.matched)) {
-            setPlayingGame(true);
-            try {
-              const res = await playGameAction('memory_cards', { completed: true });
-              if (res.success) {
-                showToast(
-                  isRtl ? `🃏 مبروك! طابقت جميع البطاقات بنجاح وحصلت على +${res.xpAwarded} XP!` : `🃏 Memory Game Complete! +${res.xpAwarded} XP!`,
-                  'success'
-                );
-              } else {
-                showToast(res.error || (isRtl ? 'وصلت للحد اليومي' : 'Daily limit reached'), 'info');
-              }
-            } catch (err) {
-              showToast(isRtl ? 'حدث خطأ' : 'Error', 'error');
-            } finally {
-              setPlayingGame(false);
-            }
-          }
-        }, 300);
-      } else {
-        setTimeout(() => {
-          setMemoryCards((prev) =>
-            prev.map((c) => (c.id === card1?.id || c.id === card2?.id ? { ...c, flipped: false } : c))
-          );
-          setFlippedCards([]);
-        }, 800);
-      }
-    }
-  };
-
-  const handleCatchItem = async () => {
-    if (playingGame) return;
-    const nextScore = catcherScore + 1;
-    setCatcherScore(nextScore);
-
-    if (nextScore >= 5) {
-      setPlayingGame(true);
-      try {
-        const res = await playGameAction('stationery_catcher', { score: nextScore });
-        if (res.success) {
-          showToast(
-            isRtl ? `📚 ممتاز! التقطت 5 أدوات بنجاح وحصلت على +${res.xpAwarded} XP!` : `📚 Caught 5 items! +${res.xpAwarded} XP!`,
-            'success'
-          );
-        } else {
-          showToast(res.error || (isRtl ? 'وصلت للحد اليومي' : 'Daily limit reached'), 'info');
-        }
-      } catch (err) {
-        showToast(isRtl ? 'حدث خطأ' : 'Error', 'error');
-      } finally {
-        setPlayingGame(false);
-      }
-    }
-  };
 
   const handleClaimDaily = async () => {
     setClaimingLogin(true);
@@ -170,66 +67,6 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onNavigate, showToast }) =
       showToast(isRtl ? 'تعذر استلام المكافأة اليومية' : 'Failed to claim daily reward', 'error');
     } finally {
       setClaimingLogin(false);
-    }
-  };
-
-  const handleSpinWheel = async () => {
-    if (wheelSpinning || playingGame) return;
-    setWheelSpinning(true);
-    setWheelWonXp(null);
-
-    // Random rotation for 3 seconds animation
-    const randomDegree = 1800 + Math.floor(Math.random() * 360);
-    setWheelRotation(randomDegree);
-
-    setTimeout(async () => {
-      setWheelSpinning(false);
-      setPlayingGame(true);
-      try {
-        const res = await playGameAction('wheel_spin', { spinResultDegree: randomDegree });
-        if (res.success) {
-          setWheelWonXp(res.xpAwarded || 50);
-          playSound('xp_gain');
-          showToast(
-            isRtl
-              ? `🎯 أحسنت! كسبت +${res.xpAwarded || 50} XP من عجلة الحظ!`
-              : `🎯 Awesome! You earned +${res.xpAwarded || 50} XP!`,
-            'success'
-          );
-        } else {
-          showToast(res.error || (isRtl ? 'وصلت للحد الأقصى للجولات اليوم' : 'Daily limit reached'), 'info');
-        }
-      } catch (err) {
-        showToast(isRtl ? 'حدث خطأ أثناء اللعب' : 'Game error', 'error');
-      } finally {
-        setPlayingGame(false);
-      }
-    }, 3000);
-  };
-
-  const handlePlayQuiz = async (selectedOption: number) => {
-    if (quizAnswered || playingGame) return;
-    setQuizAnswered(true);
-    setPlayingGame(true);
-
-    try {
-      const isCorrect = selectedOption === 1; // Option 2 is correct
-      const res = await playGameAction('quiz_challenge', { isCorrect, selectedOption });
-      if (res.success) {
-        if (isCorrect) playSound('correct');
-        showToast(
-          isRtl
-            ? `🧠 ${isCorrect ? 'إجابة صحيحة!' : 'حاول مرة أخرى!'} كسبت +${res.xpAwarded} XP!`
-            : `🧠 You earned +${res.xpAwarded} XP!`,
-          'success'
-        );
-      } else {
-        showToast(res.error || (isRtl ? 'وصلت للحد اليومي' : 'Daily limit reached'), 'info');
-      }
-    } catch (err) {
-      showToast(isRtl ? 'فشل إرسال الإجابة' : 'Failed to submit', 'error');
-    } finally {
-      setPlayingGame(false);
     }
   };
 
@@ -416,98 +253,38 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onNavigate, showToast }) =
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {/* Game 1: Wheel of Fortune */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all space-y-4 flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="w-14 h-14 bg-amber-50 rounded-2xl flex items-center justify-center text-3xl shadow-inner">
-                🎡
-              </div>
-              <h3 className="font-black text-slate-800 text-lg">{isRtl ? 'عجلة الحظ' : 'Wheel of Fortune'}</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                {isRtl ? 'أدر عجلة الحظ واكسب حتى +200 XP لرفع ترتيبك في المتصدرين.' : 'Spin the wheel to win up to +200 XP points!'}
-              </p>
-            </div>
-
-            <button
-              onClick={() => setActiveGameModal('wheel')}
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm"
+          {games.filter(g => g.enabled).map(game => (
+            <div
+              key={game.id}
+              className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all space-y-4 flex flex-col justify-between"
             >
-              <Play className="w-4 h-4 fill-current" />
-              <span>{isRtl ? 'العب الآن (+50 XP)' : 'Play Now'}</span>
-            </button>
-          </div>
-
-          {/* Game 2: Trivia Quiz */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all space-y-4 flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="w-14 h-14 bg-sky-50 rounded-2xl flex items-center justify-center text-3xl shadow-inner">
-                🧠
+              <div className="space-y-3">
+                <div className="w-14 h-14 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center text-2xl shadow-inner">
+                  {game.icon === 'Disc' ? '🎡' : game.icon === 'HelpCircle' ? '🧠' : game.icon === 'Layers' ? '🃏' : '📚'}
+                </div>
+                <h3 className="font-black text-slate-800 text-lg">
+                  {language === 'ar' ? game.nameAr : game.nameEn}
+                </h3>
+                <p className="text-xs text-slate-500 leading-relaxed">
+                  {language === 'ar' ? game.descriptionAr : game.descriptionEn}
+                </p>
               </div>
-              <h3 className="font-black text-slate-800 text-lg">{isRtl ? 'تحدي المعلومات' : 'Trivia Quiz'}</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                {isRtl ? 'أجب على أسئلة القرطاسية والأدوات المكتبية بشكل صحيح واكسب +50 XP.' : 'Answer trivia questions correctly to earn +50 XP.'}
-              </p>
-            </div>
 
-            <button
-              onClick={() => {
-                setQuizAnswered(false);
-                setActiveGameModal('quiz');
-              }}
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm"
-            >
-              <Play className="w-4 h-4 fill-current" />
-              <span>{isRtl ? 'العب الآن (+50 XP)' : 'Play Now'}</span>
-            </button>
-          </div>
-
-          {/* Game 3: Memory Cards */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all space-y-4 flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="w-14 h-14 bg-emerald-50 rounded-2xl flex items-center justify-center text-3xl shadow-inner">
-                🃏
+              <div className="space-y-2 pt-2">
+                <div className="flex items-center justify-between text-[11px] font-bold text-slate-400 border-t border-slate-100 pt-2">
+                  <span>المحاولات اليومية:</span>
+                  <span className="text-indigo-600 font-extrabold">{game.dailyAttemptsLimit || 5} جولات</span>
+                </div>
+                <button
+                  onClick={() => setActiveGameModal(game.id)}
+                  className="w-full py-3 bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm cursor-pointer transition-all active:scale-95"
+                >
+                  <Play className="w-4 h-4 fill-current" />
+                  <span>{isRtl ? `العب الآن (+${game.xpPerAction || 100} XP)` : 'Play Now'}</span>
+                </button>
               </div>
-              <h3 className="font-black text-slate-800 text-lg">{isRtl ? 'لعبة الذاكرة' : 'Memory Cards'}</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                {isRtl ? 'طابق الأزواج المتشابهة من صور الأدوات المدرسية بأقل عدد حركات.' : 'Match identical stationery pairs to win XP rewards.'}
-              </p>
             </div>
-
-            <button
-              onClick={() => {
-                initMemoryGame();
-                setActiveGameModal('memory');
-              }}
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm cursor-pointer"
-            >
-              <Play className="w-4 h-4 fill-current" />
-              <span>{isRtl ? 'العب الآن (+50 XP)' : 'Play Now'}</span>
-            </button>
-          </div>
-
-          {/* Game 4: Stationery Catcher */}
-          <div className="bg-white rounded-3xl p-6 border border-slate-100 shadow-sm hover:shadow-md transition-all space-y-4 flex flex-col justify-between">
-            <div className="space-y-3">
-              <div className="w-14 h-14 bg-purple-50 rounded-2xl flex items-center justify-center text-3xl shadow-inner">
-                📚
-              </div>
-              <h3 className="font-black text-slate-800 text-lg">{isRtl ? 'صائد الأدوات' : 'Stationery Catcher'}</h3>
-              <p className="text-xs text-slate-500 leading-relaxed">
-                {isRtl ? 'التقط الكتب والأقلام المتساقطة بسرعة فائقة لاكتساب النقاط.' : 'Catch falling books and pens fast to collect XP!'}
-              </p>
-            </div>
-
-            <button
-              onClick={() => {
-                setCatcherScore(0);
-                setActiveGameModal('catcher');
-              }}
-              className="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl text-xs flex items-center justify-center gap-2 shadow-sm cursor-pointer"
-            >
-              <Play className="w-4 h-4 fill-current" />
-              <span>{isRtl ? 'العب الآن (+50 XP)' : 'Play Now'}</span>
-            </button>
-          </div>
+          ))}
         </div>
       </div>
 
@@ -575,156 +352,48 @@ export const GamesPage: React.FC<GamesPageProps> = ({ onNavigate, showToast }) =
         </div>
       </div>
 
-      {/* GAME MODAL: Wheel of Fortune */}
-      {activeGameModal === 'wheel' && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 text-center space-y-6 shadow-2xl border border-slate-100">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-black text-slate-800 text-lg">🎡 عجلة الحظ التنافسية</h3>
-              <button
-                onClick={() => setActiveGameModal(null)}
-                className="p-1 rounded-full text-slate-400 hover:bg-slate-100"
-              >
-                ✕
-              </button>
-            </div>
+      {/* DYNAMIC INTERACTIVE GAME MODAL */}
+      {activeGameModal && (() => {
+        const GameComponent = getGameModule(activeGameModal);
+        const currentGameConfig = games.find(g => g.id === activeGameModal) || {
+          id: activeGameModal,
+          nameAr: 'اللعبة التفاعلية',
+          xpPerAction: 100,
+        };
 
-            {/* Wheel Canvas Mock */}
-            <div className="relative w-48 h-48 mx-auto flex items-center justify-center">
-              <div
-                className="w-44 h-44 rounded-full border-8 border-amber-400 bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 transition-transform duration-[3000ms] ease-out shadow-inner flex items-center justify-center text-white font-black text-2xl"
-                style={{ transform: `rotate(${wheelRotation}deg)` }}
-              >
-                🌟 XP 🌟
-              </div>
-              <div className="absolute top-0 w-0 h-0 border-l-[12px] border-l-transparent border-r-[12px] border-r-transparent border-t-[20px] border-t-amber-500 z-10" />
-            </div>
-
-            {wheelWonXp && (
-              <div className="p-3 bg-amber-50 rounded-2xl border border-amber-200 text-amber-800 font-black text-lg animate-bounce">
-                🎉 مبروك! حصلت على +{wheelWonXp} XP!
-              </div>
-            )}
-
-            <button
-              onClick={handleSpinWheel}
-              disabled={wheelSpinning || playingGame}
-              className="w-full py-3.5 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-black rounded-2xl text-base shadow-md transition-all active:scale-95"
-            >
-              {wheelSpinning ? 'جاري دوران العجلة...' : 'أدر العجلة الآن (+50 XP)'}
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* GAME MODAL: Trivia Quiz */}
-      {activeGameModal === 'quiz' && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 space-y-6 shadow-2xl border border-slate-100 text-right">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-black text-slate-800 text-lg">🧠 تحدي المعلومات المكتبية</h3>
-              <button
-                onClick={() => setActiveGameModal(null)}
-                className="p-1 rounded-full text-slate-400 hover:bg-slate-100"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-4">
-              <p className="font-bold text-slate-800 text-sm bg-slate-50 p-4 rounded-2xl border border-slate-100">
-                سؤال: ما هو القياس القياسي للورق الأكثر استخداماً للطباعة والدفاتر؟
-              </p>
-
-              <div className="space-y-2">
-                {['أ) ورق A3', 'ب) ورق A4', 'ج) ورق B5', 'د) ورق A2'].map((opt, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => handlePlayQuiz(idx)}
-                    disabled={quizAnswered || playingGame}
-                    className="w-full text-right p-3.5 rounded-2xl font-bold text-xs bg-slate-50 hover:bg-indigo-50 hover:text-indigo-700 border border-slate-200 transition-all"
-                  >
-                    {opt}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      {/* GAME MODAL: Memory Cards */}
-      {activeGameModal === 'memory' && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 space-y-6 shadow-2xl border border-slate-100 text-center">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-black text-slate-800 text-lg">🃏 لعبة مطابقة الأدوات المدرسية</h3>
-              <button
-                onClick={() => setActiveGameModal(null)}
-                className="p-1 rounded-full text-slate-400 hover:bg-slate-100 cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <p className="text-xs text-slate-500 font-bold">
-              {isRtl ? 'افتح البطاقات وطابق الأزواج المتشابهة للفوز بـ +50 XP!' : 'Match all identical card pairs to win +50 XP!'}
-            </p>
-
-            <div className="grid grid-cols-3 gap-3">
-              {memoryCards.map((card) => (
+        if (!GameComponent) {
+          return (
+            <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+              <div className="bg-slate-900 text-white rounded-3xl p-6 text-center space-y-4 max-w-sm w-full">
+                <p className="font-bold text-sm">اللعبة قيد التحديث والبرمجة</p>
                 <button
-                  key={card.id}
-                  onClick={() => handleFlipMemoryCard(card.id)}
-                  className={`h-24 rounded-2xl text-3xl flex items-center justify-center font-black transition-all cursor-pointer border ${
-                    card.flipped || card.matched
-                      ? 'bg-amber-100 border-amber-300 scale-100'
-                      : 'bg-indigo-600 border-indigo-700 text-white hover:bg-indigo-700 active:scale-95'
-                  }`}
+                  onClick={() => setActiveGameModal(null)}
+                  className="px-4 py-2 bg-slate-800 rounded-xl text-xs font-bold cursor-pointer"
                 >
-                  {card.flipped || card.matched ? card.icon : '❓'}
+                  إغلاق
                 </button>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* GAME MODAL: Stationery Catcher */}
-      {activeGameModal === 'catcher' && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white w-full max-w-md rounded-3xl p-6 space-y-6 shadow-2xl border border-slate-100 text-center">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-black text-slate-800 text-lg">📚 لعبة صائد الأدوات</h3>
-              <button
-                onClick={() => setActiveGameModal(null)}
-                className="p-1 rounded-full text-slate-400 hover:bg-slate-100 cursor-pointer"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-xs text-slate-500 font-bold">
-                {isRtl ? 'انقر على الأدوات لالتقاطها قبل أن تختفي! التقط 5 أدوات للفوز.' : 'Click items to catch them! Reach 5 score to win +50 XP.'}
-              </p>
-              <div className="text-xl font-black text-amber-600 bg-amber-50 py-2 rounded-xl border border-amber-200">
-                {isRtl ? `النتيجة: ${catcherScore} / 5` : `Score: ${catcherScore} / 5`}
               </div>
             </div>
+          );
+        }
 
-            <div className="h-40 bg-slate-50 rounded-2xl border border-dashed border-slate-300 flex items-center justify-center relative overflow-hidden">
-              <button
-                onClick={handleCatchItem}
-                disabled={playingGame}
-                className="px-6 py-4 bg-amber-400 hover:bg-amber-500 text-slate-950 font-black rounded-2xl shadow-lg animate-bounce transition-all text-2xl flex items-center gap-2 cursor-pointer active:scale-90"
-              >
-                <span>📚</span>
-                <span className="text-sm">{isRtl ? 'التقطني!' : 'Catch Me!'}</span>
-              </button>
-            </div>
+        return (
+          <div className="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 flex items-center justify-center p-4 overflow-y-auto">
+            <GameComponent
+              game={currentGameConfig}
+              onClose={() => setActiveGameModal(null)}
+              showToast={showToast}
+              onGameComplete={async (score, metadata) => {
+                const res = await playGameAction(activeGameModal, { score, ...metadata });
+                if (res.success) {
+                  playSound('xp_gain');
+                }
+                return res;
+              }}
+            />
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 };

@@ -203,8 +203,8 @@
       "isFeatured": false,
       "isBestSeller": false,
       "isNewArrival": true,
-      "rating": 4.8999999999999995,
-      "reviewsCount": 4,
+      "rating": 5,
+      "reviewsCount": 1,
       "createdAt": "2026-09-03T10:34:35.423Z",
       "updatedAt": "2026-09-03T10:34:35.425Z",
       "options": [
@@ -422,7 +422,7 @@
       "isBestSeller": false,
       "isNewArrival": false,
       "rating": 5,
-      "reviewsCount": 8,
+      "reviewsCount": 1,
       "createdAt": "2026-09-03T10:34:35.326Z",
       "updatedAt": "2026-09-03T10:34:35.327Z",
       "options": [
@@ -43779,39 +43779,12 @@
     },
     "sess_1789611648994_d6nuiai": {
       "id": "sess_1789611648994_d6nuiai",
-      "items": [
-        {
-          "id": "cart_item_1789822356311_nfor",
-          "productId": "Product_cmawem0us0aeg01ob6yjhh78t",
-          "variantId": "ProductVariant_cmawem0vi0aeh01ob5lwc4sem",
-          "sku": "SKU-cmawem0us0aeg01ob6yjhh78t",
-          "title": "غلاف هوية دوام طباعة مع شعار",
-          "handle": "علاف-هوية-للعمل",
-          "image": "https://assets.wuiltstore.com/cmawem1842z0p01m19avx4t6z_WhatsApp_Image_2025-05-20_at_11.13.08_AM__1_.jpeg",
-          "price": 5,
-          "compareAtPrice": null,
-          "quantity": 1,
-          "selectedOptionsSummary": "اختر الشكل: وزارة التربية 2"
-        },
-        {
-          "id": "cart_item_1789911477771_kkcs",
-          "productId": "Product_cm4zjb6pi086x01pddqgy3sim",
-          "variantId": "ProductVariant_cm4zjb6py086y01pd9ebehw7g",
-          "sku": "-BBS-1520140-B",
-          "title": "ماوس باد مربع مستوي",
-          "handle": "ماوس-باد-مربع",
-          "image": "https://assets.wuiltstore.com/cm4zjb8ew0l7w01kl1vdwdfnc__D9_85_D8_A7_D9_88_D8_B3__D8_A8_D8_A7_D8_AF-_D8_B9_D8_A7_D8_AF_D9_8A1.jpg",
-          "price": 1.45,
-          "compareAtPrice": null,
-          "quantity": 1,
-          "selectedOptionsSummary": "الالوان: اسود"
-        }
-      ],
-      "subtotal": 6.45,
+      "items": [],
+      "subtotal": 0,
       "discount": 0,
-      "shippingFee": 2,
-      "total": 8.45,
-      "updatedAt": "2026-09-23T11:26:27.220Z"
+      "shippingFee": 0,
+      "total": 0,
+      "updatedAt": "2026-09-23T15:12:08.432Z"
     },
     "audit_sess_1789827837057": {
       "id": "audit_sess_1789827837057",
@@ -44062,7 +44035,26 @@
       "updatedAt": "2026-09-23T11:26:27.220Z"
     }
   },
-  "reviews": [],
+  "reviews": [
+    {
+      "id": "rev_1790175814802_8vqi",
+      "productId": "Product_cls7an8of02e401ob6szq2p4l",
+      "authorName": "عبدالله الكندري",
+      "rating": 5,
+      "comment": "جيد",
+      "isVerifiedPurchase": true,
+      "createdAt": "2026-09-23T15:03:34.802Z"
+    },
+    {
+      "id": "rev_1790170601696",
+      "productId": "Product_clqhz3irc06tc01mr6iuhfz0t",
+      "authorName": "abood Sarhan",
+      "rating": 5,
+      "comment": "راىع",
+      "isVerifiedPurchase": true,
+      "createdAt": "2026-09-23T13:36:41.696Z"
+    }
+  ],
   "addresses": [],
   "coupons": [
     {
@@ -44469,6 +44461,22 @@
   },
   "activityLogs": [
     {
+      "id": "act_1790176743828_d96ah",
+      "action": "إضافة مكافأة محفظة",
+      "category": "system",
+      "details": "تم إضافة 2.5 د.ك للمستخدم (test_adv_2) - مكافأة تجريبية حقيقية",
+      "status": "success",
+      "timestamp": "2026-09-23T15:19:03.828Z"
+    },
+    {
+      "id": "act_1790176281729_uk18r",
+      "action": "إضافة مكافأة محفظة",
+      "category": "system",
+      "details": "تم إضافة 5 د.ك للمستخدم (test_user_1) - مكافأة فوز بمركز المتصدرين",
+      "status": "success",
+      "timestamp": "2026-09-23T15:11:21.729Z"
+    },
+    {
       "id": "act_1790162787239_cycow",
       "action": "تحديث إعدادات العرض",
       "category": "settings",
@@ -44777,27 +44785,35 @@
     "aiChatEnabled": true,
     "aiChatSystemPrompt": "أنت مساعد ذكي متخصص في خدمة عملاء مكتبة الشاطئ الأزرق في الكويت. مهمتك الأساسية مساعدة العملاء في استكشاف المنتجات، أسعارها، وتقديم توصيات بناءً على احتياجاتهم وميزانيتهم. تعليمات صارمة: 1. يجب أن تكون جميع إجاباتك متعلقة حصرياً بمكتبة الشاطئ الأزرق ومنتجاتها. 2. إذا سألك المستخدم أي سؤال عام غير متعلق بالمكتبة أو الأدوات المدرسية، اعتذر بلطف ووجه الحديث للمنتجات. 3. استخدم أداة البحث عن المنتجات للوصول إلى معلومات دقيقة حول الأسعار والتوافر. 4. الأسعار بالدينار الكويتي (د.ك). 5. كن ودوداً واحترافياً واستخدم لغة عربية سليمة."
   },
-  "promotionSettings": {
-    "enabled": true,
-    "discountType": "percentage",
-    "discountValue": 50,
-    "couponCode": "DYNAMIC10",
-    "minProductsValue": 5,
-    "enableMaxDiscount": false,
-    "maxDiscount": null,
-    "includeShipping": false,
-    "titleAr": "هدية خاصة لك 🎁",
-    "titleEn": "Special Gift For You 🎁",
-    "messageAr": "مرحباً {name} 👋\nاحصل الآن على خصم {discount} واستخدم كود الخصم {code}",
-    "messageEn": "Welcome {name} 👋\nGet {discount} off your order using code {code}",
-    "buttonTextAr": "تسوق الآن",
-    "buttonTextEn": "Shop Now",
-    "startAt": "2026-09-22T11:26:26.901Z",
-    "endAt": "2027-09-23T11:26:26.901Z",
-    "showToAuthenticatedUsers": true,
-    "showToGuests": true,
-    "delaySeconds": 1,
-    "frequency": "session_once",
-    "updatedAt": "2026-09-23T11:26:27.220Z"
+  "wallets": {
+    "test_idempotent_1790185694283": {
+      "userId": "test_idempotent_1790185694283",
+      "activeBalance": 2,
+      "usedBalance": 3,
+      "expiredBalance": 0,
+      "totalEarned": 5,
+      "items": [],
+      "transactions": [
+        {
+          "id": "tx_order_123",
+          "userId": "test_idempotent_1790185694283",
+          "type": "debit",
+          "amount": 3,
+          "balanceAfter": 2,
+          "description": "Test Order Checkout",
+          "createdAt": "2026-09-23T17:48:14.353Z"
+        },
+        {
+          "id": "tx_fixed_id",
+          "userId": "test_idempotent_1790185694283",
+          "type": "credit",
+          "amount": 5,
+          "balanceAfter": 5,
+          "description": "Test Bonus",
+          "createdAt": "2026-09-23T17:48:14.323Z"
+        }
+      ],
+      "lastUpdated": "2026-09-23T17:48:14.353Z"
+    }
   }
 }

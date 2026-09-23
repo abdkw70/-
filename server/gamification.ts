@@ -185,8 +185,8 @@ const defaultXpRules: XpRulesConfig = {
   productViewXp: 10,
   dailyProductBrowsingCap: 100,
   reviewXpAmount: 100,
-  reviewMinCommentLength: 20,
-  reviewXpEligibilityMode: 'PURCHASED_PRODUCTS_ONLY',
+  reviewMinCommentLength: 3,
+  reviewXpEligibilityMode: 'ANY_PRODUCT',
   dailyXpCap: 5000,
   globalDailyGameAttempts: 10,
 };
@@ -251,6 +251,8 @@ const defaultDailyChallenges: DailyChallengeConfig[] = [
 
 export class GamificationEngine {
   private data: GamificationDataStore;
+  private isSaving: boolean = false;
+  private pendingSave: boolean = false;
 
   constructor() {
     if (!fs.existsSync(DATA_DIR)) {
@@ -289,10 +291,26 @@ export class GamificationEngine {
   }
 
   private save(): void {
+    if (this.isSaving) {
+      this.pendingSave = true;
+      return;
+    }
+    this.isSaving = true;
     try {
-      fs.writeFileSync(XP_GAMIFICATION_FILE, JSON.stringify(this.data, null, 2), 'utf-8');
+      if (!fs.existsSync(DATA_DIR)) {
+        fs.mkdirSync(DATA_DIR, { recursive: true });
+      }
+      const tmpFile = `${XP_GAMIFICATION_FILE}.tmp`;
+      fs.writeFileSync(tmpFile, JSON.stringify(this.data, null, 2), 'utf-8');
+      fs.renameSync(tmpFile, XP_GAMIFICATION_FILE);
     } catch (err) {
       console.error('Failed to save xp_gamification.json:', err);
+    } finally {
+      this.isSaving = false;
+      if (this.pendingSave) {
+        this.pendingSave = false;
+        this.save();
+      }
     }
   }
 
@@ -662,9 +680,17 @@ export class GamificationEngine {
     const userRec = this.getUserXp(userId, displayName);
     const rules = this.getXpRules();
 
+    // Idempotency check: check if already viewed this specific product today
+    const alreadyViewedToday = this.data.xpTransactions.some(
+      t => t.userId === userId && t.sourceType === 'PRODUCT_VIEW' && t.sourceId === productId && t.timestamp.startsWith(today)
+    );
+    if (alreadyViewedToday) {
+      return { success: true, alreadyViewed: true, xpAwarded: 0, message: 'تم احتساب نقاط هذا المنتج سابقاً اليوم' };
+    }
+
     const currentBrowsingXp = userRec.dailyProductBrowsingXp[today] || 0;
     if (currentBrowsingXp >= rules.dailyProductBrowsingCap) {
-      return { success: false, capReached: true, message: 'وصلت إلى الحد اليومي من XP تصفح المنتجات' };
+      return { success: false, capReached: true, message: 'وصلت إلى الحد اليومي من XP تصفح المنتجات (100 XP)' };
     }
 
     const awardAmount = Math.min(rules.productViewXp, rules.dailyProductBrowsingCap - currentBrowsingXp);
@@ -705,34 +731,24 @@ export class GamificationEngine {
     if (cleanComment.length < rules.reviewMinCommentLength) {
       return {
         success: false,
-        error: `التعليق قصير جداً. يجب أن يحتوي على ${rules.reviewMinCommentLength} حرفاً على الأقل للحصول على XP.`,
+        error: `التعليق قصير جداً. يجب أن يحتوي على ${rules.reviewMinCommentLength} أسطر/أحرف على الأقل للحصول على XP.`,
       };
     }
 
-    // 2. Purchased products check if enabled
-    if (rules.reviewXpEligibilityMode === 'PURCHASED_PRODUCTS_ONLY') {
-      const orders = db.getOrders();
-      const hasPurchased = orders.some(
-        o =>
-          (o.customerPhone && userRec.displayName && o.customerName.includes(userRec.displayName)) ||
-          o.items.some((item: any) => item.productId === productId || item.id === productId)
-      );
-      if (!hasPurchased) {
-        // Fallback: If no order record found yet allow safely or check user order list
-      }
-    }
+    // 2. Idempotency: check if already received XP for reviewing this product
+    const effectiveReviewId = reviewId || `rev_${productId}_${userId}`;
+    const alreadyReviewed = this.data.xpTransactions.some(
+      t => t.userId === userId && t.sourceType === 'PRODUCT_REVIEW' && (t.sourceId === effectiveReviewId || (t.metadata && t.metadata.productId === productId))
+    );
 
-    // 3. Idempotency & Daily Review Limit check (1 review for XP per day)
-    const existingDailyReview = userRec.dailyProductReviewXp[today];
-    if (existingDailyReview && existingDailyReview.xp > 0) {
+    if (alreadyReviewed) {
       return {
         success: false,
         isAlreadyClaimed: true,
-        error: 'لقد حصلت على XP تقييم اليوم بالفعل! يمكنك تقييم منتج آخر غداً.',
+        error: 'لقد حصلت على 100 XP لتقييم هذا المنتج سابقاً!',
       };
     }
 
-    const effectiveReviewId = reviewId || `rev_${productId}_${today}`;
     userRec.dailyProductReviewXp[today] = {
       xp: rules.reviewXpAmount,
       reviewId: effectiveReviewId,
@@ -1018,10 +1034,17 @@ export class GamificationEngine {
     const numAmount = Number(amount);
     if (isNaN(numAmount) || numAmount <= 0) return null;
 
+    const id = txId || `tx_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+
+    // Idempotency check: if transaction with this id already processed, return existing
+    const existingTx = wallet.transactions.find(t => t.id === id);
+    if (existingTx) {
+      return existingTx;
+    }
+
     wallet.activeBalance = Number((wallet.activeBalance + numAmount).toFixed(3));
     wallet.totalEarned = Number((wallet.totalEarned + numAmount).toFixed(3));
     const now = new Date().toISOString();
-    const id = txId || `tx_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
     const tx = {
       id,
       userId,
@@ -1035,6 +1058,40 @@ export class GamificationEngine {
     wallet.lastUpdated = now;
     db.save();
     return tx;
+  }
+
+  public deductWalletBalance(userId: string, amount: number, reason: string, txId?: string): { success: boolean; transaction?: any; error?: string } {
+    const wallet = this.getUserWallet(userId);
+    const numAmount = Number(amount);
+    if (isNaN(numAmount) || numAmount <= 0) {
+      return { success: false, error: 'المبلغ غير صالح للخصم' };
+    }
+    if (wallet.activeBalance < numAmount) {
+      return { success: false, error: 'رصيد المحفظة غير كافٍ' };
+    }
+
+    const id = txId || `tx_ded_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const existingTx = wallet.transactions.find(t => t.id === id);
+    if (existingTx) {
+      return { success: true, transaction: existingTx };
+    }
+
+    wallet.activeBalance = Number((wallet.activeBalance - numAmount).toFixed(3));
+    wallet.usedBalance = Number((wallet.usedBalance + numAmount).toFixed(3));
+    const now = new Date().toISOString();
+    const tx = {
+      id,
+      userId,
+      type: 'debit' as const,
+      amount: Number(numAmount.toFixed(3)),
+      balanceAfter: wallet.activeBalance,
+      description: reason || 'خصم رصيد من المحفظة',
+      createdAt: now,
+    };
+    wallet.transactions.unshift(tx);
+    wallet.lastUpdated = now;
+    db.save();
+    return { success: true, transaction: tx };
   }
 
   public updateUserProfile(userId: string, updates: any): UserProfile {
@@ -1071,7 +1128,7 @@ export class GamificationEngine {
       questionsPerChallenge: 10,
       timePerQuestionSeconds: 15,
       dailyAttemptsLimit: 3,
-      rewardExpiryHours: 48,
+      rewardExpiryHours: 0,
       maxWalletUsagePercent: 50,
       autoShowChallengeOnEntry: false,
       autoShowFrequency: 'once_per_session',

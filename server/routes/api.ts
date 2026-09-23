@@ -534,8 +534,7 @@ apiRouter.post('/checkout', (req, res) => {
     let walletDiscount = 0;
     const subtotalAfterCoupon = Math.max(0, realSubtotal - couponDiscount);
     if (useWalletBalance && effectiveUserId && subtotalAfterCoupon > 0) {
-      const gamSettings = gamificationEngine.getXpRules();
-      const userWallet = (db as any).getUserWallet ? (db as any).getUserWallet(effectiveUserId) : null;
+      const userWallet = gamificationEngine.getUserWallet(effectiveUserId);
       if (userWallet && userWallet.activeBalance > 0) {
         const eligibleAmount = Math.min(userWallet.activeBalance, subtotalAfterCoupon);
         if (eligibleAmount > 0) {
@@ -619,6 +618,18 @@ apiRouter.post('/checkout', (req, res) => {
       });
     }
 
+    // Deduct wallet balance if applied
+    if (walletDiscount > 0 && effectiveUserId) {
+      const deductionTxId = `tx_ord_${orderId}_${effectiveUserId}`;
+      gamificationEngine.deductWalletBalance(
+        effectiveUserId,
+        walletDiscount,
+        `استخدام رصيد محفظة في الطلب رقم #${orderNumber}`,
+        deductionTxId
+      );
+      db.logActivity('استخدام رصيد محفظة', 'order', `تم خصم ${walletDiscount.toFixed(3)} د.ك من محفظة العميل (${effectiveUserId}) للطلب ${orderNumber}`, 'success');
+    }
+
     // Empty user cart
     cart.items = [];
     cart.discount = 0;
@@ -693,13 +704,13 @@ apiRouter.get('/reviews/:productId', (req, res) => {
 });
 
 apiRouter.post('/reviews', (req, res) => {
-  const { productId, authorName, rating, comment } = req.body;
+  const { productId, authorName, rating, comment, userId } = req.body;
   if (!productId || !authorName || !rating || !comment) {
     return res.status(400).json({ success: false, error: 'يرجى إكمال جميع حقول التقييم' });
   }
 
   const review: Review = {
-    id: `rev_${Date.now()}`,
+    id: `rev_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
     productId,
     authorName,
     rating: Math.max(1, Math.min(5, Number(rating))),
@@ -709,7 +720,29 @@ apiRouter.post('/reviews', (req, res) => {
   };
 
   db.addReview(review);
-  res.json({ success: true, review });
+
+  // Trigger 100 XP award for product review
+  const effectiveUserId = userId || authorName.trim().toLowerCase().replace(/\s+/g, '_');
+  const ip = getClientIp(req);
+  const userAgent = (req.headers['user-agent'] as string) || '';
+
+  const xpResult = gamificationEngine.processProductReview({
+    userId: effectiveUserId,
+    productId,
+    reviewId: review.id,
+    rating: review.rating,
+    comment,
+    displayName: authorName,
+    ip,
+    userAgent,
+  });
+
+  res.json({
+    success: true,
+    review,
+    xpAwarded: ('xpAwarded' in xpResult && typeof xpResult.xpAwarded === 'number') ? xpResult.xpAwarded : 0,
+    xpResult,
+  });
 });
 
 // ==========================================
@@ -904,21 +937,15 @@ apiRouter.post('/admin/wallet/adjust', requireAdminAuth, (req, res) => {
         txId
       );
     } else {
-      if (wallet.activeBalance < numAmount) {
-        return res.status(400).json({ success: false, error: 'رصيد العميل غير كافٍ للخصم' });
-      }
-      wallet.activeBalance = Number((wallet.activeBalance - numAmount).toFixed(3));
-      wallet.usedBalance = Number((wallet.usedBalance + numAmount).toFixed(3));
-      wallet.transactions.unshift({
-        id: txId,
+      const dedResult = gamificationEngine.deductWalletBalance(
         userId,
-        type: 'debit',
-        amount: Number(numAmount.toFixed(3)),
-        balanceAfter: wallet.activeBalance,
-        description: `تعديل إداري (خصم): ${reason}`,
-        createdAt: now,
-      });
-      db.save();
+        numAmount,
+        `تعديل إداري (خصم): ${reason}`,
+        txId
+      );
+      if (!dedResult.success) {
+        return res.status(400).json({ success: false, error: dedResult.error || 'رصيد العميل غير كافٍ للخصم' });
+      }
     }
 
     const updatedWallet = gamificationEngine.getUserWallet(userId);
@@ -2129,6 +2156,35 @@ apiRouter.get('/admin/gamification/audit', requireAdminAuth, (req, res) => {
   try {
     const logs = gamificationEngine.getAuditLogs();
     res.json({ success: true, logs });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 6. Admin Grant Wallet Reward (KWD)
+apiRouter.post('/admin/gamification/grant-reward', requireAdminAuth, (req, res) => {
+  try {
+    const { userId, amount, reason, source, txId, refId } = req.body;
+    if (!userId || !amount || Number(amount) <= 0) {
+      return res.status(400).json({ success: false, error: 'يرجى تحديد المستخدم ومبلغ المكافأة المستحق (بالدينار)' });
+    }
+
+    const effectiveTxId = txId || refId || `reward_${Date.now()}`;
+    const tx = gamificationEngine.addWalletReward(
+      userId,
+      Number(amount),
+      source || 'ADMIN_LEADERBOARD_REWARD',
+      effectiveTxId,
+      reason || 'تمت إضافة مكافأة إلى محفظتك تقديرًا لفوزك ومشاركتك في الألعاب.',
+      effectiveTxId
+    );
+
+    if (!tx) {
+      return res.status(400).json({ success: false, error: 'فشل إضافة المكافأة للمحفظة' });
+    }
+
+    db.logActivity('إضافة مكافأة محفظة', 'system', `تم إضافة ${amount} د.ك للمستخدم (${userId}) - ${reason || ''}`, 'success');
+    res.json({ success: true, message: 'تمت إضافة المكافأة إلى المحفظة وإشعار المستخدم بنجاح', transaction: tx });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
