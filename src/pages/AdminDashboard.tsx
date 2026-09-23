@@ -18,6 +18,7 @@ import { AdminGamificationManager } from '../components/admin/AdminGamificationM
 import { AdminFreeChallenge } from '../components/admin/AdminFreeChallenge';
 import { AdminUsers } from '../components/admin/AdminUsers';
 import { AdminSecurityLogs } from '../components/admin/AdminSecurityLogs';
+import { AdminPromotions } from '../components/admin/AdminPromotions';
 import { ProductEditModal } from '../components/admin/ProductEditModal';
 
 interface AdminDashboardProps {
@@ -221,6 +222,12 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
           {activeTab === 'orders' && (
             <AdminOrders
               formatPrice={formatPrice}
+              showToast={showToast}
+            />
+          )}
+
+          {activeTab === 'promotions' && (
+            <AdminPromotions
               showToast={showToast}
             />
           )}

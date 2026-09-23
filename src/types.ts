@@ -184,6 +184,26 @@ export interface Order {
   updatedAt: string;
 }
 
+export interface PromotionSettings {
+  enabled: boolean;
+  discountType: 'percentage' | 'fixed_amount';
+  discountValue: number;
+  couponCode: string;
+  titleAr: string;
+  titleEn: string;
+  messageAr: string;
+  messageEn: string;
+  buttonTextAr: string;
+  buttonTextEn: string;
+  startAt?: string | null;
+  endAt?: string | null;
+  showToAuthenticatedUsers: boolean;
+  showToGuests: boolean;
+  delaySeconds: number;
+  frequency: 'every_visit' | 'session_once' | 'daily_once' | 'user_once' | 'until_closed';
+  updatedAt?: string;
+}
+
 export interface Coupon {
   id: string;
   code: string;

@@ -14,6 +14,7 @@ import { EntryChallengeBanner } from './components/gamification/EntryChallengeBa
 import { FreeChallengeModal } from './components/freeChallenge/FreeChallengeModal';
 import { LiveWinnersTicker } from './components/freeChallenge/LiveWinnersTicker';
 import { AuthModal } from './components/AuthModal';
+import { PromotionPopupModal } from './components/PromotionPopupModal';
 import { LoginPage } from './pages/LoginPage';
 import { HomePage } from './pages/HomePage';
 import { ShopPage } from './pages/ShopPage';
@@ -209,7 +210,7 @@ const MainApp: React.FC = () => {
     return <HomePage categories={categories} onNavigate={navigate} />;
   };
 
-  const { dir } = useLanguage();
+  const { dir, language } = useLanguage();
   const isAdminRoute = currentPath === '/admin';
 
   return (
@@ -237,6 +238,7 @@ const MainApp: React.FC = () => {
         />
       )}
       {!isAdminRoute && <FreeChallengeModal onNavigate={navigate} />}
+      {!isAdminRoute && <PromotionPopupModal language={language} onNavigate={navigate} />}
       <ToastContainer />
     </div>
   );

@@ -13,6 +13,7 @@ import {
   Achievement,
   GamificationSettings,
   LeaderboardEntry,
+  PromotionSettings,
 } from '../types';
 
 export interface ProductsResponse {
@@ -1092,6 +1093,69 @@ export async function checkSessionApi(token: string): Promise<{
     return res.json();
   } catch {
     return { success: false };
+  }
+}
+
+// ==========================================
+// PROMOTION POPUP API FUNCTIONS
+// ==========================================
+
+export async function fetchActivePromotion(): Promise<{
+  success: boolean;
+  active: boolean;
+  promotion: PromotionSettings | null;
+  reason?: string;
+}> {
+  try {
+    const res = await fetch('/api/promotions/active');
+    if (!res.ok) return { success: false, active: false, promotion: null };
+    return res.json();
+  } catch {
+    return { success: false, active: false, promotion: null };
+  }
+}
+
+export async function fetchAdminPromotions(): Promise<{
+  success: boolean;
+  promotion?: PromotionSettings;
+  error?: string;
+}> {
+  try {
+    const res = await fetch('/api/admin/promotions', {
+      headers: { ...getAdminAuthHeaders() },
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.error || 'فشل جلب إعدادات العرض');
+    }
+    return json;
+  } catch (err: any) {
+    return { success: false, error: err.message };
+  }
+}
+
+export async function updateAdminPromotions(data: Partial<PromotionSettings>): Promise<{
+  success: boolean;
+  message?: string;
+  promotion?: PromotionSettings;
+  error?: string;
+}> {
+  try {
+    const res = await fetch('/api/admin/promotions', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAdminAuthHeaders(),
+      },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (!res.ok || !json.success) {
+      throw new Error(json.error || 'فشل حفظ إعدادات العرض');
+    }
+    return json;
+  } catch (err: any) {
+    return { success: false, error: err.message };
   }
 }
 

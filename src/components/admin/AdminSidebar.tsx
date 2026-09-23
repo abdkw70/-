@@ -18,6 +18,7 @@ import {
   ShieldAlert,
   Gift,
   X,
+  Sparkles,
 } from 'lucide-react';
 
 export type AdminTab =
@@ -25,6 +26,7 @@ export type AdminTab =
   | 'products'
   | 'categories'
   | 'orders'
+  | 'promotions'
   | 'freeChallenge'
   | 'gamification'
   | 'users'
@@ -82,6 +84,13 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       icon: ShoppingBag,
       badge: stats?.pendingOrders && stats.pendingOrders > 0 ? `${stats.pendingOrders}` : null,
       badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+    },
+    {
+      id: 'promotions' as AdminTab,
+      label: 'العروض والخصومات',
+      icon: Sparkles,
+      badge: 'خصم',
+      badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
     },
     {
       id: 'freeChallenge' as AdminTab,

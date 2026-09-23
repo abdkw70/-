@@ -1611,6 +1611,67 @@ apiRouter.post('/admin/settings', requireAdminAuth, (req, res) => {
   res.json({ success: true, settings: db.getSettings() });
 });
 
+// PROMOTION POPUP ENDPOINTS
+// Public active promotion check (Server-side date and status validation)
+apiRouter.get('/promotions/active', (req, res) => {
+  try {
+    const promo = db.getPromotionSettings();
+    if (!promo.enabled) {
+      return res.json({ success: true, active: false, promotion: null, reason: 'disabled' });
+    }
+
+    const now = Date.now();
+    if (promo.startAt) {
+      const startTime = new Date(promo.startAt).getTime();
+      if (!isNaN(startTime) && startTime > now) {
+        return res.json({ success: true, active: false, promotion: null, reason: 'not_started' });
+      }
+    }
+
+    if (promo.endAt) {
+      const endTime = new Date(promo.endAt).getTime();
+      if (!isNaN(endTime) && endTime < now) {
+        return res.json({ success: true, active: false, promotion: null, reason: 'expired' });
+      }
+    }
+
+    res.json({ success: true, active: true, promotion: promo });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Error fetching active promotion' });
+  }
+});
+
+// Admin Get Promotion Settings
+apiRouter.get('/admin/promotions', requireAdminAuth, (req, res) => {
+  try {
+    const promo = db.getPromotionSettings();
+    res.json({ success: true, promotion: promo });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'Error fetching promotion settings' });
+  }
+});
+
+// Admin Update Promotion Settings
+apiRouter.put('/admin/promotions', requireAdminAuth, (req, res) => {
+  try {
+    const { discountValue, couponCode, delaySeconds } = req.body;
+    if (typeof discountValue === 'number' && discountValue <= 0) {
+      return res.status(400).json({ success: false, error: 'قيمة الخصم يجب أن تكون أصل أكبر من صفر' });
+    }
+    if (couponCode && typeof couponCode === 'string' && !couponCode.trim()) {
+      return res.status(400).json({ success: false, error: 'كود الخصم لا يمكن أن يكون فارغاً' });
+    }
+    if (typeof delaySeconds === 'number' && delaySeconds < 0) {
+      return res.status(400).json({ success: false, error: 'وقت التأخير يجب أن يكون 0 أو أكثر' });
+    }
+
+    const updated = db.updatePromotionSettings(req.body);
+    res.json({ success: true, message: 'تم حفظ إعدادات العرض المنبثق والكوبون بنجاح!', promotion: updated });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message || 'تعذر حفظ إعدادات العرض' });
+  }
+});
+
 // ==========================================
 // COUPON & DISCOUNT MANAGEMENT ENDPOINTS
 // ==========================================

@@ -1,6 +1,6 @@
 import fs from 'fs';
 import path from 'path';
-import { Product, Category, Order, Cart, Review, ImporterStats, ActivityLog, BackupRecord, UserAddress, Coupon, CouponUsage, DiscountStats } from './types';
+import { Product, Category, Order, Cart, Review, ImporterStats, ActivityLog, BackupRecord, UserAddress, Coupon, CouponUsage, DiscountStats, PromotionSettings } from './types';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'store.json');
@@ -18,6 +18,7 @@ export interface DatabaseSchema {
   couponUsages?: CouponUsage[];
   importerStats: ImporterStats;
   activityLogs?: ActivityLog[];
+  promotionSettings?: PromotionSettings;
   settings: {
     storeNameAr: string;
     storeNameEn: string;
@@ -68,6 +69,26 @@ const defaultSettings = {
   logoUrl: 'https://assets.wuiltstore.com/clqvb10wk0zhh01o1ed177fz2__D8_B4_D8_B9_D8_A7_D8_B14.png',
   aiChatEnabled: true,
   aiChatSystemPrompt: 'أنت مساعد ذكي متخصص في خدمة عملاء مكتبة الشاطئ الأزرق في الكويت. مهمتك الأساسية مساعدة العملاء في استكشاف المنتجات، أسعارها، وتقديم توصيات بناءً على احتياجاتهم وميزانيتهم. تعليمات صارمة: 1. يجب أن تكون جميع إجاباتك متعلقة حصرياً بمكتبة الشاطئ الأزرق ومنتجاتها. 2. إذا سألك المستخدم أي سؤال عام غير متعلق بالمكتبة أو الأدوات المدرسية، اعتذر بلطف ووجه الحديث للمنتجات. 3. استخدم أداة البحث عن المنتجات للوصول إلى معلومات دقيقة حول الأسعار والتوافر. 4. الأسعار بالدينار الكويتي (د.ك). 5. كن ودوداً واحترافياً واستخدم لغة عربية سليمة.',
+};
+
+const defaultPromotionSettings: PromotionSettings = {
+  enabled: true,
+  discountType: 'percentage',
+  discountValue: 15,
+  couponCode: 'WELCOME15',
+  titleAr: 'هدية خاصة لك 🎁',
+  titleEn: 'Special Gift For You 🎁',
+  messageAr: 'مرحباً {name} 👋\nاحصل الآن على خصم {discount} واستخدم كود الخصم {code}',
+  messageEn: 'Welcome {name} 👋\nGet {discount} off your order using code {code}',
+  buttonTextAr: 'تسوق الآن',
+  buttonTextEn: 'Shop Now',
+  startAt: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString(),
+  endAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+  showToAuthenticatedUsers: true,
+  showToGuests: true,
+  delaySeconds: 1,
+  frequency: 'session_once',
+  updatedAt: new Date().toISOString(),
 };
 
 const defaultCoupons: Coupon[] = [
@@ -925,6 +946,66 @@ class Database {
     this.recordSyncEvent('update', 'settings', 'store_settings', 'تحديث إعدادات المتجر العامة والشحن');
     this.save();
     this.logActivity('تحديث الإعدادات', 'settings', 'تم تعديل الإعدادات العامة للمتجر');
+  }
+
+  // --- Promotion Popup Settings ---
+  public getPromotionSettings(): PromotionSettings {
+    if (!this.data.promotionSettings) {
+      this.data.promotionSettings = { ...defaultPromotionSettings };
+      this.save();
+    } else {
+      // Ensure all fields are merged in case schema expands
+      this.data.promotionSettings = { ...defaultPromotionSettings, ...this.data.promotionSettings };
+    }
+    return this.data.promotionSettings;
+  }
+
+  public updatePromotionSettings(settings: Partial<PromotionSettings>): PromotionSettings {
+    const current = this.getPromotionSettings();
+    const updated: PromotionSettings = {
+      ...current,
+      ...settings,
+      updatedAt: new Date().toISOString(),
+    };
+    this.data.promotionSettings = updated;
+
+    // Sync or create the Coupon in database automatically
+    if (updated.couponCode) {
+      const cleanCode = updated.couponCode.toUpperCase().trim();
+      if (!this.data.coupons) this.data.coupons = defaultCoupons;
+      
+      const existingCoupon = this.data.coupons.find(c => c.code.toUpperCase() === cleanCode);
+      const couponType = updated.discountType === 'percentage' ? 'percentage' : 'fixed';
+      
+      if (existingCoupon) {
+        existingCoupon.discountType = couponType;
+        existingCoupon.discountValue = Number(updated.discountValue) || 0;
+        existingCoupon.isActive = updated.enabled;
+        existingCoupon.expiresAt = updated.endAt || undefined;
+        existingCoupon.descriptionAr = `كوبون خصم من العرض المنبثق (${updated.discountType === 'percentage' ? updated.discountValue + '%' : updated.discountValue + ' د.ك'})`;
+        existingCoupon.descriptionEn = `Popup promotion discount coupon (${updated.discountType === 'percentage' ? updated.discountValue + '%' : updated.discountValue + ' KWD'})`;
+        existingCoupon.updatedAt = new Date().toISOString();
+      } else {
+        this.data.coupons.push({
+          id: `c_promo_${Date.now()}`,
+          code: cleanCode,
+          discountType: couponType,
+          discountValue: Number(updated.discountValue) || 0,
+          source: 'promotion',
+          isActive: updated.enabled,
+          usageCount: 0,
+          expiresAt: updated.endAt || undefined,
+          descriptionAr: `كوبون خصم من العرض المنبثق (${updated.discountType === 'percentage' ? updated.discountValue + '%' : updated.discountValue + ' د.ك'})`,
+          descriptionEn: `Popup promotion discount coupon (${updated.discountType === 'percentage' ? updated.discountValue + '%' : updated.discountValue + ' KWD'})`,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        });
+      }
+    }
+
+    this.save();
+    this.logActivity('تحديث إعدادات العرض', 'settings', `تم تعديل كود العرض المنبثق: ${updated.couponCode} بقيمة ${updated.discountValue}`);
+    return updated;
   }
 
   // --- Activity Logs ---
