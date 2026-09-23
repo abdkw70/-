@@ -493,6 +493,10 @@ export interface PromotionSettings {
   discountType: 'percentage' | 'fixed_amount';
   discountValue: number;
   couponCode: string;
+  minProductsValue?: number | null; // Minimum products subtotal required to activate discount
+  enableMaxDiscount?: boolean; // Toggle for max discount ceiling
+  maxDiscount?: number | null; // Max discount ceiling amount in KWD
+  includeShipping?: boolean; // Default false (discount applies to products only)
   titleAr: string;
   titleEn: string;
   messageAr: string;
@@ -508,14 +512,30 @@ export interface PromotionSettings {
   updatedAt?: string;
 }
 
+export interface PromotionActivation {
+  id: string;
+  promotionId: string;
+  couponCode: string;
+  userId?: string;
+  sessionId?: string;
+  activatedAt: string;
+  status: 'active' | 'used' | 'revoked';
+  discountType: 'percentage' | 'fixed' | 'fixed_amount' | 'free_shipping';
+  discountValue: number;
+  minProductsValue?: number | null;
+}
+
 export interface Coupon {
   id: string;
   code: string; // e.g. "MAKTABA10", "WIN25-X8K", "WHEEL15-K9L"
   discountType: 'percentage' | 'fixed' | 'free_shipping';
   discountValue: number; // e.g. 10 for 10% or 1.000 for 1 KWD (or 0 for free_shipping)
-  source: 'game' | 'fortune_wheel' | 'admin' | 'welcome' | 'promotion' | 'referral' | 'loyalty' | 'custom' | 'challenge';
+  source: 'game' | 'fortune_wheel' | 'admin' | 'welcome' | 'promotion' | 'referral' | 'loyalty' | 'custom' | 'challenge' | 'store';
+  minProductsValue?: number;
   minOrderAmount?: number;
+  minSubtotal?: number;
   maxDiscountAmount?: number;
+  includeShipping?: boolean;
   usageLimit?: number; // max total usage count allowed, e.g. 1 for single-use game/wheel vouchers
   usageCount: number; // times actually used in completed orders
   isActive: boolean;

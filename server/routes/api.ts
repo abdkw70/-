@@ -408,29 +408,37 @@ apiRouter.post('/cart/:sessionId/coupon', (req, res) => {
   }
 
   const validation = db.validateCoupon(cleanCode, cart.subtotal, userId);
-  if (!validation.valid || !validation.coupon) {
+  if (!validation.coupon) {
     return res.status(400).json({ success: false, error: validation.error || 'كود الخصم غير صالح أو منتهي الصلاحية' });
   }
 
+  // Save coupon code to cart and recalculate via central engine
   cart.couponCode = validation.coupon.code;
-  cart.discount = validation.discountAmount;
-  if (validation.coupon.discountType === 'free_shipping') {
-    cart.shippingFee = 0;
-  } else {
-    cart.shippingFee = db.calculateShippingFee(cart.subtotal, validation.coupon.code);
-  }
-  cart.total = Number(Math.max(0, cart.subtotal - cart.discount + cart.shippingFee).toFixed(3));
-
   db.updateCart(sessionId, cart);
+
+  const updatedCart = db.getCart(sessionId);
+
+  if (!validation.valid) {
+    return res.json({
+      success: true,
+      eligible: false,
+      message: validation.error || 'تم حفظ كود الخصم، أضف المزيد من المنتجات لتفعيله.',
+      discountAmount: 0,
+      remainingForMin: validation.remainingForMin || 0,
+      coupon: validation.coupon,
+      cart: updatedCart,
+    });
+  }
 
   res.json({
     success: true,
+    eligible: true,
     message: validation.coupon.discountType === 'free_shipping'
       ? 'تم تفعيل التوصيل المجاني بنجاح!'
-      : `تم تطبيق خصم ${validation.discountAmount.toFixed(3)} د.ك بنجاح!`,
-    discountAmount: validation.discountAmount,
+      : `تم تطبيق خصم ${updatedCart.discount.toFixed(3)} د.ك بنجاح!`,
+    discountAmount: updatedCart.discount,
     coupon: validation.coupon,
-    cart: db.getCart(sessionId),
+    cart: updatedCart,
   });
 });
 
@@ -1638,6 +1646,76 @@ apiRouter.get('/promotions/active', (req, res) => {
     res.json({ success: true, active: true, promotion: promo });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message || 'Error fetching active promotion' });
+  }
+});
+
+// User Promotion Activation Route
+apiRouter.post('/promotions/activate', (req, res) => {
+  try {
+    const { promotionId, couponCode, userId, sessionId } = req.body;
+    const promo = db.getPromotionSettings();
+
+    if (!promo.enabled) {
+      return res.status(400).json({ success: false, error: 'العرض غير مفعّل حالياً' });
+    }
+
+    const now = Date.now();
+    if (promo.startAt) {
+      const startTime = new Date(promo.startAt).getTime();
+      if (!isNaN(startTime) && startTime > now) {
+        return res.status(400).json({ success: false, error: 'العرض لم يبدأ بعد' });
+      }
+    }
+
+    if (promo.endAt) {
+      const endTime = new Date(promo.endAt).getTime();
+      if (!isNaN(endTime) && endTime < now) {
+        return res.status(400).json({ success: false, error: 'انتهت صلاحية العرض' });
+      }
+    }
+
+    // Activate promotion in database
+    const activationResult = db.activatePromotion({
+      promotionId: promotionId || 'current_promotion',
+      couponCode: couponCode || promo.couponCode,
+      userId,
+      sessionId,
+    });
+
+    // Auto-attach coupon to cart if sessionId provided
+    let updatedCart: any = null;
+    if (sessionId) {
+      const cart = db.getCart(sessionId, userId);
+      cart.couponCode = promo.couponCode.toUpperCase().trim();
+      db.updateCart(sessionId, cart);
+      updatedCart = db.getCart(sessionId, userId);
+    }
+
+    res.json({
+      success: true,
+      isAlreadyActive: activationResult.isAlreadyActive,
+      activation: activationResult.activation,
+      promotion: promo,
+      couponCode: promo.couponCode,
+      cart: updatedCart,
+      message: activationResult.isAlreadyActive
+        ? 'العرض مفعّل بالفعل لحسابك'
+        : 'تم تفعيل العرض بنجاح على حسابك وسلتك!',
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message || 'فشل تفعيل العرض' });
+  }
+});
+
+// User Promotion Activation Check
+apiRouter.get('/promotions/activations', (req, res) => {
+  try {
+    const userId = req.query.userId as string | undefined;
+    const sessionId = req.query.sessionId as string | undefined;
+    const activation = db.getActivePromotionActivation(userId, sessionId);
+    res.json({ success: true, active: Boolean(activation), activation });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
   }
 });
 

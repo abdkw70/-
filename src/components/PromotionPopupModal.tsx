@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Gift, Sparkles, X, ShoppingBag, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useCart } from '../context/CartContext';
-import { fetchActivePromotion } from '../lib/api';
+import { fetchActivePromotion, activatePromotion } from '../lib/api';
 import { PromotionSettings } from '../types';
 
 interface PromotionPopupModalProps {
@@ -15,7 +15,7 @@ export const PromotionPopupModal: React.FC<PromotionPopupModalProps> = ({
   onNavigate,
 }) => {
   const { user, userProfile } = useAuth();
-  const { applyCouponCode, cart } = useCart();
+  const { applyCouponCode, cart, sessionId } = useCart();
 
   const [promotion, setPromotion] = useState<PromotionSettings | null>(null);
   const [isOpen, setIsOpen] = useState(false);
@@ -138,13 +138,17 @@ export const PromotionPopupModal: React.FC<PromotionPopupModalProps> = ({
 
     setIsApplying(true);
     try {
-      // Store pending code for automatic apply on cart add if cart is empty
-      localStorage.setItem('pending_promo_code', code);
+      // 1. Call Backend Promotion Activation Endpoint
+      await activatePromotion({
+        promotionId: promotion.couponCode,
+        couponCode: code,
+        userId: user?.uid,
+        sessionId: sessionId,
+      });
 
-      // If cart has items, apply right now
-      if (cart && cart.items && cart.items.length > 0) {
-        await applyCouponCode(code);
-      }
+      // 2. Store pending code and apply to cart
+      localStorage.setItem('pending_promo_code', code);
+      await applyCouponCode(code);
     } catch {
       // ignore
     } finally {
@@ -250,6 +254,14 @@ export const PromotionPopupModal: React.FC<PromotionPopupModalProps> = ({
             {discountStr} {isRtl ? 'خصم' : 'OFF'}
           </div>
         </div>
+
+        {promotion.minProductsValue && promotion.minProductsValue > 0 ? (
+          <div className="mt-2 text-center text-[11px] sm:text-xs text-slate-500 font-bold bg-slate-100 py-1.5 px-3 rounded-lg border border-slate-200">
+            {isRtl
+              ? `الحد الأدنى للمنتجات لتفعيل الخصم: ${promotion.minProductsValue.toFixed(3)} د.ك`
+              : `Minimum products subtotal: ${promotion.minProductsValue.toFixed(3)} KWD`}
+          </div>
+        ) : null}
 
         {/* CTA Button */}
         <button

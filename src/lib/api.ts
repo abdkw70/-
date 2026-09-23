@@ -14,6 +14,7 @@ import {
   GamificationSettings,
   LeaderboardEntry,
   PromotionSettings,
+  PromotionActivation,
 } from '../types';
 
 export interface ProductsResponse {
@@ -146,7 +147,7 @@ export async function removeCartItem(sessionId: string, itemId: string): Promise
   return res.json();
 }
 
-export async function applyCoupon(sessionId: string, code: string): Promise<{ success: boolean; message: string; cart: Cart }> {
+export async function applyCoupon(sessionId: string, code: string): Promise<{ success: boolean; eligible?: boolean; message: string; cart: Cart; discountAmount?: number; remainingForMin?: number }> {
   const res = await fetch(`/api/cart/${sessionId}/coupon`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -1112,6 +1113,37 @@ export async function fetchActivePromotion(): Promise<{
     return res.json();
   } catch {
     return { success: false, active: false, promotion: null };
+  }
+}
+
+export async function activatePromotion(data: {
+  promotionId?: string;
+  couponCode?: string;
+  userId?: string;
+  sessionId?: string;
+}): Promise<{
+  success: boolean;
+  isAlreadyActive?: boolean;
+  activation?: PromotionActivation;
+  promotion?: PromotionSettings;
+  couponCode?: string;
+  cart?: Cart;
+  message?: string;
+  error?: string;
+}> {
+  try {
+    const res = await fetch('/api/promotions/activate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data),
+    });
+    const json = await res.json();
+    if (!res.ok) {
+      return { success: false, error: json.error || 'فشل تفعيل العرض' };
+    }
+    return json;
+  } catch (err: any) {
+    return { success: false, error: err.message || 'خطأ أثناء الاتصال بالخادم لتفعيل العرض' };
   }
 }
 

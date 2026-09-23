@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
-import { Product, Category, Order, Cart, Review, ImporterStats, ActivityLog, BackupRecord, UserAddress, Coupon, CouponUsage, DiscountStats, PromotionSettings } from './types';
+import { Product, Category, Order, Cart, Review, ImporterStats, ActivityLog, BackupRecord, UserAddress, Coupon, CouponUsage, DiscountStats, PromotionSettings, PromotionActivation } from './types';
+import { calculatePromotionDiscount } from './services/promotionEngine';
 
 const DATA_DIR = path.join(process.cwd(), 'data');
 const DB_FILE = path.join(DATA_DIR, 'store.json');
@@ -19,6 +20,7 @@ export interface DatabaseSchema {
   importerStats: ImporterStats;
   activityLogs?: ActivityLog[];
   promotionSettings?: PromotionSettings;
+  promotionActivations?: PromotionActivation[];
   settings: {
     storeNameAr: string;
     storeNameEn: string;
@@ -76,6 +78,10 @@ const defaultPromotionSettings: PromotionSettings = {
   discountType: 'percentage',
   discountValue: 15,
   couponCode: 'WELCOME15',
+  minProductsValue: 5,
+  enableMaxDiscount: false,
+  maxDiscount: null,
+  includeShipping: false,
   titleAr: 'هدية خاصة لك 🎁',
   titleEn: 'Special Gift For You 🎁',
   messageAr: 'مرحباً {name} 👋\nاحصل الآن على خصم {discount} واستخدم كود الخصم {code}',
@@ -229,6 +235,7 @@ class Database {
           couponUsages: Array.isArray(parsed.couponUsages) ? parsed.couponUsages : [],
           importerStats: parsed.importerStats || defaultStats,
           activityLogs: Array.isArray(parsed.activityLogs) ? parsed.activityLogs : [],
+          promotionActivations: Array.isArray(parsed.promotionActivations) ? parsed.promotionActivations : [],
           settings: { ...defaultSettings, ...(parsed.settings || {}) },
         };
       }
@@ -487,7 +494,97 @@ class Database {
   }
 
   // --- Carts ---
-  public getCart(sessionId: string): Cart {
+  private recalculateCart(cart: Cart): Cart {
+    const subtotal = Number((cart.items || []).reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 0), 0).toFixed(3));
+    let discount = 0;
+    let shippingFee = this.calculateShippingFee(subtotal, cart.couponCode);
+    let total = Number((subtotal + shippingFee).toFixed(3));
+
+    if (cart.couponCode) {
+      const cleanCode = cart.couponCode.toUpperCase().trim();
+      const coupon = this.getCouponByCode(cleanCode);
+      if (coupon && coupon.isActive) {
+        const result = calculatePromotionDiscount({
+          productsSubtotal: subtotal,
+          shippingFee,
+          coupon,
+        });
+        discount = result.discountAmount;
+        shippingFee = result.effectiveShippingFee;
+        total = result.finalTotal;
+      }
+    }
+
+    return {
+      ...cart,
+      subtotal,
+      discount,
+      shippingFee,
+      total,
+      updatedAt: new Date().toISOString(),
+    };
+  }
+
+  // --- Promotion Activations ---
+  public getPromotionActivations(userId?: string, sessionId?: string): PromotionActivation[] {
+    if (!this.data.promotionActivations) this.data.promotionActivations = [];
+    return this.data.promotionActivations.filter(a => {
+      if (a.status !== 'active') return false;
+      if (userId && a.userId === userId) return true;
+      if (sessionId && a.sessionId === sessionId) return true;
+      return false;
+    });
+  }
+
+  public getActivePromotionActivation(userId?: string, sessionId?: string): PromotionActivation | undefined {
+    const list = this.getPromotionActivations(userId, sessionId);
+    return list[0];
+  }
+
+  public activatePromotion(data: {
+    promotionId?: string;
+    couponCode?: string;
+    userId?: string;
+    sessionId?: string;
+  }): { activation: PromotionActivation; isAlreadyActive: boolean } {
+    if (!this.data.promotionActivations) this.data.promotionActivations = [];
+
+    const promoSettings = this.getPromotionSettings();
+    const couponCode = (data.couponCode || promoSettings.couponCode).toUpperCase().trim();
+    const promotionId = data.promotionId || 'current_promotion';
+
+    // Idempotency check: prevent duplicate active activations for same user/session and promotion
+    const existing = this.data.promotionActivations.find(a =>
+      a.promotionId === promotionId &&
+      a.couponCode === couponCode &&
+      a.status === 'active' &&
+      ((data.userId && a.userId === data.userId) || (data.sessionId && a.sessionId === data.sessionId))
+    );
+
+    if (existing) {
+      return { activation: existing, isAlreadyActive: true };
+    }
+
+    const newActivation: PromotionActivation = {
+      id: `act_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      promotionId,
+      couponCode,
+      userId: data.userId || undefined,
+      sessionId: data.sessionId || undefined,
+      activatedAt: new Date().toISOString(),
+      status: 'active',
+      discountType: promoSettings.discountType,
+      discountValue: promoSettings.discountValue,
+      minProductsValue: promoSettings.minProductsValue,
+    };
+
+    this.data.promotionActivations.unshift(newActivation);
+    this.save();
+
+    return { activation: newActivation, isAlreadyActive: false };
+  }
+
+  public getCart(sessionId: string, userId?: string): Cart {
     if (!this.data.carts[sessionId]) {
       this.data.carts[sessionId] = {
         id: sessionId,
@@ -499,35 +596,26 @@ class Database {
         updatedAt: new Date().toISOString(),
       };
       this.save();
-    } else {
-      // Dynamic recalculation on access to guarantee that changing admin settings instantly reflects on active carts
-      const cart = this.data.carts[sessionId];
-      const subtotal = cart.items.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 0), 0);
-      const shippingFee = this.calculateShippingFee(subtotal, cart.couponCode);
-      const total = Math.max(0, subtotal - (cart.discount || 0) + shippingFee);
-
-      cart.subtotal = Number(subtotal.toFixed(3));
-      cart.shippingFee = Number(shippingFee.toFixed(3));
-      cart.total = Number(total.toFixed(3));
-      cart.updatedAt = new Date().toISOString();
     }
+
+    // Automatically check for active promotion activation if couponCode is missing
+    const cartObj = this.data.carts[sessionId];
+    if (!cartObj.couponCode) {
+      const activeActivation = this.getActivePromotionActivation(userId, sessionId);
+      const promoSettings = this.getPromotionSettings();
+      if (activeActivation && promoSettings.enabled) {
+        cartObj.couponCode = activeActivation.couponCode;
+      }
+    }
+
+    // Dynamic recalculation on access to guarantee that changing cart items or admin settings instantly reflects
+    this.data.carts[sessionId] = this.recalculateCart(cartObj);
     return this.data.carts[sessionId];
   }
 
   public updateCart(sessionId: string, cart: Cart): void {
-    // Recalculate totals server-side
-    const subtotal = cart.items.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 0), 0);
-    const shippingFee = this.calculateShippingFee(subtotal, cart.couponCode);
-    const total = Math.max(0, subtotal - (cart.discount || 0) + shippingFee);
-
-    this.data.carts[sessionId] = {
-      ...cart,
-      id: sessionId,
-      subtotal: Number(subtotal.toFixed(3)),
-      shippingFee: Number(shippingFee.toFixed(3)),
-      total: Number(total.toFixed(3)),
-      updatedAt: new Date().toISOString(),
-    };
+    const updated = this.recalculateCart({ ...cart, id: sessionId });
+    this.data.carts[sessionId] = updated;
     this.save();
   }
 
@@ -716,7 +804,7 @@ class Database {
     code: string,
     subtotal: number,
     userId?: string
-  ): { valid: boolean; coupon?: Coupon; discountAmount: number; error?: string } {
+  ): { valid: boolean; coupon?: Coupon; discountAmount: number; error?: string; remainingForMin?: number } {
     if (!code || typeof code !== 'string') {
       return { valid: false, discountAmount: 0, error: 'يرجى إدخال كود الخصم' };
     }
@@ -742,15 +830,6 @@ class Database {
       return { valid: false, discountAmount: 0, error: 'كود الخصم هذا مخصص لحساب آخر' };
     }
 
-    // Minimum order amount
-    if (coupon.minOrderAmount && subtotal < coupon.minOrderAmount) {
-      return {
-        valid: false,
-        discountAmount: 0,
-        error: `الحد الأدنى لتطبيق هذا الكود هو ${coupon.minOrderAmount.toFixed(3)} د.ك (المجموع الحالي: ${subtotal.toFixed(3)} د.ك)`,
-      };
-    }
-
     // Usage limit check
     if (coupon.usageLimit && coupon.usageCount >= coupon.usageLimit) {
       return { valid: false, discountAmount: 0, error: 'تم استنفاد الحد الأقصى لاستخدام كود الخصم هذا' };
@@ -766,26 +845,29 @@ class Database {
       }
     }
 
-    // Calculate real discount
-    let discountAmount = 0;
-    if (coupon.discountType === 'percentage') {
-      discountAmount = Number(((subtotal * coupon.discountValue) / 100).toFixed(3));
-      if (coupon.maxDiscountAmount && coupon.maxDiscountAmount > 0) {
-        discountAmount = Math.min(discountAmount, coupon.maxDiscountAmount);
-      }
-    } else {
-      // Fixed
-      discountAmount = Number(coupon.discountValue.toFixed(3));
-    }
+    // Central promotion calculation
+    const shippingFee = this.calculateShippingFee(subtotal, cleanCode);
+    const result = calculatePromotionDiscount({
+      productsSubtotal: subtotal,
+      shippingFee,
+      coupon,
+      userId,
+    });
 
-    // Discount cannot exceed subtotal
-    discountAmount = Math.min(subtotal, Math.max(0, discountAmount));
-    discountAmount = Number(discountAmount.toFixed(3));
+    if (!result.eligible) {
+      return {
+        valid: false,
+        coupon,
+        discountAmount: 0,
+        remainingForMin: result.remainingForMin,
+        error: result.reasonAr || `أضف ${result.remainingForMin.toFixed(3)} د.ك من المنتجات لتفعيل الخصم.`,
+      };
+    }
 
     return {
       valid: true,
       coupon,
-      discountAmount,
+      discountAmount: result.discountAmount,
     };
   }
 
@@ -980,6 +1062,11 @@ class Database {
       if (existingCoupon) {
         existingCoupon.discountType = couponType;
         existingCoupon.discountValue = Number(updated.discountValue) || 0;
+        existingCoupon.minProductsValue = typeof updated.minProductsValue === 'number' ? updated.minProductsValue : (updated.minProductsValue ? Number(updated.minProductsValue) : 0);
+        existingCoupon.minOrderAmount = existingCoupon.minProductsValue;
+        existingCoupon.minSubtotal = existingCoupon.minProductsValue;
+        existingCoupon.maxDiscountAmount = updated.enableMaxDiscount && updated.maxDiscount ? Number(updated.maxDiscount) : undefined;
+        existingCoupon.includeShipping = updated.includeShipping ?? false;
         existingCoupon.isActive = updated.enabled;
         existingCoupon.expiresAt = updated.endAt || undefined;
         existingCoupon.descriptionAr = `كوبون خصم من العرض المنبثق (${updated.discountType === 'percentage' ? updated.discountValue + '%' : updated.discountValue + ' د.ك'})`;
@@ -991,6 +1078,11 @@ class Database {
           code: cleanCode,
           discountType: couponType,
           discountValue: Number(updated.discountValue) || 0,
+          minProductsValue: typeof updated.minProductsValue === 'number' ? updated.minProductsValue : (updated.minProductsValue ? Number(updated.minProductsValue) : 0),
+          minOrderAmount: typeof updated.minProductsValue === 'number' ? updated.minProductsValue : (updated.minProductsValue ? Number(updated.minProductsValue) : 0),
+          minSubtotal: typeof updated.minProductsValue === 'number' ? updated.minProductsValue : (updated.minProductsValue ? Number(updated.minProductsValue) : 0),
+          maxDiscountAmount: updated.enableMaxDiscount && updated.maxDiscount ? Number(updated.maxDiscount) : undefined,
+          includeShipping: updated.includeShipping ?? false,
           source: 'promotion',
           isActive: updated.enabled,
           usageCount: 0,
@@ -1000,6 +1092,13 @@ class Database {
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         });
+      }
+    }
+
+    // Instantly recalculate all existing carts in DB so admin updates immediately reflect
+    if (this.data.carts) {
+      for (const sId of Object.keys(this.data.carts)) {
+        this.data.carts[sId] = this.recalculateCart(this.data.carts[sId]);
       }
     }
 

@@ -189,6 +189,10 @@ export interface PromotionSettings {
   discountType: 'percentage' | 'fixed_amount';
   discountValue: number;
   couponCode: string;
+  minProductsValue?: number | null; // Minimum products subtotal required to activate discount
+  enableMaxDiscount?: boolean; // Toggle for max discount ceiling
+  maxDiscount?: number | null; // Max discount ceiling amount in KWD
+  includeShipping?: boolean; // Default false (discount applies to products only)
   titleAr: string;
   titleEn: string;
   messageAr: string;
@@ -204,14 +208,30 @@ export interface PromotionSettings {
   updatedAt?: string;
 }
 
+export interface PromotionActivation {
+  id: string;
+  promotionId: string;
+  couponCode: string;
+  userId?: string;
+  sessionId?: string;
+  activatedAt: string;
+  status: 'active' | 'used' | 'revoked';
+  discountType: 'percentage' | 'fixed' | 'fixed_amount' | 'free_shipping';
+  discountValue: number;
+  minProductsValue?: number | null;
+}
+
 export interface Coupon {
   id: string;
   code: string;
   discountType: 'percentage' | 'fixed' | 'free_shipping';
   discountValue: number; // percentage (e.g. 25 for 25%) or fixed amount in KWD (e.g. 2.500)
+  minProductsValue?: number; // Minimum products subtotal required to use this coupon
   minSubtotal?: number; // Minimum cart subtotal required to use this coupon
+  minOrderAmount?: number;
   maxDiscountAmount?: number; // Max ceiling discount in KWD if percentage
-  source: 'store' | 'game' | 'fortune_wheel' | 'referral' | 'loyalty' | 'custom';
+  includeShipping?: boolean; // Default false
+  source: 'store' | 'game' | 'fortune_wheel' | 'referral' | 'loyalty' | 'custom' | 'promotion' | 'admin' | 'welcome' | 'challenge';
   isActive: boolean;
   usageLimit?: number; // total allowed uses (null = unlimited)
   usageCount: number; // times used so far
@@ -220,7 +240,7 @@ export interface Coupon {
   descriptionAr?: string;
   descriptionEn?: string;
   createdAt: string;
-  updatedAt: string;
+  updatedAt?: string;
 }
 
 export interface CouponUsage {

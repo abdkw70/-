@@ -31,9 +31,12 @@ export const AdminPromotions: React.FC<AdminPromotionsProps> = ({ showToast }) =
   // Preview interactive state
   const [previewLang, setPreviewLang] = useState<'ar' | 'en'>('ar');
   const [previewSampleName, setPreviewSampleName] = useState('عبدالرحمن');
+  const [previewTestSubtotalInput, setPreviewTestSubtotalInput] = useState('0.150');
 
-  // Input String State for Discount Value to avoid "0" coercion bugs and support "2.500", "10", empty, etc.
+  // Input String States for Discount Value, Min Subtotal, and Max Discount to avoid "0" coercion bugs and support "2.500", "10", empty, etc.
   const [discountValueInput, setDiscountValueInput] = useState<string>('15');
+  const [minProductsValueInput, setMinProductsValueInput] = useState<string>('5.000');
+  const [maxDiscountInput, setMaxDiscountInput] = useState<string>('');
 
   // Form State
   const [formData, setFormData] = useState<PromotionSettings>({
@@ -41,6 +44,10 @@ export const AdminPromotions: React.FC<AdminPromotionsProps> = ({ showToast }) =
     discountType: 'percentage',
     discountValue: 15,
     couponCode: 'WELCOME15',
+    minProductsValue: 5,
+    enableMaxDiscount: false,
+    maxDiscount: null,
+    includeShipping: false,
     titleAr: 'هدية خاصة لك 🎁',
     titleEn: 'Special Gift For You 🎁',
     messageAr: 'مرحباً {name} 👋\nاحصل الآن على خصم {discount} واستخدم كود الخصم {code} عند الطلب!',
@@ -85,6 +92,8 @@ export const AdminPromotions: React.FC<AdminPromotionsProps> = ({ showToast }) =
           endAt: p.endAt ? new Date(p.endAt).toISOString().slice(0, 16) : '',
         });
         setDiscountValueInput(p.discountValue !== undefined && p.discountValue !== null ? String(p.discountValue) : '');
+        setMinProductsValueInput(p.minProductsValue !== undefined && p.minProductsValue !== null ? String(p.minProductsValue) : '5.000');
+        setMaxDiscountInput(p.maxDiscount !== undefined && p.maxDiscount !== null ? String(p.maxDiscount) : '');
       }
     } catch (err: any) {
       showToast?.(err.message || 'فشل تحميل إعدادات العروض', 'error');
@@ -115,7 +124,7 @@ export const AdminPromotions: React.FC<AdminPromotionsProps> = ({ showToast }) =
     const numDiscount = Number(normalizedDiscount);
 
     if (isNaN(numDiscount) || !isFinite(numDiscount)) {
-      showToast?.('أدخل رقماً صحيحاً.', 'error');
+      showToast?.('أدخل رقماً صحيحاً لقيمة الخصم.', 'error');
       return;
     }
 
@@ -135,11 +144,32 @@ export const AdminPromotions: React.FC<AdminPromotionsProps> = ({ showToast }) =
       }
     }
 
+    // Validate Minimum Products Value
+    const normMin = normalizeArabicNumbers(minProductsValueInput.trim());
+    const numMin = normMin === '' ? 0 : Number(normMin);
+    if (isNaN(numMin) || numMin < 0) {
+      showToast?.('يرجى إدخال حد أدنى صحيح لقيمة المنتجات.', 'error');
+      return;
+    }
+
+    // Validate Maximum Discount Ceiling if enabled
+    let numMax: number | null = null;
+    if (formData.enableMaxDiscount) {
+      const normMax = normalizeArabicNumbers(maxDiscountInput.trim());
+      if (normMax === '' || isNaN(Number(normMax)) || Number(normMax) <= 0) {
+        showToast?.('يرجى إدخال قيمة حد أقصى صالحة للخصم.', 'error');
+        return;
+      }
+      numMax = Number(normMax);
+    }
+
     setSaving(true);
     try {
       const payload: Partial<PromotionSettings> = {
         ...formData,
         discountValue: numDiscount,
+        minProductsValue: numMin,
+        maxDiscount: numMax,
         couponCode: formData.couponCode.toUpperCase().trim(),
         startAt: formData.startAt ? new Date(formData.startAt).toISOString() : null,
         endAt: formData.endAt ? new Date(formData.endAt).toISOString() : null,
@@ -148,6 +178,7 @@ export const AdminPromotions: React.FC<AdminPromotionsProps> = ({ showToast }) =
       const res = await updateAdminPromotions(payload);
       if (res.success && res.promotion) {
         showToast?.(res.message || 'تم حفظ إعدادات العرض المنبثق بنجاح!', 'success');
+        window.dispatchEvent(new CustomEvent('promotion-updated'));
         const p = res.promotion;
         setFormData({
           ...p,
@@ -155,6 +186,8 @@ export const AdminPromotions: React.FC<AdminPromotionsProps> = ({ showToast }) =
           endAt: p.endAt ? new Date(p.endAt).toISOString().slice(0, 16) : '',
         });
         setDiscountValueInput(String(p.discountValue));
+        setMinProductsValueInput(p.minProductsValue !== undefined && p.minProductsValue !== null ? String(p.minProductsValue) : '5.000');
+        setMaxDiscountInput(p.maxDiscount !== undefined && p.maxDiscount !== null ? String(p.maxDiscount) : '');
       } else {
         throw new Error(res.error || 'تعذر الحفظ');
       }
@@ -421,6 +454,100 @@ export const AdminPromotions: React.FC<AdminPromotionsProps> = ({ showToast }) =
                 <p>
                   عند حفظ التغييرات، سيقوم النظام تلقائياً بتحديث أو إنشائه كـ <strong>كوبون مفعّل حقيقي</strong> في قاعدة بيانات المتجر لتيسير استخدامه أثناء عملية الدفع (Checkout) وسلة المشتريات.
                 </p>
+              </div>
+            </div>
+
+            {/* 2.1 Rules, Minimum Order & Shipping Fee Limits */}
+            <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 shadow-lg space-y-4">
+              <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-emerald-400" />
+                  <h2 className="text-base font-bold text-white">2.1 شروط الحد الأدنى، الحد الأقصى، ورسوم التوصيل</h2>
+                </div>
+                <span className="text-xs text-amber-400 font-bold bg-amber-500/10 border border-amber-500/20 px-2.5 py-1 rounded-lg">
+                  فصل المنتجات عن التوصيل
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                {/* Minimum Products Value */}
+                <div className="space-y-1.5">
+                  <label className="block text-xs font-bold text-slate-300">
+                    الحد الأدنى لقيمة المنتجات لتفعيل الخصم (د.ك KWD)
+                  </label>
+                  <input
+                    type="text"
+                    inputMode="decimal"
+                    value={minProductsValueInput}
+                    onChange={e => setMinProductsValueInput(normalizeArabicNumbers(e.target.value))}
+                    className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold text-sm focus:outline-hidden focus:border-emerald-500"
+                    placeholder="مثال: 5.000"
+                    dir="ltr"
+                  />
+                  <span className="block text-[11px] text-slate-400">
+                    تنبيه: الخصم يُحسب ويُفعل بناءً على قيمة المنتجات فقط (قبل التوصيل). إذا كانت سلة المنتجات أقل من هذا المبلغ، لن يعمل الخصم حتى يكتمل الحد الأدنى.
+                  </span>
+                </div>
+
+                {/* Include Shipping Toggle */}
+                <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="block font-bold text-sm text-white">هل يشمل الخصم رسوم التوصيل؟</span>
+                      <span className="block text-xs text-slate-400 mt-0.5">
+                        {formData.includeShipping ? 'تفعيل (يغطي الخصم رسوم التوصيل)' : 'إيقاف (الخصم ينطبق على المنتجات فقط)'}
+                      </span>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={!!formData.includeShipping}
+                        onChange={e => setFormData({ ...formData, includeShipping: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-slate-800 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-amber-500"></div>
+                    </label>
+                  </div>
+                  <span className="block text-[11px] text-slate-400 leading-tight">
+                    القاعدة التجارية العادلة (إيقاف): التوصيل يبقى ثابتاً (مثلاً 2.000 د.ك) والخصم يخصم من المنتجات فقط.
+                  </span>
+                </div>
+
+                {/* Enable Maximum Discount Toggle & Input */}
+                <div className="sm:col-span-2 p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <span className="block font-bold text-sm text-white">تحديد حد أقصى لمبلغ الخصم (Maximum Discount)</span>
+                      <span className="block text-xs text-slate-400 mt-0.5">
+                        وضع سقف لأقصى مبلغ يُخصم بالدينار الكويتي عند اختيار نسبة مئوية %
+                      </span>
+                    </div>
+                    <label className="relative inline-flex items-center cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={!!formData.enableMaxDiscount}
+                        onChange={e => setFormData({ ...formData, enableMaxDiscount: e.target.checked })}
+                        className="sr-only peer"
+                      />
+                      <div className="w-11 h-6 bg-slate-800 peer-focus:outline-hidden rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-sky-500"></div>
+                    </label>
+                  </div>
+
+                  {formData.enableMaxDiscount && (
+                    <div className="pt-2 border-t border-slate-800 space-y-1.5">
+                      <label className="block text-xs font-bold text-slate-300">الحد الأقصى لمبلغ الخصم (د.ك KWD)</label>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={maxDiscountInput}
+                        onChange={e => setMaxDiscountInput(normalizeArabicNumbers(e.target.value))}
+                        className="w-full px-3.5 py-2.5 bg-slate-900 border border-slate-800 rounded-xl text-white font-bold text-sm focus:outline-hidden focus:border-sky-500"
+                        placeholder="مثال: 5.000 (أقصى خصم 5 د.ك)"
+                        dir="ltr"
+                      />
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 
@@ -812,6 +939,142 @@ export const AdminPromotions: React.FC<AdminPromotionsProps> = ({ showToast }) =
               </button>
             </div>
           </div>
+
+          {/* Interactive Discount Engine Simulator Box */}
+          {(() => {
+            const simSubtotal = Number(previewTestSubtotalInput) || 0;
+            const simMin = Number(minProductsValueInput) || 0;
+            const simValue = Number(discountValueInput) || 0;
+            const simMax = formData.enableMaxDiscount ? Number(maxDiscountInput) || 0 : 0;
+            const simShipping = 2.000;
+
+            let simDiscount = 0;
+            let simEligible = true;
+            let simReason = '';
+
+            if (simMin > 0 && simSubtotal < simMin) {
+              simEligible = false;
+              const rem = Number((simMin - simSubtotal).toFixed(3));
+              simReason = `أضف ${rem.toFixed(3)} د.ك من المنتجات لتفعيل الخصم.`;
+            } else {
+              if (formData.discountType === 'percentage') {
+                simDiscount = (simSubtotal * simValue) / 100;
+              } else {
+                simDiscount = simValue;
+              }
+              if (simMax > 0 && simDiscount > simMax) {
+                simDiscount = simMax;
+              }
+              if (!formData.includeShipping) {
+                simDiscount = Math.min(simSubtotal, simDiscount);
+              } else {
+                simDiscount = Math.min(simSubtotal + simShipping, simDiscount);
+              }
+              simDiscount = Number(simDiscount.toFixed(3));
+              simReason = `تم تطبيق خصم ${simDiscount.toFixed(3)} د.ك بنجاح!`;
+            }
+
+            const simEffectiveShipping = formData.includeShipping && simDiscount > simSubtotal
+              ? Math.max(0, simShipping - (simDiscount - simSubtotal))
+              : simShipping;
+
+            const simFinalTotal = Number((Math.max(0, simSubtotal - (formData.includeShipping ? 0 : simDiscount)) + simEffectiveShipping).toFixed(3));
+
+            return (
+              <div className="bg-slate-950 border border-slate-800 rounded-2xl p-5 space-y-4">
+                <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+                  <div className="flex items-center gap-2">
+                    <RefreshCw className="w-4 h-4 text-sky-400" />
+                    <h3 className="text-sm font-bold text-white">محاكي السلة والخصم الفوري (Live Cart & Discount Engine Simulator)</h3>
+                  </div>
+                  <span className="text-[11px] font-mono text-slate-400 bg-slate-900 px-2 py-1 rounded-md border border-slate-800">
+                    قواعد الحساب الحقيقية
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
+                  <div>
+                    <label className="block text-xs font-bold text-slate-300 mb-1">
+                      أدخل قيمة المنتجات بالسلة (د.ك KWD)
+                    </label>
+                    <input
+                      type="text"
+                      inputMode="decimal"
+                      value={previewTestSubtotalInput}
+                      onChange={e => setPreviewTestSubtotalInput(normalizeArabicNumbers(e.target.value))}
+                      className="w-full px-3 py-2 bg-slate-900 border border-slate-700 rounded-xl text-amber-300 font-mono font-bold text-sm"
+                      dir="ltr"
+                    />
+                  </div>
+
+                  {/* Quick Preset Buttons */}
+                  <div className="md:col-span-2 flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs text-slate-400 font-bold me-1">أمثلة سريعة:</span>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewTestSubtotalInput('0.150')}
+                      className="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-rose-500/10 text-rose-300 border border-rose-500/20 hover:bg-rose-500/20 cursor-pointer"
+                    >
+                      0.150 د.ك (أقل من الحد)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewTestSubtotalInput('1.000')}
+                      className="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-amber-500/10 text-amber-300 border border-amber-500/20 hover:bg-amber-500/20 cursor-pointer"
+                    >
+                      1.000 د.ك
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewTestSubtotalInput('5.000')}
+                      className="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 hover:bg-emerald-500/20 cursor-pointer"
+                    >
+                      5.000 د.ك (مساوٍ للحد)
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setPreviewTestSubtotalInput('10.000')}
+                      className="px-2.5 py-1 text-xs font-mono font-bold rounded-lg bg-sky-500/10 text-sky-300 border border-sky-500/20 hover:bg-sky-500/20 cursor-pointer"
+                    >
+                      10.000 د.ك
+                    </button>
+                  </div>
+                </div>
+
+                {/* Live Output Breakdown */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 p-3.5 bg-slate-900 rounded-xl border border-slate-800 text-xs font-tajawal">
+                  <div>
+                    <span className="block text-slate-400">قيمة المنتجات:</span>
+                    <span className="font-mono font-bold text-slate-200 text-sm">{simSubtotal.toFixed(3)} د.ك</span>
+                  </div>
+                  <div>
+                    <span className="block text-slate-400">الخصم المطبق:</span>
+                    <span className={`font-mono font-bold text-sm ${simDiscount > 0 ? 'text-emerald-400' : 'text-slate-500'}`}>
+                      -{simDiscount.toFixed(3)} د.ك
+                    </span>
+                  </div>
+                  <div>
+                    <span className="block text-slate-400">رسوم التوصيل:</span>
+                    <span className="font-mono font-bold text-slate-200 text-sm">{simEffectiveShipping.toFixed(3)} د.ك</span>
+                  </div>
+                  <div>
+                    <span className="block text-slate-400">المجموع النهائي:</span>
+                    <span className="font-mono font-bold text-amber-400 text-sm">{simFinalTotal.toFixed(3)} د.ك</span>
+                  </div>
+                </div>
+
+                {/* Dynamic Status Banner */}
+                <div className={`p-3 rounded-xl border text-xs font-bold flex items-center gap-2 ${
+                  simEligible
+                    ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-300'
+                    : 'bg-rose-500/10 border-rose-500/30 text-rose-300'
+                }`}>
+                  {simEligible ? <CheckCircle2 className="w-4 h-4 shrink-0" /> : <AlertCircle className="w-4 h-4 shrink-0" />}
+                  <span>{simReason}</span>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       )}
     </div>

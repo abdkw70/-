@@ -43569,7 +43569,113 @@
       "titleEn": "New Arrivals"
     }
   ],
-  "orders": [],
+  "orders": [
+    {
+      "id": "ord_test_1790162787202",
+      "orderNumber": "MQ-TEST-1001",
+      "customerName": "Ahmad User",
+      "customerEmail": "ahmad@example.com",
+      "customerPhone": "90001122",
+      "governorate": "العاصمة",
+      "area": "شرق",
+      "block": "1",
+      "street": "شارع الهلال",
+      "paymentMethod": "cash_on_delivery",
+      "paymentStatus": "pending",
+      "orderStatus": "pending",
+      "items": [
+        {
+          "productId": "p1",
+          "title": "Test Pen",
+          "price": 10,
+          "quantity": 1,
+          "lineTotal": 10
+        }
+      ],
+      "subtotal": 10,
+      "shippingFee": 2,
+      "discount": 2,
+      "total": 10,
+      "couponCode": "DYNAMIC10",
+      "discountType": "percentage",
+      "discountValue": 20,
+      "actualDiscountAmount": 2,
+      "subtotalBeforeDiscount": 10,
+      "subtotalAfterDiscount": 8,
+      "createdAt": "2026-09-23T11:26:27.202Z",
+      "updatedAt": "2026-09-23T11:26:27.202Z"
+    },
+    {
+      "id": "ord_test_1790162767271",
+      "orderNumber": "MQ-TEST-1001",
+      "customerName": "Ahmad User",
+      "customerEmail": "ahmad@example.com",
+      "customerPhone": "90001122",
+      "governorate": "العاصمة",
+      "area": "شرق",
+      "block": "1",
+      "street": "شارع الهلال",
+      "paymentMethod": "cash_on_delivery",
+      "paymentStatus": "pending",
+      "orderStatus": "pending",
+      "items": [
+        {
+          "productId": "p1",
+          "title": "Test Pen",
+          "price": 10,
+          "quantity": 1,
+          "lineTotal": 10
+        }
+      ],
+      "subtotal": 10,
+      "shippingFee": 2,
+      "discount": 2,
+      "total": 10,
+      "couponCode": "DYNAMIC10",
+      "discountType": "percentage",
+      "discountValue": 20,
+      "actualDiscountAmount": 2,
+      "subtotalBeforeDiscount": 10,
+      "subtotalAfterDiscount": 8,
+      "createdAt": "2026-09-23T11:26:07.271Z",
+      "updatedAt": "2026-09-23T11:26:07.271Z"
+    },
+    {
+      "id": "ord_test_1790162708133",
+      "orderNumber": "MQ-TEST-1001",
+      "customerName": "Ahmad User",
+      "customerEmail": "ahmad@example.com",
+      "customerPhone": "90001122",
+      "governorate": "العاصمة",
+      "area": "شرق",
+      "block": "1",
+      "street": "شارع الهلال",
+      "paymentMethod": "cash_on_delivery",
+      "paymentStatus": "pending",
+      "orderStatus": "pending",
+      "items": [
+        {
+          "productId": "p1",
+          "title": "Test Pen",
+          "price": 10,
+          "quantity": 1,
+          "lineTotal": 10
+        }
+      ],
+      "subtotal": 10,
+      "shippingFee": 2,
+      "discount": 2,
+      "total": 10,
+      "couponCode": "DYNAMIC10",
+      "discountType": "percentage",
+      "discountValue": 20,
+      "actualDiscountAmount": 2,
+      "subtotalBeforeDiscount": 10,
+      "subtotalAfterDiscount": 8,
+      "createdAt": "2026-09-23T11:25:08.133Z",
+      "updatedAt": "2026-09-23T11:25:08.134Z"
+    }
+  ],
   "carts": {
     "sess_1788431671297_kss3w33": {
       "id": "sess_1788431671297_kss3w33",
@@ -43592,7 +43698,7 @@
       "discount": 0,
       "shippingFee": 2,
       "total": 7.3,
-      "updatedAt": "2026-09-03T10:54:21.578Z"
+      "updatedAt": "2026-09-23T11:26:27.220Z"
     },
     "test_sess_1788685622": {
       "id": "test_sess_1788685622",
@@ -43601,7 +43707,7 @@
       "discount": 0,
       "shippingFee": 0,
       "total": 0,
-      "updatedAt": "2026-09-06T09:07:02.592Z"
+      "updatedAt": "2026-09-23T11:26:27.220Z"
     },
     "test_sess_flow_1788685627": {
       "id": "test_sess_flow_1788685627",
@@ -43610,7 +43716,7 @@
       "discount": 0,
       "shippingFee": 0,
       "total": 0,
-      "updatedAt": "2026-09-06T09:07:07.856Z"
+      "updatedAt": "2026-09-23T11:26:27.220Z"
     },
     "test_sess_flow2_1788685634": {
       "id": "test_sess_flow2_1788685634",
@@ -43633,7 +43739,7 @@
       "discount": 0,
       "shippingFee": 2,
       "total": 21,
-      "updatedAt": "2026-09-06T09:07:14.635Z"
+      "updatedAt": "2026-09-23T11:26:27.220Z"
     },
     "sess_1788853289350_uvs27q7": {
       "id": "sess_1788853289350_uvs27q7",
@@ -43642,7 +43748,7 @@
       "discount": 0,
       "shippingFee": 0,
       "total": 0,
-      "updatedAt": "2026-09-08T07:46:40.474Z"
+      "updatedAt": "2026-09-23T11:26:27.220Z"
     },
     "sess_1789050073213_bbvs19u": {
       "id": "sess_1789050073213_bbvs19u",
@@ -43651,7 +43757,7 @@
       "discount": 0,
       "shippingFee": 0,
       "total": 0,
-      "updatedAt": "2026-09-10T17:14:19.672Z"
+      "updatedAt": "2026-09-23T11:26:27.220Z"
     },
     "sess_1789157385066_ld0flij": {
       "id": "sess_1789157385066_ld0flij",
@@ -43660,7 +43766,7 @@
       "discount": 0,
       "shippingFee": 0,
       "total": 0,
-      "updatedAt": "2026-09-11T20:09:45.301Z"
+      "updatedAt": "2026-09-23T11:26:27.220Z"
     },
     "sess_1789329974470_gfpampq": {
       "id": "sess_1789329974470_gfpampq",
@@ -43669,7 +43775,7 @@
       "discount": 0,
       "shippingFee": 0,
       "total": 0,
-      "updatedAt": "2026-09-13T21:23:53.456Z"
+      "updatedAt": "2026-09-23T11:26:27.220Z"
     },
     "sess_1789611648994_d6nuiai": {
       "id": "sess_1789611648994_d6nuiai",
@@ -43705,7 +43811,7 @@
       "discount": 0,
       "shippingFee": 2,
       "total": 8.45,
-      "updatedAt": "2026-09-20T13:37:57.790Z"
+      "updatedAt": "2026-09-23T11:26:27.220Z"
     },
     "audit_sess_1789827837057": {
       "id": "audit_sess_1789827837057",
@@ -43728,7 +43834,7 @@
       "discount": 0,
       "shippingFee": 2,
       "total": 30.5,
-      "updatedAt": "2026-09-19T14:23:57.139Z"
+      "updatedAt": "2026-09-23T11:26:27.220Z"
     },
     "audit_sess_1789827851735": {
       "id": "audit_sess_1789827851735",
@@ -43751,8 +43857,209 @@
       "discount": 2.85,
       "shippingFee": 2,
       "total": 27.65,
-      "updatedAt": "2026-09-19T14:24:11.818Z",
+      "updatedAt": "2026-09-23T11:26:27.220Z",
       "couponCode": "WELCOME10"
+    },
+    "test_session_1790161645047": {
+      "id": "test_session_1790161645047",
+      "items": [
+        {
+          "id": "item1",
+          "productId": "p1",
+          "title": "Test Pen",
+          "price": 2,
+          "quantity": 1,
+          "lineTotal": 2
+        }
+      ],
+      "couponCode": "DYNAMIC10",
+      "subtotal": 2,
+      "discount": 0,
+      "shippingFee": 2,
+      "total": 4,
+      "updatedAt": "2026-09-23T11:26:27.220Z"
+    },
+    "test_session_1790161700176": {
+      "id": "test_session_1790161700176",
+      "items": [
+        {
+          "id": "item1",
+          "productId": "p1",
+          "title": "Test Pen",
+          "price": 2,
+          "quantity": 1,
+          "lineTotal": 2
+        }
+      ],
+      "couponCode": "DYNAMIC10",
+      "subtotal": 2,
+      "discount": 0,
+      "shippingFee": 2,
+      "total": 4,
+      "updatedAt": "2026-09-23T11:26:27.220Z"
+    },
+    "test_session_1790162043843": {
+      "id": "test_session_1790162043843",
+      "items": [
+        {
+          "id": "item1",
+          "productId": "p1",
+          "title": "Test Pen",
+          "price": 2,
+          "quantity": 1,
+          "lineTotal": 2
+        }
+      ],
+      "couponCode": "DYNAMIC10",
+      "subtotal": 2,
+      "discount": 0,
+      "shippingFee": 2,
+      "total": 4,
+      "updatedAt": "2026-09-23T11:26:27.220Z"
+    },
+    "test_session_1790162707829": {
+      "id": "test_session_1790162707829",
+      "items": [
+        {
+          "id": "item1",
+          "productId": "p1",
+          "title": "Test Pen",
+          "price": 10,
+          "quantity": 1,
+          "lineTotal": 10
+        }
+      ],
+      "couponCode": "DYNAMIC10",
+      "subtotal": 10,
+      "discount": 5,
+      "shippingFee": 2,
+      "total": 7,
+      "updatedAt": "2026-09-23T11:26:27.220Z"
+    },
+    "sess_auto_1790162708016": {
+      "id": "sess_auto_1790162708016",
+      "items": [],
+      "subtotal": 0,
+      "discount": 0,
+      "shippingFee": 0,
+      "total": 0,
+      "updatedAt": "2026-09-23T11:26:27.220Z",
+      "couponCode": "DYNAMIC10"
+    },
+    "sess_snap_1790162708115": {
+      "id": "sess_snap_1790162708115",
+      "items": [
+        {
+          "id": "item1",
+          "productId": "p1",
+          "title": "Test Pen",
+          "price": 10,
+          "quantity": 1,
+          "lineTotal": 10
+        }
+      ],
+      "couponCode": "DYNAMIC10",
+      "subtotal": 10,
+      "discount": 5,
+      "shippingFee": 2,
+      "total": 7,
+      "updatedAt": "2026-09-23T11:26:27.220Z"
+    },
+    "test_session_1790162767016": {
+      "id": "test_session_1790162767016",
+      "items": [
+        {
+          "id": "item1",
+          "productId": "p1",
+          "title": "Test Pen",
+          "price": 10,
+          "quantity": 1,
+          "lineTotal": 10
+        }
+      ],
+      "couponCode": "DYNAMIC10",
+      "subtotal": 10,
+      "discount": 5,
+      "shippingFee": 2,
+      "total": 7,
+      "updatedAt": "2026-09-23T11:26:27.220Z"
+    },
+    "sess_auto_1790162767174": {
+      "id": "sess_auto_1790162767174",
+      "items": [],
+      "subtotal": 0,
+      "discount": 0,
+      "shippingFee": 0,
+      "total": 0,
+      "updatedAt": "2026-09-23T11:26:27.220Z",
+      "couponCode": "DYNAMIC10"
+    },
+    "sess_snap_1790162767251": {
+      "id": "sess_snap_1790162767251",
+      "items": [
+        {
+          "id": "item1",
+          "productId": "p1",
+          "title": "Test Pen",
+          "price": 10,
+          "quantity": 1,
+          "lineTotal": 10
+        }
+      ],
+      "couponCode": "DYNAMIC10",
+      "subtotal": 10,
+      "discount": 5,
+      "shippingFee": 2,
+      "total": 7,
+      "updatedAt": "2026-09-23T11:26:27.220Z"
+    },
+    "test_session_1790162786940": {
+      "id": "test_session_1790162786940",
+      "items": [
+        {
+          "id": "item1",
+          "productId": "p1",
+          "title": "Test Pen",
+          "price": 10,
+          "quantity": 1,
+          "lineTotal": 10
+        }
+      ],
+      "couponCode": "DYNAMIC10",
+      "subtotal": 10,
+      "discount": 5,
+      "shippingFee": 2,
+      "total": 7,
+      "updatedAt": "2026-09-23T11:26:27.220Z"
+    },
+    "sess_auto_1790162787109": {
+      "id": "sess_auto_1790162787109",
+      "items": [],
+      "subtotal": 0,
+      "discount": 0,
+      "shippingFee": 0,
+      "total": 0,
+      "updatedAt": "2026-09-23T11:26:27.220Z",
+      "couponCode": "DYNAMIC10"
+    },
+    "sess_snap_1790162787183": {
+      "id": "sess_snap_1790162787183",
+      "items": [
+        {
+          "id": "item1",
+          "productId": "p1",
+          "title": "Test Pen",
+          "price": 10,
+          "quantity": 1,
+          "lineTotal": 10
+        }
+      ],
+      "couponCode": "DYNAMIC10",
+      "subtotal": 10,
+      "discount": 5,
+      "shippingFee": 2,
+      "total": 7,
+      "updatedAt": "2026-09-23T11:26:27.220Z"
     }
   },
   "reviews": [],
@@ -43823,6 +44130,24 @@
       "descriptionAr": "خصم 1.000 د.ك مباشر على الطلبات من 5 د.ك",
       "descriptionEn": "1.000 KWD direct discount on orders from 5 KWD",
       "createdAt": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "c_promo_1790161645085",
+      "code": "DYNAMIC10",
+      "discountType": "percentage",
+      "discountValue": 50,
+      "minProductsValue": 5,
+      "minOrderAmount": 5,
+      "minSubtotal": 5,
+      "includeShipping": false,
+      "source": "promotion",
+      "isActive": true,
+      "usageCount": 0,
+      "expiresAt": "2027-09-23T11:26:26.901Z",
+      "descriptionAr": "كوبون خصم من العرض المنبثق (50%)",
+      "descriptionEn": "Popup promotion discount coupon (50%)",
+      "createdAt": "2026-09-23T11:07:25.085Z",
+      "updatedAt": "2026-09-23T11:26:27.220Z"
     }
   ],
   "couponUsages": [],
@@ -44144,6 +44469,102 @@
   },
   "activityLogs": [
     {
+      "id": "act_1790162787239_cycow",
+      "action": "تحديث إعدادات العرض",
+      "category": "settings",
+      "details": "تم تعديل كود العرض المنبثق: DYNAMIC10 بقيمة 50",
+      "status": "info",
+      "timestamp": "2026-09-23T11:26:27.239Z"
+    },
+    {
+      "id": "act_1790162787146_u2elf",
+      "action": "تحديث إعدادات العرض",
+      "category": "settings",
+      "details": "تم تعديل كود العرض المنبثق: DYNAMIC10 بقيمة 20",
+      "status": "info",
+      "timestamp": "2026-09-23T11:26:27.146Z"
+    },
+    {
+      "id": "act_1790162787014_7egpg",
+      "action": "تحديث إعدادات العرض",
+      "category": "settings",
+      "details": "تم تعديل كود العرض المنبثق: DYNAMIC10 بقيمة 10",
+      "status": "info",
+      "timestamp": "2026-09-23T11:26:27.014Z"
+    },
+    {
+      "id": "act_1790162767312_95dsl",
+      "action": "تحديث إعدادات العرض",
+      "category": "settings",
+      "details": "تم تعديل كود العرض المنبثق: DYNAMIC10 بقيمة 50",
+      "status": "info",
+      "timestamp": "2026-09-23T11:26:07.312Z"
+    },
+    {
+      "id": "act_1790162767211_v46l0",
+      "action": "تحديث إعدادات العرض",
+      "category": "settings",
+      "details": "تم تعديل كود العرض المنبثق: DYNAMIC10 بقيمة 20",
+      "status": "info",
+      "timestamp": "2026-09-23T11:26:07.211Z"
+    },
+    {
+      "id": "act_1790162767096_1k4td",
+      "action": "تحديث إعدادات العرض",
+      "category": "settings",
+      "details": "تم تعديل كود العرض المنبثق: DYNAMIC10 بقيمة 10",
+      "status": "info",
+      "timestamp": "2026-09-23T11:26:07.096Z"
+    },
+    {
+      "id": "act_1790162708182_pq4vq",
+      "action": "تحديث إعدادات العرض",
+      "category": "settings",
+      "details": "تم تعديل كود العرض المنبثق: DYNAMIC10 بقيمة 50",
+      "status": "info",
+      "timestamp": "2026-09-23T11:25:08.182Z"
+    },
+    {
+      "id": "act_1790162708075_9r0nh",
+      "action": "تحديث إعدادات العرض",
+      "category": "settings",
+      "details": "تم تعديل كود العرض المنبثق: DYNAMIC10 بقيمة 20",
+      "status": "info",
+      "timestamp": "2026-09-23T11:25:08.075Z"
+    },
+    {
+      "id": "act_1790162707903_99vam",
+      "action": "تحديث إعدادات العرض",
+      "category": "settings",
+      "details": "تم تعديل كود العرض المنبثق: DYNAMIC10 بقيمة 10",
+      "status": "info",
+      "timestamp": "2026-09-23T11:25:07.903Z"
+    },
+    {
+      "id": "act_1790162043909_oyz51",
+      "action": "تحديث إعدادات العرض",
+      "category": "settings",
+      "details": "تم تعديل كود العرض المنبثق: DYNAMIC10 بقيمة 10",
+      "status": "info",
+      "timestamp": "2026-09-23T11:14:03.910Z"
+    },
+    {
+      "id": "act_1790161700255_mauy0",
+      "action": "تحديث إعدادات العرض",
+      "category": "settings",
+      "details": "تم تعديل كود العرض المنبثق: DYNAMIC10 بقيمة 10",
+      "status": "info",
+      "timestamp": "2026-09-23T11:08:20.255Z"
+    },
+    {
+      "id": "act_1790161645113_kvyls",
+      "action": "تحديث إعدادات العرض",
+      "category": "settings",
+      "details": "تم تعديل كود العرض المنبثق: DYNAMIC10 بقيمة 10",
+      "status": "info",
+      "timestamp": "2026-09-23T11:07:25.113Z"
+    },
+    {
       "id": "act_1789912266958_z26pt",
       "action": "تسجيل حساب جديد",
       "category": "system",
@@ -44301,6 +44722,44 @@
       "timestamp": "2026-09-08T08:35:47.415Z"
     }
   ],
+  "promotionActivations": [
+    {
+      "id": "act_1790162787091_miyr",
+      "promotionId": "current_promotion",
+      "couponCode": "DYNAMIC10",
+      "userId": "user_123_1790162787090",
+      "sessionId": "sess_act_1790162787090",
+      "activatedAt": "2026-09-23T11:26:27.091Z",
+      "status": "active",
+      "discountType": "percentage",
+      "discountValue": 10,
+      "minProductsValue": 5
+    },
+    {
+      "id": "act_1790162708016_2s7f",
+      "promotionId": "current_promotion",
+      "couponCode": "DYNAMIC10",
+      "userId": "user_456",
+      "sessionId": "sess_auto_1790162708016",
+      "activatedAt": "2026-09-23T11:25:08.016Z",
+      "status": "active",
+      "discountType": "percentage",
+      "discountValue": 10,
+      "minProductsValue": 5
+    },
+    {
+      "id": "act_1790162707991_my6g",
+      "promotionId": "current_promotion",
+      "couponCode": "DYNAMIC10",
+      "userId": "user_123",
+      "sessionId": "sess_act_1790162707991",
+      "activatedAt": "2026-09-23T11:25:07.991Z",
+      "status": "active",
+      "discountType": "percentage",
+      "discountValue": 10,
+      "minProductsValue": 5
+    }
+  ],
   "settings": {
     "storeNameAr": "مكتبة الشاطئ الازرق",
     "storeNameEn": "Blue Beach Stationery",
@@ -44318,1030 +44777,27 @@
     "aiChatEnabled": true,
     "aiChatSystemPrompt": "أنت مساعد ذكي متخصص في خدمة عملاء مكتبة الشاطئ الأزرق في الكويت. مهمتك الأساسية مساعدة العملاء في استكشاف المنتجات، أسعارها، وتقديم توصيات بناءً على احتياجاتهم وميزانيتهم. تعليمات صارمة: 1. يجب أن تكون جميع إجاباتك متعلقة حصرياً بمكتبة الشاطئ الأزرق ومنتجاتها. 2. إذا سألك المستخدم أي سؤال عام غير متعلق بالمكتبة أو الأدوات المدرسية، اعتذر بلطف ووجه الحديث للمنتجات. 3. استخدم أداة البحث عن المنتجات للوصول إلى معلومات دقيقة حول الأسعار والتوافر. 4. الأسعار بالدينار الكويتي (د.ك). 5. كن ودوداً واحترافياً واستخدم لغة عربية سليمة."
   },
-  "questions": [
-    {
-      "id": "q_1",
-      "question": {
-        "ar": "ما هي عاصمة دولة الكويت؟",
-        "en": "Gamification Question"
-      },
-      "options": [
-        {
-          "ar": "مدينة الكويت",
-          "en": "Option text"
-        },
-        {
-          "ar": "الجهراء",
-          "en": "Option text"
-        },
-        {
-          "ar": "الأحمدي",
-          "en": "Option text"
-        },
-        {
-          "ar": "حولي",
-          "en": "Option text"
-        }
-      ],
-      "correctAnswerIndex": 0,
-      "rewardAmount": 0.5,
-      "xpAmount": 25,
-      "category": "الكويت وتاريخها",
-      "difficulty": "easy",
-      "isActive": true,
-      "timesShown": 120,
-      "timesCorrect": 114,
-      "timesIncorrect": 6,
-      "createdAt": "2026-09-20T13:00:31.842Z"
-    },
-    {
-      "id": "q_2",
-      "question": {
-        "ar": "ما هو الرمز الكيميائي للرصاص المستخدم في أقلام الرصاص تاريخياً (مع العلم أنه جرافيت)؟",
-        "en": "Gamification Question"
-      },
-      "options": [
-        {
-          "ar": "Pb",
-          "en": "Option text"
-        },
-        {
-          "ar": "Fe",
-          "en": "Option text"
-        },
-        {
-          "ar": "C (كربون/جرافيت)",
-          "en": "Option text"
-        },
-        {
-          "ar": "Au",
-          "en": "Option text"
-        }
-      ],
-      "correctAnswerIndex": 2,
-      "rewardAmount": 0.5,
-      "xpAmount": 30,
-      "category": "قرطاسية وأدوات مكتبية",
-      "difficulty": "medium",
-      "isActive": true,
-      "timesShown": 95,
-      "timesCorrect": 68,
-      "timesIncorrect": 27,
-      "createdAt": "2026-09-20T13:00:31.842Z"
-    },
-    {
-      "id": "q_3",
-      "question": {
-        "ar": "ما هو المقاس القياسي لورق الطباعة المكتبي الأكثر استخداماً؟",
-        "en": "Gamification Question"
-      },
-      "options": [
-        {
-          "ar": "A3",
-          "en": "Option text"
-        },
-        {
-          "ar": "A4",
-          "en": "Option text"
-        },
-        {
-          "ar": "A5",
-          "en": "Option text"
-        },
-        {
-          "ar": "B5",
-          "en": "Option text"
-        }
-      ],
-      "correctAnswerIndex": 1,
-      "rewardAmount": 0.25,
-      "xpAmount": 20,
-      "category": "قرطاسية وأدوات مكتبية",
-      "difficulty": "easy",
-      "isActive": true,
-      "timesShown": 140,
-      "timesCorrect": 132,
-      "timesIncorrect": 8,
-      "createdAt": "2026-09-20T13:00:31.842Z"
-    },
-    {
-      "id": "q_4",
-      "question": {
-        "ar": "في أي عام تم افتتاح أبراج الكويت رسمياً كمعلم حضاري؟",
-        "en": "Gamification Question"
-      },
-      "options": [
-        {
-          "ar": "1979م",
-          "en": "Option text"
-        },
-        {
-          "ar": "1961م",
-          "en": "Option text"
-        },
-        {
-          "ar": "1985م",
-          "en": "Option text"
-        },
-        {
-          "ar": "1990م",
-          "en": "Option text"
-        }
-      ],
-      "correctAnswerIndex": 0,
-      "rewardAmount": 0.5,
-      "xpAmount": 35,
-      "category": "الكويت وتاريخها",
-      "difficulty": "medium",
-      "isActive": true,
-      "timesShown": 88,
-      "timesCorrect": 62,
-      "timesIncorrect": 26,
-      "createdAt": "2026-09-20T13:00:31.842Z"
-    },
-    {
-      "id": "q_5",
-      "question": {
-        "ar": "ما هي الأداة الهندسية المستخدمة لرسم الدوائر والأقواس بدقة؟",
-        "en": "Gamification Question"
-      },
-      "options": [
-        {
-          "ar": "الفرجار",
-          "en": "Option text"
-        },
-        {
-          "ar": "المنقلة",
-          "en": "Option text"
-        },
-        {
-          "ar": "المثلث القائم",
-          "en": "Option text"
-        },
-        {
-          "ar": "المسطرة",
-          "en": "Option text"
-        }
-      ],
-      "correctAnswerIndex": 0,
-      "rewardAmount": 0.25,
-      "xpAmount": 20,
-      "category": "قرطاسية وأدوات مكتبية",
-      "difficulty": "easy",
-      "isActive": true,
-      "timesShown": 110,
-      "timesCorrect": 104,
-      "timesIncorrect": 6,
-      "createdAt": "2026-09-20T13:00:31.842Z"
-    },
-    {
-      "id": "q_6",
-      "question": {
-        "ar": "ما هو البحر أو المسطح المائي الذي تطل عليه سواحل دولة الكويت؟",
-        "en": "Gamification Question"
-      },
-      "options": [
-        {
-          "ar": "الخليج العربي",
-          "en": "Option text"
-        },
-        {
-          "ar": "بحر العرب",
-          "en": "Option text"
-        },
-        {
-          "ar": "البحر الأحمر",
-          "en": "Option text"
-        },
-        {
-          "ar": "خليج عمان",
-          "en": "Option text"
-        }
-      ],
-      "correctAnswerIndex": 0,
-      "rewardAmount": 0.25,
-      "xpAmount": 20,
-      "category": "الكويت وتاريخها",
-      "difficulty": "easy",
-      "isActive": true,
-      "timesShown": 150,
-      "timesCorrect": 147,
-      "timesIncorrect": 3,
-      "createdAt": "2026-09-20T13:00:31.842Z"
-    },
-    {
-      "id": "q_7",
-      "question": {
-        "ar": "ما هي العملة الرسمية لدولة الكويت وتعتبر من أعلى العملات قيمة عالمياً؟",
-        "en": "Gamification Question"
-      },
-      "options": [
-        {
-          "ar": "الدينار الكويتي",
-          "en": "Option text"
-        },
-        {
-          "ar": "الريال",
-          "en": "Option text"
-        },
-        {
-          "ar": "الدرهم",
-          "en": "Option text"
-        },
-        {
-          "ar": "الليرة",
-          "en": "Option text"
-        }
-      ],
-      "correctAnswerIndex": 0,
-      "rewardAmount": 0.25,
-      "xpAmount": 20,
-      "category": "الكويت وتاريخها",
-      "difficulty": "easy",
-      "isActive": true,
-      "timesShown": 160,
-      "timesCorrect": 158,
-      "timesIncorrect": 2,
-      "createdAt": "2026-09-20T13:00:31.842Z"
-    },
-    {
-      "id": "q_8",
-      "question": {
-        "ar": "ما هو النوع الشائع من الألوان المائية التي تجف بسرعة وتتميز بقوام بلاستيكي مرن؟",
-        "en": "Gamification Question"
-      },
-      "options": [
-        {
-          "ar": "ألوان الأكريليك",
-          "en": "Option text"
-        },
-        {
-          "ar": "ألوان الباستيل الزيتي",
-          "en": "Option text"
-        },
-        {
-          "ar": "ألوان الجواش",
-          "en": "Option text"
-        },
-        {
-          "ar": "الفحم النباتي",
-          "en": "Option text"
-        }
-      ],
-      "correctAnswerIndex": 0,
-      "rewardAmount": 0.5,
-      "xpAmount": 30,
-      "category": "قرطاسية وأدوات مكتبية",
-      "difficulty": "medium",
-      "isActive": true,
-      "timesShown": 80,
-      "timesCorrect": 58,
-      "timesIncorrect": 22,
-      "createdAt": "2026-09-20T13:00:31.842Z"
-    },
-    {
-      "id": "q_9",
-      "question": {
-        "ar": "ما هو أكبر كواكب المجموعة الشمسية حجماً وكتلة؟",
-        "en": "Gamification Question"
-      },
-      "options": [
-        {
-          "ar": "المشتري",
-          "en": "Option text"
-        },
-        {
-          "ar": "زحل",
-          "en": "Option text"
-        },
-        {
-          "ar": "الأرض",
-          "en": "Option text"
-        },
-        {
-          "ar": "نبتون",
-          "en": "Option text"
-        }
-      ],
-      "correctAnswerIndex": 0,
-      "rewardAmount": 0.5,
-      "xpAmount": 25,
-      "category": "علوم وتكنولوجيا",
-      "difficulty": "easy",
-      "isActive": true,
-      "timesShown": 105,
-      "timesCorrect": 92,
-      "timesIncorrect": 13,
-      "createdAt": "2026-09-20T13:00:31.842Z"
-    },
-    {
-      "id": "q_10",
-      "question": {
-        "ar": "كم عدد أحرف اللغة العربية الهجائية؟",
-        "en": "Gamification Question"
-      },
-      "options": [
-        {
-          "ar": "28 حرفاً",
-          "en": "Option text"
-        },
-        {
-          "ar": "26 حرفاً",
-          "en": "Option text"
-        },
-        {
-          "ar": "30 حرفاً",
-          "en": "Option text"
-        },
-        {
-          "ar": "29 حرفاً",
-          "en": "Option text"
-        }
-      ],
-      "correctAnswerIndex": 0,
-      "rewardAmount": 0.25,
-      "xpAmount": 20,
-      "category": "لغة عربية",
-      "difficulty": "easy",
-      "isActive": true,
-      "timesShown": 130,
-      "timesCorrect": 122,
-      "timesIncorrect": 8,
-      "createdAt": "2026-09-20T13:00:31.842Z"
-    },
-    {
-      "id": "q_11",
-      "question": {
-        "ar": "ما هو الجزء في الحاسوب المسؤول عن معالجة البيانات والعمليات الحسابية (عقل الجهاز)؟",
-        "en": "Gamification Question"
-      },
-      "options": [
-        {
-          "ar": "المعالج (CPU)",
-          "en": "Option text"
-        },
-        {
-          "ar": "القرص الصلب (HDD)",
-          "en": "Option text"
-        },
-        {
-          "ar": "ذاكرة الوصول العشوائي (RAM)",
-          "en": "Option text"
-        },
-        {
-          "ar": "الشاشة",
-          "en": "Option text"
-        }
-      ],
-      "correctAnswerIndex": 0,
-      "rewardAmount": 0.5,
-      "xpAmount": 25,
-      "category": "علوم وتكنولوجيا",
-      "difficulty": "easy",
-      "isActive": true,
-      "timesShown": 90,
-      "timesCorrect": 82,
-      "timesIncorrect": 8,
-      "createdAt": "2026-09-20T13:00:31.842Z"
-    },
-    {
-      "id": "q_12",
-      "question": {
-        "ar": "ما هو مضاد كلمة 'إيجاز' في اللغة العربية؟",
-        "en": "Gamification Question"
-      },
-      "options": [
-        {
-          "ar": "إطناب وتفصيل",
-          "en": "Option text"
-        },
-        {
-          "ar": "اختصار",
-          "en": "Option text"
-        },
-        {
-          "ar": "بلاغة",
-          "en": "Option text"
-        },
-        {
-          "ar": "صمت",
-          "en": "Option text"
-        }
-      ],
-      "correctAnswerIndex": 0,
-      "rewardAmount": 0.5,
-      "xpAmount": 35,
-      "category": "لغة عربية",
-      "difficulty": "medium",
-      "isActive": true,
-      "timesShown": 75,
-      "timesCorrect": 52,
-      "timesIncorrect": 23,
-      "createdAt": "2026-09-20T13:00:31.842Z"
-    },
-    {
-      "id": "q_13",
-      "question": {
-        "ar": "ما هي الجزيرة الكويتية الأكبر مساحة وغير المأهولة بالسكان وتشتهر بآثارها وموقعها الاستراتيجي؟",
-        "en": "Gamification Question"
-      },
-      "options": [
-        {
-          "ar": "جزيرة بوبيان",
-          "en": "Option text"
-        },
-        {
-          "ar": "جزيرة فيلكا",
-          "en": "Option text"
-        },
-        {
-          "ar": "جزيرة وربة",
-          "en": "Option text"
-        },
-        {
-          "ar": "جزيرة كبر",
-          "en": "Option text"
-        }
-      ],
-      "correctAnswerIndex": 0,
-      "rewardAmount": 0.5,
-      "xpAmount": 35,
-      "category": "الكويت وتاريخها",
-      "difficulty": "medium",
-      "isActive": true,
-      "timesShown": 82,
-      "timesCorrect": 59,
-      "timesIncorrect": 23,
-      "createdAt": "2026-09-20T13:00:31.842Z"
-    },
-    {
-      "id": "q_14",
-      "question": {
-        "ar": "ما هي الجزيرة الكويتية التاريخية الشهيرة بآثار الحضارة الدلمونية والإغريقية؟",
-        "en": "Gamification Question"
-      },
-      "options": [
-        {
-          "ar": "جزيرة فيلكا",
-          "en": "Option text"
-        },
-        {
-          "ar": "جزيرة قاروه",
-          "en": "Option text"
-        },
-        {
-          "ar": "جزيرة أم المرادم",
-          "en": "Option text"
-        },
-        {
-          "ar": "جزيرة عوهة",
-          "en": "Option text"
-        }
-      ],
-      "correctAnswerIndex": 0,
-      "rewardAmount": 0.5,
-      "xpAmount": 30,
-      "category": "الكويت وتاريخها",
-      "difficulty": "easy",
-      "isActive": true,
-      "timesShown": 110,
-      "timesCorrect": 98,
-      "timesIncorrect": 12,
-      "createdAt": "2026-09-20T13:00:31.842Z"
-    },
-    {
-      "id": "q_15",
-      "question": {
-        "ar": "ما هي وحدة قياس كثافة وسماكة ورق الطباعة والمستندات؟",
-        "en": "Gamification Question"
-      },
-      "options": [
-        {
-          "ar": "جم / متر مربع (GSM)",
-          "en": "Option text"
-        },
-        {
-          "ar": "ملم مكعب",
-          "en": "Option text"
-        },
-        {
-          "ar": "بوصة مربعة",
-          "en": "Option text"
-        },
-        {
-          "ar": "ميكرومتر",
-          "en": "Option text"
-        }
-      ],
-      "correctAnswerIndex": 0,
-      "rewardAmount": 0.75,
-      "xpAmount": 40,
-      "category": "قرطاسية وأدوات مكتبية",
-      "difficulty": "hard",
-      "isActive": true,
-      "timesShown": 60,
-      "timesCorrect": 34,
-      "timesIncorrect": 26,
-      "createdAt": "2026-09-20T13:00:31.842Z"
-    },
-    {
-      "id": "q_16",
-      "question": {
-        "ar": "من هو مخترع المصباح الكهربائي العملي ومسجل آلاف براءات الاختراع؟",
-        "en": "Gamification Question"
-      },
-      "options": [
-        {
-          "ar": "توماس إديسون",
-          "en": "Option text"
-        },
-        {
-          "ar": "نيكولا تسلا",
-          "en": "Option text"
-        },
-        {
-          "ar": "ألكسندر غراهام بيل",
-          "en": "Option text"
-        },
-        {
-          "ar": "إسحاق نيوتن",
-          "en": "Option text"
-        }
-      ],
-      "correctAnswerIndex": 0,
-      "rewardAmount": 0.5,
-      "xpAmount": 25,
-      "category": "ثقافة عامة",
-      "difficulty": "easy",
-      "isActive": true,
-      "timesShown": 95,
-      "timesCorrect": 85,
-      "timesIncorrect": 10,
-      "createdAt": "2026-09-20T13:00:31.842Z"
-    },
-    {
-      "id": "q_17",
-      "question": {
-        "ar": "ما هي درجة غليان الماء النقي تحت الضغط الجوي العادي؟",
-        "en": "Gamification Question"
-      },
-      "options": [
-        {
-          "ar": "100 درجة مئوية",
-          "en": "Option text"
-        },
-        {
-          "ar": "90 درجة مئوية",
-          "en": "Option text"
-        },
-        {
-          "ar": "120 درجة مئوية",
-          "en": "Option text"
-        },
-        {
-          "ar": "80 درجة مئوية",
-          "en": "Option text"
-        }
-      ],
-      "correctAnswerIndex": 0,
-      "rewardAmount": 0.25,
-      "xpAmount": 20,
-      "category": "علوم وتكنولوجيا",
-      "difficulty": "easy",
-      "isActive": true,
-      "timesShown": 120,
-      "timesCorrect": 115,
-      "timesIncorrect": 5,
-      "createdAt": "2026-09-20T13:00:31.842Z"
-    },
-    {
-      "id": "q_18",
-      "question": {
-        "ar": "ما هو الخط العربي الكلاسيكي المتميز بالحروف العريضة والهندسية والمستخدم في المصاحف القديمة؟",
-        "en": "Gamification Question"
-      },
-      "options": [
-        {
-          "ar": "الخط الكوفي",
-          "en": "Option text"
-        },
-        {
-          "ar": "خط الرقعة",
-          "en": "Option text"
-        },
-        {
-          "ar": "خط النسخ",
-          "en": "Option text"
-        },
-        {
-          "ar": "خط الديواني",
-          "en": "Option text"
-        }
-      ],
-      "correctAnswerIndex": 0,
-      "rewardAmount": 0.5,
-      "xpAmount": 35,
-      "category": "لغة عربية",
-      "difficulty": "medium",
-      "isActive": true,
-      "timesShown": 70,
-      "timesCorrect": 49,
-      "timesIncorrect": 21,
-      "createdAt": "2026-09-20T13:00:31.842Z"
-    },
-    {
-      "id": "q_19",
-      "question": {
-        "ar": "ما هو الاسم التاريخي الشهير لسور الكويت الذي شُيد لحماية المدينة وله بوابات باقية حتى اليوم؟",
-        "en": "Gamification Question"
-      },
-      "options": [
-        {
-          "ar": "السور الثالث (1920م)",
-          "en": "Option text"
-        },
-        {
-          "ar": "السور الأول",
-          "en": "Option text"
-        },
-        {
-          "ar": "سور القرين",
-          "en": "Option text"
-        },
-        {
-          "ar": "سور الشامية",
-          "en": "Option text"
-        }
-      ],
-      "correctAnswerIndex": 0,
-      "rewardAmount": 0.5,
-      "xpAmount": 35,
-      "category": "الكويت وتاريخها",
-      "difficulty": "medium",
-      "isActive": true,
-      "timesShown": 78,
-      "timesCorrect": 53,
-      "timesIncorrect": 25,
-      "createdAt": "2026-09-20T13:00:31.842Z"
-    },
-    {
-      "id": "q_20",
-      "question": {
-        "ar": "ما هي الأداة المكتبية المستخدمة لجمع وتثبيت الأوراق معاً باستخدام سلك معدني صغير؟",
-        "en": "Gamification Question"
-      },
-      "options": [
-        {
-          "ar": "الدباسة (Stapler)",
-          "en": "Option text"
-        },
-        {
-          "ar": "المثقاب (Puncher)",
-          "en": "Option text"
-        },
-        {
-          "ar": "المقص",
-          "en": "Option text"
-        },
-        {
-          "ar": "المشبك المغناطيسي",
-          "en": "Option text"
-        }
-      ],
-      "correctAnswerIndex": 0,
-      "rewardAmount": 0.25,
-      "xpAmount": 20,
-      "category": "قرطاسية وأدوات مكتبية",
-      "difficulty": "easy",
-      "isActive": true,
-      "timesShown": 130,
-      "timesCorrect": 128,
-      "timesIncorrect": 2,
-      "createdAt": "2026-09-20T13:00:31.842Z"
-    }
-  ],
-  "achievements": [
-    {
-      "id": "ach_first_challenge",
-      "title": "أول تحدٍ في المتجر",
-      "description": "خضت أول تحدٍ في مسابقة تحدى واربح رصيدك",
-      "icon": "PlayCircle",
-      "requiredCondition": "إكمال أول تحدي",
-      "rewardXp": 50,
-      "category": "challenge",
-      "isActive": true
-    },
-    {
-      "id": "ach_first_correct",
-      "title": "إصابة الهدف",
-      "description": "أجبت إجابة صحيحة لأول مرة في التحدي",
-      "icon": "CheckCircle2",
-      "requiredCondition": "إجابة صحيحة واحدة",
-      "rewardXp": 25,
-      "category": "challenge",
-      "isActive": true
-    },
-    {
-      "id": "ach_10_correct",
-      "title": "عقل متوقد",
-      "description": "جمعت 10 إجابات صحيحة عبر التحديات",
-      "icon": "Award",
-      "requiredCondition": "10 إجابات صحيحة",
-      "rewardXp": 150,
-      "category": "challenge",
-      "isActive": true
-    },
-    {
-      "id": "ach_50_correct",
-      "title": "نابغة القرطاسية",
-      "description": "حققت 50 إجابة صحيحة بنجاح باهر",
-      "icon": "Flame",
-      "requiredCondition": "50 إجابة صحيحة",
-      "rewardXp": 500,
-      "category": "challenge",
-      "isActive": true
-    },
-    {
-      "id": "ach_silver_level",
-      "title": "الوصول للمستوى الفضي",
-      "description": "تجاوزت 100 نقطة XP وارتقيت للمستوى الفضي",
-      "icon": "ShieldCheck",
-      "requiredCondition": "بلوغ المستوى الفضي",
-      "rewardXp": 100,
-      "category": "levels",
-      "isActive": true
-    },
-    {
-      "id": "ach_gold_level",
-      "title": "ملك المعرفة الذهبي",
-      "description": "تجاوزت 500 نقطة XP ونلت الشارة الذهبية",
-      "icon": "Crown",
-      "requiredCondition": "بلوغ المستوى الذهبي",
-      "rewardXp": 250,
-      "category": "levels",
-      "isActive": true
-    },
-    {
-      "id": "ach_diamond_level",
-      "title": "نخبة الماسيين",
-      "description": "وصلت إلى قمة المستويات (المستوى الماسي)",
-      "icon": "Gem",
-      "requiredCondition": "بلوغ المستوى الماسي",
-      "rewardXp": 1000,
-      "category": "levels",
-      "isActive": true
-    },
-    {
-      "id": "ach_wallet_first_order",
-      "title": "المتسوق الذكي",
-      "description": "أتممت أول طلب شراء باستخدام رصيد مكافآت التحدي",
-      "icon": "ShoppingBag",
-      "requiredCondition": "شراء باستخدام رصيد المحفظة",
-      "rewardXp": 100,
-      "category": "orders",
-      "isActive": true
-    },
-    {
-      "id": "ach_earned_5kwd",
-      "title": "جامع المكافآت",
-      "description": "كسبت إجمالي 5.000 د.ك أو أكثر من رصيد التحديات",
-      "icon": "Coins",
-      "requiredCondition": "كسب 5 د.ك رصيد متجر",
-      "rewardXp": 300,
-      "category": "challenge",
-      "isActive": true
-    }
-  ],
-  "gamificationSettings": {
-    "isEnabled": true,
-    "questionsPerChallenge": 10,
-    "timePerQuestionSeconds": 15,
-    "dailyAttemptsLimit": 3,
-    "rewardExpiryHours": 48,
-    "maxWalletUsagePercent": 50,
-    "autoShowChallengeOnEntry": true,
-    "autoShowFrequency": "once_per_session",
-    "enableAchievements": true,
-    "enableLeaderboard": true,
-    "defaultRewardAmount": 0.5,
-    "defaultXpPerCorrectAnswer": 25,
-    "challengeCompletionBonusXp": 100,
-    "tiers": [
-      {
-        "id": "tier_bronze",
-        "name": "المستوى البرونزي",
-        "minXp": 0,
-        "badgeColor": "text-amber-600",
-        "badgeBg": "bg-amber-500/10 border-amber-600/30",
-        "iconName": "Shield",
-        "perksDescription": "مكافآت التحدي الأساسية والمشاركة في المسابقات اليومية"
-      },
-      {
-        "id": "tier_silver",
-        "name": "المستوى الفضي",
-        "minXp": 100,
-        "badgeColor": "text-slate-300",
-        "badgeBg": "bg-slate-300/10 border-slate-300/30",
-        "iconName": "ShieldCheck",
-        "perksDescription": "مكافآت XP إضافية وشارة التميز الفضية"
-      },
-      {
-        "id": "tier_gold",
-        "name": "المستوى الذهبي",
-        "minXp": 500,
-        "badgeColor": "text-amber-400",
-        "badgeBg": "bg-amber-400/10 border-amber-400/30",
-        "iconName": "Crown",
-        "perksDescription": "أولوية في تجهيز الطلبات وشارة التميز الذهبية"
-      },
-      {
-        "id": "tier_platinum",
-        "name": "المستوى البلاتيني",
-        "minXp": 1500,
-        "badgeColor": "text-cyan-400",
-        "badgeBg": "bg-cyan-400/10 border-cyan-400/30",
-        "iconName": "Sparkles",
-        "perksDescription": "مكافآت حصرية وخصومات خاصة على تشكيلات مختارة"
-      },
-      {
-        "id": "tier_diamond",
-        "name": "المستوى الماسي",
-        "minXp": 5000,
-        "badgeColor": "text-violet-400",
-        "badgeBg": "bg-violet-400/10 border-violet-400/30",
-        "iconName": "Gem",
-        "perksDescription": "المرتبة العليا لكبار عملاء مكتبة الشاطئ الازرق مع أعلى رصيد XP"
-      }
-    ]
-  },
-  "userProfiles": {
-    "guest_user": {
-      "id": "guest_user",
-      "displayName": "عميل المتجر",
-      "email": "",
-      "phone": "",
-      "phoneNumber": "",
-      "role": "user",
-      "xp": 0,
-      "currentTier": "المستوى البرونزي",
-      "challengesPlayed": 0,
-      "challengesCompleted": 0,
-      "correctAnswersCount": 0,
-      "wrongAnswersCount": 0,
-      "totalRewardsEarnedKwd": 0,
-      "totalRewardsUsedKwd": 0,
-      "dailyAttemptsDate": "2026-09-20",
-      "dailyAttemptsUsed": 0,
-      "unlockedAchievementIds": [],
-      "createdAt": "2026-09-20T13:32:33.360Z",
-      "updatedAt": "2026-09-20T13:32:33.360Z"
-    },
-    "hJTzexpkH4M9Cmr8RZUcT94cyFA3": {
-      "id": "hJTzexpkH4M9Cmr8RZUcT94cyFA3",
-      "displayName": "عبدالرحمن",
-      "email": "abdulrahmankw20@gmail.com",
-      "phone": "",
-      "phoneNumber": "",
-      "role": "admin",
-      "authProvider": "google",
-      "avatarUrl": "",
-      "xp": 0,
-      "currentTier": "المستوى البرونزي",
-      "challengesPlayed": 0,
-      "challengesCompleted": 0,
-      "correctAnswersCount": 0,
-      "wrongAnswersCount": 0,
-      "totalRewardsEarnedKwd": 0,
-      "totalRewardsUsedKwd": 0,
-      "dailyAttemptsDate": "2026-09-20",
-      "dailyAttemptsUsed": 0,
-      "unlockedAchievementIds": [],
-      "lastLoginAt": "2026-09-20T13:41:15.894Z",
-      "lastIp": "37.34.183.148",
-      "userAgent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/27.0 Mobile/15E148 Safari/604.1",
-      "createdAt": "2026-09-20T13:36:37.680Z",
-      "updatedAt": "2026-09-20T13:41:15.894Z"
-    },
-    "usr_1789912257976_bng8db7": {
-      "id": "usr_1789912257976_bng8db7",
-      "displayName": "Test User",
-      "email": "test_1789912257968@example.com",
-      "phone": "",
-      "phoneNumber": "",
-      "role": "user",
-      "authProvider": "email",
-      "avatarUrl": "",
-      "xp": 0,
-      "currentTier": "المستوى البرونزي",
-      "challengesPlayed": 0,
-      "challengesCompleted": 0,
-      "correctAnswersCount": 0,
-      "wrongAnswersCount": 0,
-      "totalRewardsEarnedKwd": 0,
-      "totalRewardsUsedKwd": 0,
-      "dailyAttemptsDate": "2026-09-20",
-      "dailyAttemptsUsed": 0,
-      "unlockedAchievementIds": [],
-      "lastLoginAt": "2026-09-20T13:50:58.003Z",
-      "lastIp": "127.0.0.1",
-      "userAgent": "",
-      "createdAt": "2026-09-20T13:50:58.003Z",
-      "updatedAt": "2026-09-20T13:50:58.003Z"
-    },
-    "usr_1789912266910_g6o90fh": {
-      "id": "usr_1789912266910_g6o90fh",
-      "displayName": "Audit User",
-      "email": "audit_user_1789912266781@example.com",
-      "phone": "",
-      "phoneNumber": "",
-      "role": "user",
-      "authProvider": "email",
-      "avatarUrl": "",
-      "xp": 0,
-      "currentTier": "المستوى البرونزي",
-      "challengesPlayed": 0,
-      "challengesCompleted": 0,
-      "correctAnswersCount": 0,
-      "wrongAnswersCount": 0,
-      "totalRewardsEarnedKwd": 0,
-      "totalRewardsUsedKwd": 0,
-      "dailyAttemptsDate": "2026-09-20",
-      "dailyAttemptsUsed": 0,
-      "unlockedAchievementIds": [],
-      "lastLoginAt": "2026-09-20T13:51:07.056Z",
-      "lastIp": "127.0.0.1",
-      "userAgent": "",
-      "createdAt": "2026-09-20T13:51:06.937Z",
-      "updatedAt": "2026-09-20T13:51:07.056Z"
-    }
-  },
-  "wallets": {
-    "guest_user": {
-      "userId": "guest_user",
-      "activeBalance": 0,
-      "usedBalance": 0,
-      "expiredBalance": 0,
-      "totalEarned": 0,
-      "items": [],
-      "transactions": [],
-      "lastUpdated": "2026-09-20T13:41:16.102Z"
-    },
-    "hJTzexpkH4M9Cmr8RZUcT94cyFA3": {
-      "userId": "hJTzexpkH4M9Cmr8RZUcT94cyFA3",
-      "activeBalance": 0,
-      "usedBalance": 0,
-      "expiredBalance": 0,
-      "totalEarned": 0,
-      "items": [],
-      "transactions": [],
-      "lastUpdated": "2026-09-20T13:41:15.912Z"
-    },
-    "usr_1789912257976_bng8db7": {
-      "userId": "usr_1789912257976_bng8db7",
-      "activeBalance": 0,
-      "usedBalance": 0,
-      "expiredBalance": 0,
-      "totalEarned": 0,
-      "items": [],
-      "transactions": [],
-      "lastUpdated": "2026-09-20T13:50:58.041Z"
-    },
-    "usr_1789912266910_g6o90fh": {
-      "userId": "usr_1789912266910_g6o90fh",
-      "activeBalance": 0,
-      "usedBalance": 0,
-      "expiredBalance": 0,
-      "totalEarned": 0,
-      "items": [],
-      "transactions": [],
-      "lastUpdated": "2026-09-20T13:51:07.032Z"
-    }
-  },
-  "challengeSessions": {},
-  "challengeActivityLogs": [],
-  "rejectedOrDuplicateCount": 0,
-  "userCredentials": {
-    "test_1789912257968@example.com": {
-      "email": "test_1789912257968@example.com",
-      "passwordHash": "5afa1db434c52abfd8080f64569eb6efa27cf51f699182a8d94b80b2b230ea1d941708f0793dde41479c2c54e4026f2b74e9278de67a3184193b695cf3039ee7",
-      "salt": "7c33cc6075ba6bcb8ef4f733893913f2",
-      "userId": "usr_1789912257976_bng8db7",
-      "displayName": "Test User",
-      "phone": "",
-      "role": "user",
-      "createdAt": "2026-09-20T13:50:57.984Z",
-      "updatedAt": "2026-09-20T13:50:57.984Z"
-    },
-    "audit_user_1789912266781@example.com": {
-      "email": "audit_user_1789912266781@example.com",
-      "passwordHash": "1485e8d9339067a94da8ca483317ce2f8ab2e0248952c5e1132e6dfc8583da22bb123f9b0739b419f9fe2a30f0c7b60f1c8dc5dade6f9e16629261de76cae3b2",
-      "salt": "18303302c7a29bcc685488a238719fb0",
-      "userId": "usr_1789912266910_g6o90fh",
-      "displayName": "Audit User",
-      "phone": "",
-      "role": "user",
-      "createdAt": "2026-09-20T13:51:06.918Z",
-      "updatedAt": "2026-09-20T13:51:06.918Z"
-    }
+  "promotionSettings": {
+    "enabled": true,
+    "discountType": "percentage",
+    "discountValue": 50,
+    "couponCode": "DYNAMIC10",
+    "minProductsValue": 5,
+    "enableMaxDiscount": false,
+    "maxDiscount": null,
+    "includeShipping": false,
+    "titleAr": "هدية خاصة لك 🎁",
+    "titleEn": "Special Gift For You 🎁",
+    "messageAr": "مرحباً {name} 👋\nاحصل الآن على خصم {discount} واستخدم كود الخصم {code}",
+    "messageEn": "Welcome {name} 👋\nGet {discount} off your order using code {code}",
+    "buttonTextAr": "تسوق الآن",
+    "buttonTextEn": "Shop Now",
+    "startAt": "2026-09-22T11:26:26.901Z",
+    "endAt": "2027-09-23T11:26:26.901Z",
+    "showToAuthenticatedUsers": true,
+    "showToGuests": true,
+    "delaySeconds": 1,
+    "frequency": "session_once",
+    "updatedAt": "2026-09-23T11:26:27.220Z"
   }
 }

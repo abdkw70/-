@@ -112,6 +112,14 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     loadCart();
+
+    const handlePromoUpdated = () => {
+      loadCart();
+    };
+    window.addEventListener('promotion-updated', handlePromoUpdated);
+    return () => {
+      window.removeEventListener('promotion-updated', handlePromoUpdated);
+    };
   }, [loadCart]);
 
   const addItemToCart = async (product: Product, variantId?: string, quantity = 1) => {
@@ -159,7 +167,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const res = await api.applyCoupon(sessionId, code);
       if (res.success) {
         setCart(res.cart);
-        showToast(res.message, 'success');
+        const toastType = res.eligible === false ? 'info' : 'success';
+        showToast(res.message, toastType);
         return res.message;
       }
       throw new Error('فشل تطبيق الكود');
