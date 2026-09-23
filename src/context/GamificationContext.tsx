@@ -1,234 +1,225 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { UserProfile, UserWallet, GamificationSettings } from '../types';
-import { fetchGamificationStatus } from '../lib/api';
+import {
+  UserXPRecord,
+  Season,
+  GameConfig,
+  XpRulesConfig,
+  DailyChallengeConfig,
+  LeaderboardUserEntry,
+} from '../types';
 import { useAuth } from './AuthContext';
+
+interface LevelProgressInfo {
+  currentLevel: number;
+  currentLevelMinXp: number;
+  nextLevelMinXp: number;
+  xpInCurrentLevel: number;
+  xpRequiredForNextLevel: number;
+  progressPercent: number;
+}
+
+interface UserRankInfo {
+  rank: number;
+  seasonXp: number;
+  totalXp: number;
+  level: number;
+  xpToNextRank: number | null;
+}
 
 interface GamificationContextType {
   userId: string;
   displayName: string;
-  setDisplayName: (name: string) => void;
-  profile: UserProfile | null;
-  wallet: UserWallet | null;
-  settings: GamificationSettings | null;
+  userXp: UserXPRecord | null;
+  levelProgress: LevelProgressInfo | null;
+  activeSeason: Season | null;
+  userRank: UserRankInfo | null;
+  dailyChallenges: Array<DailyChallengeConfig & { completed: boolean }>;
+  allChallengesCompleted: boolean;
+  xpRules: XpRulesConfig | null;
+  games: GameConfig[];
+  leaderboard: LeaderboardUserEntry[];
   loading: boolean;
-  isChallengeModalOpen: boolean;
-  openChallengeModal: () => void;
-  closeChallengeModal: () => void;
   refreshGamification: () => Promise<void>;
-  playSound: (type: 'correct' | 'wrong' | 'complete' | 'level_up') => void;
-  showEntryBanner: boolean;
-  dismissEntryBanner: () => void;
+  claimDailyLogin: () => Promise<any>;
+  playGameAction: (gameId: string, actionResult?: any) => Promise<any>;
+  recordProductViewXp: (productId: string) => Promise<any>;
+  submitProductReviewXp: (params: { productId: string; reviewId?: string; rating: number; comment: string }) => Promise<any>;
+  playSound: (type: 'correct' | 'wrong' | 'complete' | 'level_up' | 'xp_gain') => void;
 }
 
 const GamificationContext = createContext<GamificationContextType | undefined>(undefined);
 
-const BANNER_SEEN_KEY = 'maktaba_q8_challenge_banner_seen';
-
-const DEFAULT_SETTINGS: GamificationSettings = {
-  isEnabled: true,
-  questionsPerChallenge: 10,
-  timePerQuestionSeconds: 15,
-  dailyAttemptsLimit: 3,
-  rewardExpiryHours: 48,
-  maxWalletUsagePercent: 50,
-  autoShowChallengeOnEntry: true,
-  autoShowFrequency: 'once_per_session',
-  enableAchievements: true,
-  enableLeaderboard: true,
-  defaultRewardAmount: 0.5,
-  defaultXpPerCorrectAnswer: 10,
-  challengeCompletionBonusXp: 50,
-  tiers: [
-    {
-      id: 'bronze',
-      name: 'المستوى البرونزي',
-      minXp: 0,
-      badgeColor: '#d97706',
-      badgeBg: '#fef3c7',
-      iconName: 'Shield',
-      perksDescription: 'مكافأة 0.500 د.ك لكل إجابة صحيحة',
-    },
-    {
-      id: 'silver',
-      name: 'المستوى الفضي',
-      minXp: 200,
-      badgeColor: '#64748b',
-      badgeBg: '#f1f5f9',
-      iconName: 'ShieldCheck',
-      perksDescription: 'مكافأة 0.500 د.ك + 10% بونص نقاط خبرة',
-    },
-    {
-      id: 'gold',
-      name: 'المستوى الذهبي',
-      minXp: 500,
-      badgeColor: '#f59e0b',
-      badgeBg: '#fffbeb',
-      iconName: 'Crown',
-      perksDescription: 'مكافأة 0.500 د.ك + 20% بونص نقاط خبرة',
-    },
-    {
-      id: 'platinum',
-      name: 'المستوى البلاتيني',
-      minXp: 1200,
-      badgeColor: '#06b6d4',
-      badgeBg: '#ecfeff',
-      iconName: 'Sparkles',
-      perksDescription: 'مكافأة 0.500 د.ك + محاولات إضافية يومياً',
-    },
-    {
-      id: 'diamond',
-      name: 'المستوى الماسي',
-      minXp: 2500,
-      badgeColor: '#8b5cf6',
-      badgeBg: '#f5f3ff',
-      iconName: 'Gem',
-      perksDescription: 'أعلى نسبة خصم ومكافآت حصرية لرواد المكتبة',
-    },
-  ],
-};
-
 export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, userProfile, wallet: authWallet, openAuthModal } = useAuth();
+  const { user, userProfile } = useAuth();
 
-  const userId = user ? user.uid : '';
-  const displayName = (userProfile?.displayName || user?.displayName || user?.email?.split('@')[0] || 'عميل المتجر');
+  const userId = user ? user.uid : 'guest_user';
+  const displayName = userProfile?.displayName || user?.displayName || user?.email?.split('@')[0] || 'متسابق المكتبة';
 
-  const [profile, setProfile] = useState<UserProfile | null>(null);
-  const [wallet, setWallet] = useState<UserWallet | null>(null);
-  const [settings, setSettings] = useState<GamificationSettings>(DEFAULT_SETTINGS);
+  const [userXp, setUserXp] = useState<UserXPRecord | null>(null);
+  const [levelProgress, setLevelProgress] = useState<LevelProgressInfo | null>(null);
+  const [activeSeason, setActiveSeason] = useState<Season | null>(null);
+  const [userRank, setUserRank] = useState<UserRankInfo | null>(null);
+  const [dailyChallenges, setDailyChallenges] = useState<Array<DailyChallengeConfig & { completed: boolean }>>([]);
+  const [allChallengesCompleted, setAllChallengesCompleted] = useState<boolean>(false);
+  const [xpRules, setXpRules] = useState<XpRulesConfig | null>(null);
+  const [games, setGames] = useState<GameConfig[]>([]);
+  const [leaderboard, setLeaderboard] = useState<LeaderboardUserEntry[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-  const [isChallengeModalOpen, setIsChallengeModalOpen] = useState<boolean>(false);
-  const [showEntryBanner, setShowEntryBanner] = useState<boolean>(true);
-  const [pendingChallengeStart, setPendingChallengeStart] = useState<boolean>(false);
-
-  const setDisplayName = useCallback((_name: string) => {
-    // Synced via AuthContext
-  }, []);
 
   const refreshGamification = useCallback(async () => {
     try {
-      const data = await fetchGamificationStatus(userId || 'guest_user', displayName);
-      if (data.success) {
-        if (data.profile && userId) setProfile(data.profile);
-        if (data.wallet && userId) setWallet(data.wallet);
-        if (data.settings) setSettings(data.settings);
+      const [statusRes, gamesRes, leadRes] = await Promise.all([
+        fetch(`/api/xp/status?userId=${encodeURIComponent(userId)}&displayName=${encodeURIComponent(displayName)}`),
+        fetch('/api/games'),
+        fetch('/api/leaderboard?limit=20'),
+      ]);
 
-        // Check if entry banner should be shown
-        if (data.settings?.isEnabled !== false) {
-          const hasSeen = sessionStorage.getItem(BANNER_SEEN_KEY);
-          if (!hasSeen) {
-            setShowEntryBanner(true);
+      if (statusRes.ok) {
+        const data = await statusRes.json();
+        if (data.success) {
+          setUserXp(data.userXp);
+          setLevelProgress(data.levelProgress);
+          setActiveSeason(data.activeSeason);
+          setUserRank(data.userRank);
+          if (data.dailyChallenges) {
+            setDailyChallenges(data.dailyChallenges.challenges || []);
+            setAllChallengesCompleted(Boolean(data.dailyChallenges.allCompleted));
           }
+          setXpRules(data.xpRules);
+        }
+      }
+
+      if (gamesRes.ok) {
+        const gData = await gamesRes.json();
+        if (gData.success && Array.isArray(gData.games)) {
+          setGames(gData.games);
+        }
+      }
+
+      if (leadRes.ok) {
+        const lData = await leadRes.json();
+        if (lData.success && Array.isArray(lData.leaderboard)) {
+          setLeaderboard(lData.leaderboard);
         }
       }
     } catch (err) {
-      console.error('Failed to load gamification status:', err);
+      console.error('Failed to load XP gamification status:', err);
     } finally {
       setLoading(false);
     }
   }, [userId, displayName]);
 
   useEffect(() => {
-    if (userProfile) {
-      setProfile(userProfile);
-    }
-    if (authWallet) {
-      setWallet(authWallet);
-    }
-  }, [userProfile, authWallet]);
-
-  useEffect(() => {
-    refreshGamification();
-    const handleRefresh = () => {
-      refreshGamification();
-    };
-    window.addEventListener('wallet-refresh', handleRefresh);
-    window.addEventListener('gamification-refresh', handleRefresh);
-    return () => {
-      window.removeEventListener('wallet-refresh', handleRefresh);
-      window.removeEventListener('gamification-refresh', handleRefresh);
-    };
-  }, [refreshGamification]);
-
-  // If user logs in while having a pending challenge start, open challenge modal immediately
-  useEffect(() => {
-    if (user && pendingChallengeStart) {
-      setPendingChallengeStart(false);
-      setIsChallengeModalOpen(true);
-      setShowEntryBanner(false);
-    }
-  }, [user, pendingChallengeStart]);
-
-  const openChallengeModal = useCallback(() => {
-    if (!user) {
-      setPendingChallengeStart(true);
-      openAuthModal('login');
-      return;
-    }
-    setIsChallengeModalOpen(true);
-    setShowEntryBanner(false);
-  }, [user, openAuthModal]);
-
-  const closeChallengeModal = useCallback(() => {
-    setIsChallengeModalOpen(false);
     refreshGamification();
   }, [refreshGamification]);
 
-  const dismissEntryBanner = useCallback(() => {
-    setShowEntryBanner(false);
-    sessionStorage.setItem(BANNER_SEEN_KEY, 'true');
-  }, []);
-
-  // Web Audio Synth for subtle native sound effects
-  const playSound = useCallback((type: 'correct' | 'wrong' | 'complete' | 'level_up') => {
+  const claimDailyLogin = useCallback(async () => {
     try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-
-      if (type === 'correct') {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
-        gain.gain.setValueAtTime(0.15, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.3);
-      } else if (type === 'wrong') {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'sawtooth';
-        osc.frequency.setValueAtTime(220, ctx.currentTime); // A3
-        osc.frequency.exponentialRampToValueAtTime(146.83, ctx.currentTime + 0.25); // D3
-        gain.gain.setValueAtTime(0.15, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start();
-        osc.stop(ctx.currentTime + 0.3);
-      } else if (type === 'complete' || type === 'level_up') {
-        // Arpeggio chime
-        const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
-        notes.forEach((freq, idx) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.type = 'triangle';
-          osc.frequency.value = freq;
-          const startTime = ctx.currentTime + idx * 0.08;
-          gain.gain.setValueAtTime(0.2, startTime);
-          gain.gain.exponentialRampToValueAtTime(0.01, startTime + 0.35);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(startTime);
-          osc.stop(startTime + 0.35);
-        });
+      const res = await fetch('/api/xp/daily-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, displayName }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        playSound('level_up');
+        await refreshGamification();
       }
-    } catch {
-      // Ignore audio context errors if blocked by browser policy
+      return data;
+    } catch (err) {
+      console.error('Daily login claim error:', err);
+      return { success: false, error: 'تعذر الاتصال بالسيرفر' };
+    }
+  }, [userId, displayName, refreshGamification]);
+
+  const playGameAction = useCallback(async (gameId: string, actionResult?: any) => {
+    try {
+      const res = await fetch('/api/games/play', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, gameId, actionResult, displayName }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        playSound('xp_gain');
+        await refreshGamification();
+      }
+      return data;
+    } catch (err) {
+      console.error('Game play error:', err);
+      return { success: false, error: 'تعذر الاتصال بالسيرفر' };
+    }
+  }, [userId, displayName, refreshGamification]);
+
+  const recordProductViewXp = useCallback(async (productId: string) => {
+    try {
+      const res = await fetch('/api/xp/product-view', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, productId, displayName }),
+      });
+      const data = await res.json();
+      if (data.success && data.xpAwarded > 0) {
+        refreshGamification();
+      }
+      return data;
+    } catch (err) {
+      return { success: false };
+    }
+  }, [userId, displayName, refreshGamification]);
+
+  const submitProductReviewXp = useCallback(async (params: { productId: string; reviewId?: string; rating: number; comment: string }) => {
+    try {
+      const res = await fetch('/api/xp/review', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, displayName, ...params }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        playSound('complete');
+        await refreshGamification();
+      }
+      return data;
+    } catch (err) {
+      console.error('Review XP error:', err);
+      return { success: false, error: 'تعذر إرسال التقييم' };
+    }
+  }, [userId, displayName, refreshGamification]);
+
+  const playSound = useCallback((type: 'correct' | 'wrong' | 'complete' | 'level_up' | 'xp_gain') => {
+    try {
+      const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+
+      if (type === 'xp_gain' || type === 'correct') {
+        osc.frequency.setValueAtTime(523.25, ctx.currentTime); // C5
+        osc.frequency.exponentialRampToValueAtTime(880, ctx.currentTime + 0.15); // A5
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.15);
+      } else if (type === 'level_up' || type === 'complete') {
+        osc.frequency.setValueAtTime(440, ctx.currentTime);
+        osc.frequency.setValueAtTime(554.37, ctx.currentTime + 0.1);
+        osc.frequency.setValueAtTime(659.25, ctx.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.25, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.35);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.35);
+      } else if (type === 'wrong') {
+        osc.frequency.setValueAtTime(220, ctx.currentTime);
+        osc.frequency.linearRampToValueAtTime(150, ctx.currentTime + 0.2);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.2);
+      }
+    } catch (e) {
+      // AudioContext fallback ignored
     }
   }, []);
 
@@ -237,18 +228,22 @@ export const GamificationProvider: React.FC<{ children: React.ReactNode }> = ({ 
       value={{
         userId,
         displayName,
-        setDisplayName,
-        profile,
-        wallet,
-        settings,
+        userXp,
+        levelProgress,
+        activeSeason,
+        userRank,
+        dailyChallenges,
+        allChallengesCompleted,
+        xpRules,
+        games,
+        leaderboard,
         loading,
-        isChallengeModalOpen,
-        openChallengeModal,
-        closeChallengeModal,
         refreshGamification,
+        claimDailyLogin,
+        playGameAction,
+        recordProductViewXp,
+        submitProductReviewXp,
         playSound,
-        showEntryBanner,
-        dismissEntryBanner,
       }}
     >
       {children}

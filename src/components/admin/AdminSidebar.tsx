@@ -27,7 +27,6 @@ export type AdminTab =
   | 'categories'
   | 'orders'
   | 'promotions'
-  | 'freeChallenge'
   | 'gamification'
   | 'users'
   | 'security'
@@ -93,17 +92,10 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
       badgeColor: 'bg-rose-500/20 text-rose-300 border-rose-500/30',
     },
     {
-      id: 'freeChallenge' as AdminTab,
-      label: 'تحدّي التسوق المجاني',
-      icon: Gift,
-      badge: 'PRO',
-      badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-    },
-    {
       id: 'gamification' as AdminTab,
-      label: 'تحدّى واربح والمستويات',
+      label: 'مركز التحكم بالألعاب ونقاط الخبرة (XP)',
       icon: Award,
-      badge: 'جديد',
+      badge: 'XP System',
       badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
     },
     {

@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from 'motion/react';
 import { X, Trash2, ShoppingBag, ArrowLeft, ArrowRight, Tag, Truck, CheckCircle2 } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
-import { FreeChallengeCartBanner } from './freeChallenge/FreeChallengeCartBanner';
 
 interface CartDrawerProps {
   onNavigate: (path: string) => void;
@@ -257,12 +256,7 @@ export const CartDrawer: React.FC<CartDrawerProps> = ({ onNavigate }) => {
                 })
               )}
 
-              {/* Free Shopping Challenge Banner */}
-              {items.length > 0 && (
-                <div className="pt-1">
-                  <FreeChallengeCartBanner compact onStartClick={closeCart} />
-                </div>
-              )}
+              {/* End of Items */}
             </div>
 
             {/* Footer & Checkout Area */}

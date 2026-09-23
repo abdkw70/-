@@ -24,7 +24,6 @@ import {
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { useGamification } from '../context/GamificationContext';
-import { useFreeChallenge } from '../context/FreeChallengeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { Category } from '../types';
 import * as api from '../lib/api';
@@ -40,7 +39,6 @@ export const Header: React.FC<HeaderProps> = ({ categories, currentPath, onNavig
   const { totalItemsCount, openCart, wishlist, formatPrice } = useCart();
   const { user, userProfile, openAuthModal } = useAuth();
   const { wallet, profile } = useGamification();
-  const { openChallenge } = useFreeChallenge();
   const { language, setLanguage, isRtl, dir, t, storeName, translateCategory, translateProductTitle } = useLanguage();
   const [searchQuery, setSearchQuery] = useState('');
   const [suggestions, setSuggestions] = useState<any[]>([]);
@@ -482,11 +480,11 @@ export const Header: React.FC<HeaderProps> = ({ categories, currentPath, onNavig
               );
             })}
 
-            {/* Gamification Challenge Link in Desktop Nav */}
+            {/* Games Center Link in Desktop Nav */}
             <li>
               <button
                 id="btn_desktop_nav_challenge"
-                onClick={() => openChallenge('challenge')}
+                onClick={() => onNavigate('/games')}
                 className="px-3 py-1.5 rounded-xl bg-gradient-to-r from-amber-500/15 via-amber-500/25 to-amber-500/15 border border-amber-500/40 text-amber-700 hover:text-amber-900 hover:border-amber-500 transition-all text-xs font-black flex items-center gap-1.5 shadow-2xs cursor-pointer"
               >
                 <span className="relative flex h-2 w-2">
@@ -494,7 +492,7 @@ export const Header: React.FC<HeaderProps> = ({ categories, currentPath, onNavig
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-amber-500"></span>
                 </span>
                 <Award className="w-4 h-4 text-amber-600 animate-pulse" />
-                <span>{t('nav.challenges')}</span>
+                <span>🎮 مركز الألعاب (XP)</span>
               </button>
             </li>
 
@@ -652,12 +650,12 @@ export const Header: React.FC<HeaderProps> = ({ categories, currentPath, onNavig
                 )}
               </div>
 
-              {/* Challenge Launcher Button in Mobile Menu */}
+              {/* Games Launcher Button in Mobile Menu */}
               <button
                 id="btn_mobile_menu_challenge"
                 onClick={() => {
                   setIsMobileMenuOpen(false);
-                  openChallenge('challenge');
+                  onNavigate('/games');
                 }}
                 className="w-full mb-3 p-3 rounded-2xl bg-gradient-to-r from-amber-500 via-amber-600 to-amber-700 text-slate-950 font-black text-xs shadow-md flex items-center justify-between border border-amber-400 active:scale-95 transition-all cursor-pointer"
               >
@@ -667,15 +665,15 @@ export const Header: React.FC<HeaderProps> = ({ categories, currentPath, onNavig
                   </div>
                   <div className={isRtl ? 'text-right' : 'text-left'}>
                     <span className="block font-black text-slate-950 text-xs">
-                      {isRtl ? '🎯 تحدّى واربح خصمك الفوري' : '🎯 Instant Discount Challenges'}
+                      {isRtl ? '🎮 مركز الألعاب والـ XP' : '🎮 Games & XP Center'}
                     </span>
                     <span className="block text-[10px] text-slate-900 font-medium">
-                      {isRtl ? 'أجب عن الألغاز واربح خصومات إضافية حتى 25%' : 'Solve quick puzzles to win up to 25% off'}
+                      {isRtl ? 'تحدَّ نفسك واكسب نقاط XP وارتقِ بمرتبتك في لائحة المتصدرين' : 'Play games, earn XP and raise your season leaderboard rank'}
                     </span>
                   </div>
                 </div>
                 <span className="px-2 py-1 rounded-lg bg-slate-950 text-amber-300 text-[10px] font-bold shrink-0">
-                  {isRtl ? 'ابدأ' : 'Play'}
+                  {isRtl ? 'العب الآن' : 'Play'}
                 </span>
               </button>
 

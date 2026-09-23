@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { Trash2, ShoppingBag, ArrowLeft, ArrowRight, Tag, Truck, CheckCircle2, MessageCircle, MapPin, X } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useLanguage } from '../context/LanguageContext';
-import { FreeChallengeCartBanner } from '../components/freeChallenge/FreeChallengeCartBanner';
 
 interface CartPageProps {
   onNavigate: (path: string) => void;
@@ -201,8 +200,6 @@ export const CartPage: React.FC<CartPageProps> = ({ onNavigate }) => {
 
         {/* Order Summary Side */}
         <div className="space-y-6">
-          {/* Free Shopping Challenge Banner */}
-          <FreeChallengeCartBanner />
 
           <div className="bg-white rounded-3xl border border-slate-200/80 p-6 shadow-xs space-y-5">
             <h2 className="text-base font-bold text-slate-900 pb-3 border-b border-slate-100">

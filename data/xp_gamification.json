@@ -1,0 +1,156 @@
+{
+  "seasons": [
+    {
+      "id": "season_1",
+      "nameAr": "الموسم الأول - Blue Beach Season #1",
+      "nameEn": "Blue Beach Season #1",
+      "startDate": "2026-01-01T00:00:00.000Z",
+      "endDate": "2026-12-31T23:59:59.000Z",
+      "status": "active",
+      "numberOfWinners": 3,
+      "prizeDescriptionAr": "المركز الأول: طقم أدوات مكتبية فاخر + درع التميز. المركز الثاني: حقيبة مستلزمات شاملة. المركز الثالث: طقم أقلام واكسسوارات فاخرة.",
+      "prizeDescriptionEn": "1st Place: Premium Stationery Set + Trophy. 2nd Place: Complete Supplies Bag. 3rd Place: Executive Pen & Accessories Kit.",
+      "createdAt": "2026-09-23T13:33:50.536Z"
+    }
+  ],
+  "games": [
+    {
+      "id": "wheel_spin",
+      "enabled": true,
+      "nameAr": "عجلة الحظ - Wheel of Fortune",
+      "nameEn": "Wheel of Fortune",
+      "descriptionAr": "أدر عجلة الحظ الموسمية واكسب نقاط XP لرفع ترتيبك في لائحة المتصدرين!",
+      "descriptionEn": "Spin the seasonal wheel to earn XP points and boost your rank!",
+      "howToPlayAr": "اضغط زر دوران العجلة. بعد انتهاء الدوران سيتم احتساب نقاط XP المستحقة وإضافتها فوراً.",
+      "howToPlayEn": "Tap spin button. Once the wheel stops, your earned XP will be added immediately.",
+      "startButtonTextAr": "أدر العجلة الآن",
+      "startButtonTextEn": "Spin Wheel",
+      "icon": "Disc",
+      "dailyAttemptsLimit": 5,
+      "xpPerAction": 100,
+      "sortOrder": 1,
+      "introEnabled": true
+    },
+    {
+      "id": "quiz_challenge",
+      "enabled": true,
+      "nameAr": "تحدي المعلومات - Trivia Quiz",
+      "nameEn": "Trivia Quiz",
+      "descriptionAr": "أجب على الأسئلة السريعة عن القرطاسية والأدوات المكتبية واكسب XP!",
+      "descriptionEn": "Answer quick trivia questions about stationery to earn XP!",
+      "howToPlayAr": "اختر الإجابة الصحيحة للسؤال المعروض قبل انتهاء الوقت لاكتساب النقاط.",
+      "howToPlayEn": "Select the correct answer for the displayed question before time expires.",
+      "startButtonTextAr": "ابدأ التحدي",
+      "startButtonTextEn": "Start Quiz",
+      "icon": "HelpCircle",
+      "dailyAttemptsLimit": 5,
+      "xpPerAction": 80,
+      "sortOrder": 2,
+      "introEnabled": true
+    },
+    {
+      "id": "memory_cards",
+      "enabled": true,
+      "nameAr": "لعبة الذاكرة - Memory Cards",
+      "nameEn": "Memory Cards",
+      "descriptionAr": "اقلب البطاقات وطابق أزواج المستلزمات المدرسية باحترافية!",
+      "descriptionEn": "Flip cards and match school supply pairs skillfully!",
+      "howToPlayAr": "افتح البطاقات واكتشف الأزواج المتشابهة من الأدوات بأسرح وقت وبأقل حركات.",
+      "howToPlayEn": "Flip cards to find matching tool pairs with minimum moves and fastest time.",
+      "startButtonTextAr": "ابدأ مطابقة البطاقات",
+      "startButtonTextEn": "Match Cards",
+      "icon": "Layers",
+      "dailyAttemptsLimit": 5,
+      "xpPerAction": 100,
+      "sortOrder": 3,
+      "introEnabled": true
+    },
+    {
+      "id": "stationery_catcher",
+      "enabled": true,
+      "nameAr": "صائد القرطاسية - Stationery Catcher",
+      "nameEn": "Stationery Catcher",
+      "descriptionAr": "التقط الأقلام والدفاتر المتساقطة بسرعة قبل انتهاء الوقت لتضاعف XP!",
+      "descriptionEn": "Catch falling pens and notebooks fast before timer ends to multiply XP!",
+      "howToPlayAr": "حرك السلة لالتقاط القرطاسية المتساقطة واجمع أعلى نقاط خلال 15 ثانية.",
+      "howToPlayEn": "Move the basket to catch falling supplies and gain maximum score in 15 seconds.",
+      "startButtonTextAr": "اصطد القرطاسية",
+      "startButtonTextEn": "Catch Supplies",
+      "icon": "ShoppingBag",
+      "dailyAttemptsLimit": 5,
+      "xpPerAction": 120,
+      "sortOrder": 4,
+      "introEnabled": true
+    }
+  ],
+  "xpRules": {
+    "dailyLoginXp": 50,
+    "productViewXp": 10,
+    "dailyProductBrowsingCap": 100,
+    "reviewXpAmount": 100,
+    "reviewMinCommentLength": 20,
+    "reviewXpEligibilityMode": "PURCHASED_PRODUCTS_ONLY",
+    "dailyXpCap": 5000,
+    "globalDailyGameAttempts": 10
+  },
+  "dailyChallenges": [
+    {
+      "id": "c_login",
+      "titleAr": "سجّل دخولك اليومي",
+      "titleEn": "Daily Login",
+      "descriptionAr": "افتح المتجر يومياً واحصل على نقاط الخبرة",
+      "descriptionEn": "Visit the store daily to earn XP",
+      "type": "DAILY_LOGIN",
+      "requiredCount": 1,
+      "xpReward": 50,
+      "enabled": true
+    },
+    {
+      "id": "c_game",
+      "titleAr": "العب مباراة واحدة",
+      "titleEn": "Play 1 Game",
+      "descriptionAr": "شارك في أي لعبة من مركز الألعاب اليوم",
+      "descriptionEn": "Play any game in the Games Center today",
+      "type": "PLAY_GAME",
+      "requiredCount": 1,
+      "xpReward": 100,
+      "enabled": true
+    },
+    {
+      "id": "c_view",
+      "titleAr": "تصفح 3 منتجات",
+      "titleEn": "View 3 Products",
+      "descriptionAr": "افتح تفاصيل 3 منتجات مختلفة لاكتشاف جديد المكتبة",
+      "descriptionEn": "Open 3 product detail pages to discover items",
+      "type": "VIEW_PRODUCTS",
+      "requiredCount": 3,
+      "xpReward": 50,
+      "enabled": true
+    },
+    {
+      "id": "c_review",
+      "titleAr": "قيّم منتج اليوم",
+      "titleEn": "Review Product Today",
+      "descriptionAr": "اكتب تقييماً صادقاً لمنتج اشتريته واستمتع بـ XP",
+      "descriptionEn": "Write a review for a product and earn XP",
+      "type": "REVIEW_PRODUCT",
+      "requiredCount": 1,
+      "xpReward": 100,
+      "enabled": true
+    },
+    {
+      "id": "c_all",
+      "titleAr": "إكمال جميع التحديات",
+      "titleEn": "Complete All Challenges",
+      "descriptionAr": "أكمل التحديات الأربعة اليومية واحصل على البونص الكبير",
+      "descriptionEn": "Finish all 4 daily tasks for huge bonus XP",
+      "type": "ALL_COMPLETE",
+      "requiredCount": 4,
+      "xpReward": 200,
+      "enabled": true
+    }
+  ],
+  "userXp": {},
+  "xpTransactions": [],
+  "auditLogs": []
+}

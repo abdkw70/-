@@ -15,7 +15,6 @@ import { AdminActivityLogs } from '../components/admin/AdminActivityLogs';
 import { AdminBackups } from '../components/admin/AdminBackups';
 import { AdminSettings } from '../components/admin/AdminSettings';
 import { AdminGamificationManager } from '../components/admin/AdminGamificationManager';
-import { AdminFreeChallenge } from '../components/admin/AdminFreeChallenge';
 import { AdminUsers } from '../components/admin/AdminUsers';
 import { AdminSecurityLogs } from '../components/admin/AdminSecurityLogs';
 import { AdminPromotions } from '../components/admin/AdminPromotions';
@@ -230,10 +229,6 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ onNavigate }) =>
             <AdminPromotions
               showToast={showToast}
             />
-          )}
-
-          {activeTab === 'freeChallenge' && (
-            <AdminFreeChallenge />
           )}
 
           {activeTab === 'gamification' && (

@@ -474,7 +474,41 @@ export const FreeChallengeProvider: React.FC<{ children: ReactNode }> = ({ child
 export const useFreeChallenge = () => {
   const context = useContext(FreeChallengeContext);
   if (!context) {
-    throw new Error('useFreeChallenge must be used within a FreeChallengeProvider');
+    return {
+      isOpen: false,
+      mode: 'challenge' as const,
+      mysteryCategoryId: undefined,
+      sessionToken: null,
+      activePuzzle: null,
+      activeGame: null,
+      games: [],
+      isSubmitting: false,
+      lastAnswerResult: null,
+      isFinished: false,
+      challengeResult: null,
+      mysteryBoxProduct: null,
+      activeWinCoupon: null,
+      activeFreeVoucher: null,
+      activeWheelDiscount: null,
+      dailyAttemptsRemaining: 0,
+      maxDailyAttempts: 0,
+      recentWinners: [],
+      settings: null,
+      isAdWatching: false,
+      openChallenge: async () => false,
+      closeChallenge: () => {},
+      submitAnswer: async () => {},
+      reportSecurityEvent: () => {},
+      claimExtraTimeFromFriend: async () => false,
+      watchRewardedAd: async () => false,
+      clearWinCoupon: () => {},
+      clearFreeVoucher: () => {},
+      clearWheelDiscount: () => {},
+      fetchUserStatus: async () => {},
+      fetchRecentWinners: async () => {},
+      fetchSettings: async () => {},
+      fetchGames: async () => {},
+    };
   }
   return context;
 };

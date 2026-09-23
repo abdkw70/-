@@ -1,12 +1,10 @@
 import React from 'react';
 import { Award, Sparkles, X, ArrowRight, ArrowLeft, ShieldCheck, Coins } from 'lucide-react';
 import { useGamification } from '../../context/GamificationContext';
-import { useFreeChallenge } from '../../context/FreeChallengeContext';
 import { useLanguage } from '../../context/LanguageContext';
 
 export const EntryChallengeBanner: React.FC = () => {
   const { showEntryBanner, dismissEntryBanner, settings } = useGamification();
-  const { openChallenge } = useFreeChallenge();
   const { t, dir, isRtl } = useLanguage();
 
   if (!showEntryBanner || settings?.isEnabled === false) return null;
@@ -38,7 +36,10 @@ export const EntryChallengeBanner: React.FC = () => {
         <div className="flex items-center gap-1.5 sm:gap-2 shrink-0 ms-auto sm:ms-0">
           <button
             id="btn_entry_challenge_start"
-            onClick={() => openChallenge('challenge')}
+            onClick={() => {
+              window.history.pushState({}, '', '/games');
+              window.dispatchEvent(new Event('popstate'));
+            }}
             className="py-1 sm:py-1.5 px-2.5 sm:px-4 rounded-xl bg-slate-950 hover:bg-slate-900 text-amber-300 text-xs font-bold shadow-sm transition-all flex items-center gap-1 active:scale-95 cursor-pointer touch-manipulation whitespace-nowrap"
           >
             <span>{t('games.start_now')}</span>

@@ -5,8 +5,7 @@ import crypto from 'crypto';
 import { db } from '../db';
 import { storeImporter, SyncMode } from '../importer';
 import { Product, Order, Review, Category, ActivityLog } from '../types';
-import { gamificationEngine } from '../gamification';
-import { freeChallengeEngine } from '../freeChallenge';
+import { gamificationEngine, getXpProgressForLevel } from '../gamification';
 import { authService } from '../authService';
 
 import { aiChatRouter } from "./aiChat.js";
@@ -531,47 +530,16 @@ apiRouter.post('/checkout', (req, res) => {
       }
     }
 
-    // Fallback support for active legacy challenge tokens
-    let challengeMetadata: Order['freeShoppingChallenge'] = undefined;
-    if (!validatedCoupon && freeCartToken) {
-      const voucherRes = freeChallengeEngine.validateAndConsumeFreeCartVoucher(freeCartToken, effectiveUserId, orderNumber);
-      if (voucherRes.valid) {
-        couponDiscount = Number(Math.min(realSubtotal, voucherRes.discountAmount).toFixed(3));
-        challengeMetadata = {
-          rewardType: 'free_cart',
-          discountAmount: couponDiscount,
-          originalSubtotal: realSubtotal,
-          voucherCode: freeCartToken,
-        };
-      }
-    } else if (!validatedCoupon && challengeDiscountToken) {
-      const discRes = freeChallengeEngine.validateAndConsumeDiscountToken(challengeDiscountToken, effectiveUserId, orderNumber);
-      if (discRes.valid) {
-        couponDiscount = Number(((realSubtotal * discRes.percentage) / 100).toFixed(3));
-        challengeMetadata = {
-          rewardType: 'discount_wheel',
-          discountPercentage: discRes.percentage,
-          discountAmount: couponDiscount,
-          originalSubtotal: realSubtotal,
-        };
-      }
-    }
-
     // Apply wallet balance if opted in (applied on remaining subtotal after coupon)
     let walletDiscount = 0;
     const subtotalAfterCoupon = Math.max(0, realSubtotal - couponDiscount);
     if (useWalletBalance && effectiveUserId && subtotalAfterCoupon > 0) {
-      const gamSettings = gamificationEngine.getSettings();
-      const maxUsagePercent = gamSettings.maxWalletUsagePercent || 50;
-      const maxAllowedWalletDiscount = Number(((subtotalAfterCoupon * maxUsagePercent) / 100).toFixed(3));
-      
-      const userWallet = gamificationEngine.getUserWallet(effectiveUserId);
-      const eligibleAmount = Math.min(userWallet.activeBalance, maxAllowedWalletDiscount, subtotalAfterCoupon);
-
-      if (eligibleAmount > 0) {
-        const deductionResult = gamificationEngine.deductWalletForOrder(effectiveUserId, eligibleAmount, orderNumber);
-        if (deductionResult.success) {
-          walletDiscount = deductionResult.deductedAmount;
+      const gamSettings = gamificationEngine.getXpRules();
+      const userWallet = (db as any).getUserWallet ? (db as any).getUserWallet(effectiveUserId) : null;
+      if (userWallet && userWallet.activeBalance > 0) {
+        const eligibleAmount = Math.min(userWallet.activeBalance, subtotalAfterCoupon);
+        if (eligibleAmount > 0) {
+          walletDiscount = eligibleAmount;
         }
       }
     }
@@ -587,10 +555,6 @@ apiRouter.post('/checkout', (req, res) => {
     let noteExtra = '';
     if (validatedCoupon) {
       noteExtra += ` [🎟️ كود الخصم: ${validatedCoupon.code} (-${couponDiscount.toFixed(3)} د.ك)]`;
-    } else if (challengeMetadata?.rewardType === 'free_cart') {
-      noteExtra += ` [🎁 فائز بتحدي التسوق المجاني - المنتجات مجاناً بقيمة ${couponDiscount.toFixed(3)} د.ك]`;
-    } else if (challengeMetadata?.rewardType === 'discount_wheel') {
-      noteExtra += ` [🎡 خصم عجلة الحظ ${challengeMetadata.discountPercentage}%: -${couponDiscount.toFixed(3)} د.ك]`;
     }
     if (walletDiscount > 0) {
       noteExtra += ` [💳 رصيد محفظة: -${walletDiscount.toFixed(3)} د.ك]`;
@@ -620,14 +584,13 @@ apiRouter.post('/checkout', (req, res) => {
       total: finalTotal,
       currency: 'د.ك',
       couponCode: validatedCoupon?.code || (couponDiscount > 0 ? appliedCouponCode : undefined),
-      discountSource: validatedCoupon?.source || (challengeMetadata ? 'fortune_wheel' : undefined),
+      discountSource: validatedCoupon?.source,
       discountType: validatedCoupon?.discountType || (couponDiscount > 0 ? 'percentage' : undefined),
-      discountValue: validatedCoupon?.discountValue || challengeMetadata?.discountPercentage,
+      discountValue: validatedCoupon?.discountValue,
       actualDiscountAmount: couponDiscount,
       subtotalBeforeDiscount: realSubtotal,
       subtotalAfterDiscount,
       walletDiscount,
-      freeShoppingChallenge: challengeMetadata,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     };
@@ -1841,92 +1804,335 @@ apiRouter.get('/coupons/stats', (req, res) => {
   res.json({ success: true, stats });
 });
 
+// Helper to extract client IP
+const getClientIp = (req: any): string => {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string') return forwarded.split(',')[0].trim();
+  return req.socket?.remoteAddress || req.ip || '127.0.0.1';
+};
+
 // ==========================================
-// GAMIFICATION CUSTOMER ENDPOINTS
+// NEW UNIFIED XP & GAMIFICATION ENDPOINTS
 // ==========================================
 
-// 1. User Gamification Status & Profile
+// 1. User XP Status & Level Progress
 apiRouter.get('/gamification/status', (req, res) => {
   try {
     const userId = (req.query.userId as string) || 'guest_user';
-    const displayName = (req.query.displayName as string) || 'متسابق مكتبة الشاطئ الازرق';
+    const displayName = (req.query.displayName as string) || 'متسابق مكتبة الشاطئ الأزرق';
 
-    const profile = gamificationEngine.getUserProfile(userId, displayName);
-    const wallet = gamificationEngine.getUserWallet(userId);
-    const settings = gamificationEngine.getSettings();
-
-    // Calculate next tier info
-    const sortedTiers = [...(settings.tiers || [])].sort((a, b) => a.minXp - b.minXp);
-    const currentTierIndex = sortedTiers.findIndex(t => t.name === profile.currentTier);
-    const currentTierDetails = currentTierIndex >= 0 ? sortedTiers[currentTierIndex] : sortedTiers[0];
-    const nextTierDetails = currentTierIndex >= 0 && currentTierIndex < sortedTiers.length - 1 ? sortedTiers[currentTierIndex + 1] : null;
-
-    let xpProgressPercent = 100;
-    let xpForNextTier = 0;
-
-    if (nextTierDetails) {
-      const prevMin = currentTierDetails?.minXp || 0;
-      const nextMin = nextTierDetails.minXp;
-      const span = nextMin - prevMin;
-      const progressInTier = Math.max(0, profile.xp - prevMin);
-      xpProgressPercent = span > 0 ? Math.min(100, Math.round((progressInTier / span) * 100)) : 100;
-      xpForNextTier = Math.max(0, nextMin - profile.xp);
-    }
-
-    const maxDaily = settings.dailyAttemptsLimit || 3;
-    const dailyAttemptsRemaining = Math.max(0, maxDaily - (profile.dailyAttemptsUsed || 0));
-
-    // Next expiring item countdown
-    const activeItems = (wallet.items || []).filter(i => (i.status === 'active' || i.status === 'partially_used') && i.amount > 0);
-    let nextExpiringItem = null;
-    let nextExpiringSeconds = 0;
-
-    if (activeItems.length > 0) {
-      const sortedActive = [...activeItems].sort((a, b) => new Date(a.expiresAt).getTime() - new Date(b.expiresAt).getTime());
-      nextExpiringItem = sortedActive[0];
-      const diffMs = new Date(nextExpiringItem.expiresAt).getTime() - Date.now();
-      nextExpiringSeconds = Math.max(0, Math.floor(diffMs / 1000));
-    }
+    const userXp = gamificationEngine.getUserXp(userId, displayName);
+    const levelProgress = getXpProgressForLevel(userXp.totalXp);
+    const activeSeason = gamificationEngine.getActiveSeason();
+    const userRank = gamificationEngine.getUserRankInfo(userId, activeSeason.id);
+    const dailyChallenges = gamificationEngine.getDailyChallengesStatus(userId);
+    const xpRules = gamificationEngine.getXpRules();
 
     res.json({
       success: true,
-      profile: {
-        ...profile,
-        currentTierDetails,
-        nextTierDetails,
-        xpProgressPercent,
-        xpForNextTier,
-        dailyAttemptsRemaining,
-      },
-      wallet: {
-        ...wallet,
-        nextExpiringItem,
-        nextExpiringSeconds,
-      },
-      settings: {
-        isEnabled: settings.isEnabled,
-        questionsPerChallenge: settings.questionsPerChallenge,
-        timePerQuestionSeconds: settings.timePerQuestionSeconds,
-        dailyAttemptsLimit: settings.dailyAttemptsLimit,
-        rewardExpiryHours: settings.rewardExpiryHours,
-        maxWalletUsagePercent: settings.maxWalletUsagePercent,
-        autoShowChallengeOnEntry: settings.autoShowChallengeOnEntry,
-        autoShowFrequency: settings.autoShowFrequency,
-        enableAchievements: settings.enableAchievements,
-        enableLeaderboard: settings.enableLeaderboard,
-      },
+      userXp,
+      levelProgress,
+      activeSeason,
+      userRank,
+      dailyChallenges,
+      xpRules,
     });
   } catch (err: any) {
     res.status(500).json({ success: false, error: err.message });
   }
 });
 
-// Helper to extract client IP
-const getClientIp = (req: Request): string => {
-  const forwarded = req.headers['x-forwarded-for'];
-  if (typeof forwarded === 'string') return forwarded.split(',')[0].trim();
-  return req.socket.remoteAddress || req.ip || '127.0.0.1';
-};
+apiRouter.get('/xp/status', (req, res) => {
+  try {
+    const userId = (req.query.userId as string) || 'guest_user';
+    const displayName = (req.query.displayName as string) || 'متسابق مكتبة الشاطئ الأزرق';
+
+    const userXp = gamificationEngine.getUserXp(userId, displayName);
+    const levelProgress = getXpProgressForLevel(userXp.totalXp);
+    const activeSeason = gamificationEngine.getActiveSeason();
+    const userRank = gamificationEngine.getUserRankInfo(userId, activeSeason.id);
+    const dailyChallenges = gamificationEngine.getDailyChallengesStatus(userId);
+    const xpRules = gamificationEngine.getXpRules();
+
+    res.json({
+      success: true,
+      userXp,
+      levelProgress,
+      activeSeason,
+      userRank,
+      dailyChallenges,
+      xpRules,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 2. Claim Daily Login XP
+apiRouter.post('/xp/daily-login', (req, res) => {
+  try {
+    const { userId, displayName } = req.body;
+    if (!userId) {
+      return res.status(400).json({ success: false, error: 'معرف المستخدم مطلوب' });
+    }
+    const ip = getClientIp(req);
+    const userAgent = (req.headers['user-agent'] as string) || '';
+
+    const result = gamificationEngine.processDailyLogin(userId, displayName, ip, userAgent);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 3. Get Public Active Games List
+apiRouter.get('/games', (req, res) => {
+  try {
+    const games = gamificationEngine.getGames(false);
+    res.json({ success: true, games });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 4. Play Game Action & Award XP
+apiRouter.post('/games/play', (req, res) => {
+  try {
+    const { userId, gameId, actionResult, displayName } = req.body;
+    if (!userId || !gameId) {
+      return res.status(400).json({ success: false, error: 'بيانات اللعبة غير مكتملة' });
+    }
+    const ip = getClientIp(req);
+    const userAgent = (req.headers['user-agent'] as string) || '';
+
+    const result = gamificationEngine.processGamePlay({
+      userId,
+      gameId,
+      actionResult,
+      displayName,
+      ip,
+      userAgent,
+    });
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 5. Product View XP
+apiRouter.post('/xp/product-view', (req, res) => {
+  try {
+    const { userId, productId, displayName } = req.body;
+    if (!userId || !productId) {
+      return res.status(400).json({ success: false, error: 'بيانات المنتج غير مكتملة' });
+    }
+    const ip = getClientIp(req);
+    const userAgent = (req.headers['user-agent'] as string) || '';
+
+    const result = gamificationEngine.processProductView(userId, productId, displayName, ip, userAgent);
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 6. Product Review XP
+apiRouter.post('/xp/review', (req, res) => {
+  try {
+    const { userId, productId, reviewId, rating, comment, displayName } = req.body;
+    if (!userId || !productId) {
+      return res.status(400).json({ success: false, error: 'بيانات التقييم غير مكتملة' });
+    }
+    const ip = getClientIp(req);
+    const userAgent = (req.headers['user-agent'] as string) || '';
+
+    const result = gamificationEngine.processProductReview({
+      userId,
+      productId,
+      reviewId,
+      rating: Number(rating || 5),
+      comment: comment || '',
+      displayName,
+      ip,
+      userAgent,
+    });
+
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 7. Public Season Leaderboard (Privacy Safe: Omit phone and email)
+apiRouter.get('/leaderboard', (req, res) => {
+  try {
+    const seasonId = req.query.seasonId as string;
+    const limit = Number(req.query.limit || 50);
+
+    const leaderboard = gamificationEngine.getLeaderboard(seasonId, limit);
+    const activeSeason = gamificationEngine.getActiveSeason();
+
+    res.json({
+      success: true,
+      leaderboard,
+      activeSeason,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+apiRouter.get('/gamification/leaderboard', (req, res) => {
+  try {
+    const seasonId = req.query.seasonId as string;
+    const limit = Number(req.query.limit || 50);
+
+    const leaderboard = gamificationEngine.getLeaderboard(seasonId, limit);
+    const activeSeason = gamificationEngine.getActiveSeason();
+
+    res.json({
+      success: true,
+      leaderboard,
+      activeSeason,
+    });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// ==========================================
+// ADMIN GAMIFICATION & XP CONTROL CENTER
+// ==========================================
+
+// 1. Overview Analytics
+apiRouter.get('/admin/gamification/overview', requireAdminAuth, (req, res) => {
+  try {
+    const overview = gamificationEngine.getOverviewStats();
+    res.json({ success: true, overview });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 2. Seasons Management
+apiRouter.get('/admin/gamification/seasons', requireAdminAuth, (req, res) => {
+  try {
+    const seasons = gamificationEngine.getSeasons();
+    const activeSeason = gamificationEngine.getActiveSeason();
+    res.json({ success: true, seasons, activeSeason });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+apiRouter.post('/admin/gamification/seasons', requireAdminAuth, (req, res) => {
+  try {
+    const season = gamificationEngine.upsertSeason(req.body);
+    db.logActivity('إدارة المواسم', 'settings', `تم حفظ الموسم: ${season.nameAr}`, 'success');
+    res.json({ success: true, season });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+apiRouter.post('/admin/gamification/seasons/:id/confirm-winners', requireAdminAuth, (req, res) => {
+  try {
+    const seasonId = req.params.id;
+    const adminUserId = (req.body.adminUserId as string) || 'admin';
+    const result = gamificationEngine.lockSeasonResults(seasonId, adminUserId);
+    if (!result.success) {
+      return res.status(400).json(result);
+    }
+    db.logActivity('اعتماد الفائزين', 'settings', `تم فلق الموسم وإعلان الفائزين بنجاح (${seasonId})`, 'success');
+    res.json(result);
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 3. Admin Games Management
+apiRouter.get('/admin/gamification/games', requireAdminAuth, (req, res) => {
+  try {
+    const games = gamificationEngine.getGames(true);
+    res.json({ success: true, games });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+apiRouter.post('/admin/gamification/games', requireAdminAuth, (req, res) => {
+  try {
+    const game = gamificationEngine.upsertGame(req.body);
+    db.logActivity('إدارة الألعاب', 'settings', `تم حفظ إعدادات لعبة XP: ${game.nameAr}`, 'success');
+    res.json({ success: true, game });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+apiRouter.put('/admin/gamification/games/:id', requireAdminAuth, (req, res) => {
+  try {
+    const { id } = req.params;
+    const game = gamificationEngine.upsertGame({ ...req.body, id });
+    db.logActivity('تعديل لعبة', 'settings', `تم تحديث لعبة XP: ${game.nameAr}`, 'success');
+    res.json({ success: true, game });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+apiRouter.delete('/admin/gamification/games/:id', requireAdminAuth, (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = gamificationEngine.deleteGame(id);
+    if (!deleted) {
+      return res.status(404).json({ success: false, error: 'اللعبة غير موجودة' });
+    }
+    db.logActivity('حذف لعبة', 'settings', `تم حذف اللعبة معرف: ${id}`, 'warning');
+    res.json({ success: true, message: 'تم حذف اللعبة بنجاح' });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+// 4. Admin XP Rules Settings
+apiRouter.get('/admin/gamification/settings', requireAdminAuth, (req, res) => {
+  try {
+    const rules = gamificationEngine.getXpRules();
+    res.json({ success: true, rules });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+apiRouter.put('/admin/gamification/settings', requireAdminAuth, (req, res) => {
+  try {
+    const rules = gamificationEngine.updateXpRules(req.body);
+    db.logActivity('قواعد XP', 'settings', 'تم تحديث قواعد وسقوف نقاط XP والتقييمات', 'success');
+    res.json({ success: true, rules, message: 'تم تحديث قواعد XP بنجاح' });
+  } catch (err: any) {
+    res.status(400).json({ success: false, error: err.message });
+  }
+});
+
+// 5. Activity Audit Logs
+apiRouter.get('/admin/gamification/audit', requireAdminAuth, (req, res) => {
+  try {
+    const logs = gamificationEngine.getAuditLogs();
+    res.json({ success: true, logs });
+  } catch (err: any) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
 
 // ==========================================
 // USER AUTH & PROFILE SYNC ENDPOINTS
@@ -2515,363 +2721,16 @@ apiRouter.post('/admin/users/:userId/bonus', requireAdminAuth, (req, res) => {
 });
 
 // =========================================================================
-// FREE SHOPPING CHALLENGE API ENDPOINTS (تحدّي التسوق المجاني)
+// DEPRECATED FREE CHALLENGE ROUTES (إلغاء النظام القديم واستبداله بنظام XP)
 // =========================================================================
 
-// 1. Get Public Settings
-apiRouter.get('/free-challenge/settings', (req, res) => {
-  try {
-    const settings = freeChallengeEngine.getSettings();
-    res.json({ success: true, settings });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// 2. Get User Status (Daily attempts remaining, etc.)
-apiRouter.get('/free-challenge/user-status', (req, res) => {
-  try {
-    const userId = (req.query.userId as string) || (req.query.sessionId as string);
-    if (!userId) {
-      return res.status(400).json({ success: false, error: 'المستخدم غير محدد' });
-    }
-    const attempts = freeChallengeEngine.getUserDailyAttempts(userId);
-    res.json({
-      success: true,
-      dailyAttemptsRemaining: attempts.remaining,
-      dailyAttemptsUsed: attempts.attemptsUsed,
-      maxDailyAttempts: attempts.maxAllowed,
-    });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// 3. Start Challenge Session
-apiRouter.post('/free-challenge/start', (req, res) => {
-  try {
-    const { userId, displayName, sessionId, mode = 'free_cart', mysteryCategoryId, gameId } = req.body;
-    const ip = req.ip || req.socket.remoteAddress;
-    const userAgent = req.headers['user-agent'];
-
-    if (!userId && !sessionId) {
-      return res.status(400).json({ success: false, error: 'معرف المستخدم أو الجلسة مطلوب' });
-    }
-
-    const result = freeChallengeEngine.startChallengeSession({
-      userId: userId || sessionId,
-      displayName: displayName || 'متسوق متميز',
-      sessionId,
-      mode,
-      mysteryCategoryId,
-      gameId,
-      ip,
-      userAgent,
-    });
-
-    if (!result.success) {
-      return res.status(400).json(result);
-    }
-
-    res.json(result);
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// 3.1 Get Public Active Games List
-apiRouter.get('/free-challenge/games', (req, res) => {
-  try {
-    const games = freeChallengeEngine.getGames(false);
-    res.json({ success: true, games });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// 3.2 Get Live Winners Ticker Info
-apiRouter.get('/free-challenge/ticker', (req, res) => {
-  try {
-    const settings = freeChallengeEngine.getSettings();
-    const winners = freeChallengeEngine.getRecentWinners();
-    res.json({
-      success: true,
-      tickerSettings: settings.tickerSettings || {
-        enabled: true,
-        speedSeconds: 25,
-        backgroundColor: '#0f172a',
-        textColor: '#f8fafc',
-        showAvatar: true,
-        showPrizeAmount: true,
-        showTimestamp: true,
-        customPrefixText: '🎉 مبروك للفائزين الجدد:',
-      },
-      winners,
-    });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// 4. Submit Puzzle Answer
-apiRouter.post('/free-challenge/answer', (req, res) => {
-  try {
-    const { sessionToken, puzzleId, selectedIndex, timeTakenSeconds } = req.body;
-
-    if (!sessionToken || !puzzleId || typeof selectedIndex !== 'number') {
-      return res.status(400).json({ success: false, error: 'بيانات الإجابة غير مكتملة' });
-    }
-
-    const result = freeChallengeEngine.submitAnswer({
-      sessionToken,
-      puzzleId,
-      selectedIndex,
-      timeTakenSeconds,
-    });
-
-    if (!result.success && result.error) {
-      return res.status(400).json(result);
-    }
-
-    res.json(result);
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// 5. Security & Visibility Event Report
-apiRouter.post('/free-challenge/security-event', (req, res) => {
-  try {
-    const { eventType, details, userId, severity = 'warning' } = req.body;
-    const ip = req.ip || req.socket.remoteAddress;
-
-    freeChallengeEngine.logSecurity(
-      eventType || 'VISIBILITY_CHANGE',
-      details || 'حدث أمني في واجهة التحدي',
-      severity,
-      userId || 'anonymous',
-      ip
-    );
-
-    res.json({ success: true });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// 6. Live Winners List
-apiRouter.get('/free-challenge/winners', (req, res) => {
-  try {
-    const winners = freeChallengeEngine.getRecentWinners();
-    res.json({ success: true, winners });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// 7. 1v1 Shopping Duel Create / Join
-apiRouter.post('/free-challenge/duel/create', (req, res) => {
-  try {
-    const { userId, userName } = req.body;
-    if (!userId) {
-      return res.status(400).json({ success: false, error: 'معرف المستخدم مطلوب' });
-    }
-
-    const match = freeChallengeEngine.createDuel({
-      userId,
-      userName: userName || 'لاعب التحدي',
-    });
-
-    res.json({ success: true, match });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-apiRouter.get('/free-challenge/duel/:idOrCode', (req, res) => {
-  try {
-    const { idOrCode } = req.params;
-    const match = freeChallengeEngine.getDuel(idOrCode);
-    if (!match) {
-      return res.status(404).json({ success: false, error: 'المبارزة غير موجودة' });
-    }
-    res.json({ success: true, match });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// --- ADMIN FREE CHALLENGE ROUTES ---
-
-// Admin Get Settings
-apiRouter.get('/admin/free-challenge/settings', requireAdminAuth, (req, res) => {
-  try {
-    const settings = freeChallengeEngine.getSettings();
-    res.json({ success: true, settings });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// Admin Update Settings
-apiRouter.put('/admin/free-challenge/settings', requireAdminAuth, (req, res) => {
-  try {
-    const updated = freeChallengeEngine.updateSettings(req.body);
-    db.logActivity('تحديث إعدادات تحدي التسوق', 'settings', 'تم تحديث إعدادات تحدي التسوق المجاني وعجلة الخصومات', 'success');
-    res.json({ success: true, settings: updated });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// Admin Get Puzzles
-apiRouter.get('/admin/free-challenge/puzzles', requireAdminAuth, (req, res) => {
-  try {
-    const puzzles = freeChallengeEngine.getPuzzles(true);
-    res.json({ success: true, puzzles });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// Admin Upsert Puzzle
-apiRouter.post('/admin/free-challenge/puzzles', requireAdminAuth, (req, res) => {
-  try {
-    const puzzle = freeChallengeEngine.upsertPuzzle(req.body);
-    db.logActivity('إضافة لغز بصري', 'settings', `تم حفظ اللغز البصري: ${puzzle.title}`, 'success');
-    res.json({ success: true, puzzle });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-apiRouter.put('/admin/free-challenge/puzzles/:id', requireAdminAuth, (req, res) => {
-  try {
-    const { id } = req.params;
-    const puzzle = freeChallengeEngine.upsertPuzzle({ ...req.body, id });
-    db.logActivity('تعديل لغز بصري', 'settings', `تم تعديل اللغز البصري: ${puzzle.title}`, 'success');
-    res.json({ success: true, puzzle });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// Admin Delete Puzzle
-apiRouter.delete('/admin/free-challenge/puzzles/:id', requireAdminAuth, (req, res) => {
-  try {
-    const { id } = req.params;
-    const deleted = freeChallengeEngine.deletePuzzle(id);
-    if (!deleted) {
-      return res.status(404).json({ success: false, error: 'اللغز غير موجود' });
-    }
-    db.logActivity('حذف لغز بصري', 'settings', `تم حذف اللغز البصري معرف: ${id}`, 'warning');
-    res.json({ success: true, message: 'تم حذف اللغز بنجاح' });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// Admin Security Logs
-apiRouter.get('/admin/free-challenge/security-logs', requireAdminAuth, (req, res) => {
-  try {
-    const logs = freeChallengeEngine.getSecurityLogs();
-    res.json({ success: true, logs });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-apiRouter.post('/admin/free-challenge/security-logs/clear', requireAdminAuth, (req, res) => {
-  try {
-    freeChallengeEngine.clearSecurityLogs();
-    res.json({ success: true, message: 'تم مسح سجلات الأمان بنجاح' });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// Admin Analytics
-apiRouter.get('/admin/free-challenge/analytics', requireAdminAuth, (req, res) => {
-  try {
-    const analytics = freeChallengeEngine.getAnalytics();
-    res.json({ success: true, analytics });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// Admin Get Games (10 Games Framework)
-apiRouter.get('/admin/free-challenge/games', requireAdminAuth, (req, res) => {
-  try {
-    const games = freeChallengeEngine.getGames(true);
-    res.json({ success: true, games });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// Admin Upsert Game
-apiRouter.post('/admin/free-challenge/games', requireAdminAuth, (req, res) => {
-  try {
-    const game = freeChallengeEngine.upsertGame(req.body);
-    db.logActivity('إدارة الألعاب', 'settings', `تم حفظ إعدادات لعبة: ${game.title}`, 'success');
-    res.json({ success: true, game });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-apiRouter.put('/admin/free-challenge/games/:id', requireAdminAuth, (req, res) => {
-  try {
-    const { id } = req.params;
-    const game = freeChallengeEngine.upsertGame({ ...req.body, id });
-    db.logActivity('إدارة الألعاب', 'settings', `تم تحديث لعبة: ${game.title}`, 'success');
-    res.json({ success: true, game });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// Admin Delete Game
-apiRouter.delete('/admin/free-challenge/games/:id', requireAdminAuth, (req, res) => {
-  try {
-    const { id } = req.params;
-    const deleted = freeChallengeEngine.deleteGame(id);
-    if (!deleted) {
-      return res.status(404).json({ success: false, error: 'اللعبة غير موجودة' });
-    }
-    db.logActivity('حذف لعبة', 'settings', `تم حذف اللعبة معرف: ${id}`, 'warning');
-    res.json({ success: true, message: 'تم حذف اللعبة بنجاح' });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// Admin Reorder Games
-apiRouter.post('/admin/free-challenge/games/reorder', requireAdminAuth, (req, res) => {
-  try {
-    const { orderedIds } = req.body;
-    if (!Array.isArray(orderedIds)) {
-      return res.status(400).json({ success: false, error: 'مصفوفة الترتيب مطلوبة' });
-    }
-    const games = freeChallengeEngine.reorderGames(orderedIds);
-    db.logActivity('إعادة ترتيب الألعاب', 'settings', 'تم حفظ ترتيب عرض الألعاب الجديد', 'info');
-    res.json({ success: true, games });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
-});
-
-// Admin Update Ticker Settings
-apiRouter.put('/admin/free-challenge/ticker', requireAdminAuth, (req, res) => {
-  try {
-    const tickerSettings = req.body;
-    const settings = freeChallengeEngine.updateSettings({ tickerSettings });
-    db.logActivity('شريط الفائزين', 'settings', 'تم تحديث إعدادات شريط الفائزين المباشر', 'success');
-    res.json({ success: true, tickerSettings: settings.tickerSettings });
-  } catch (err: any) {
-    res.status(500).json({ success: false, error: err.message });
-  }
+apiRouter.use(['/free-challenge*', '/admin/free-challenge*'], (req, res) => {
+  res.status(410).json({
+    success: false,
+    deprecated: true,
+    message: 'تم ملغاء نظام تحدي التسوق القديم بالكامل واستبداله بنظام XP والألعاب التنافسية الجديد.',
+    redirectTo: '/games',
+  });
 });
 
 

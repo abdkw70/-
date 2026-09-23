@@ -208,65 +208,57 @@ export const HomePage: React.FC<HomePageProps> = ({ categories, onNavigate }) =>
         );
       })}
 
-      {/* Gamification Challenge Banner Section */}
-      {settings?.isEnabled !== false && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="rounded-3xl bg-gradient-to-br from-amber-500 via-amber-600 to-indigo-900 text-white p-6 sm:p-10 shadow-xl relative overflow-hidden">
-            <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,rgba(255,255,255,0.15),transparent_60%)] pointer-events-none" />
-            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-              <div className={`space-y-3 max-w-xl ${isRtl ? 'text-right' : 'text-left'}`}>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-950/30 backdrop-blur-xs border border-white/20 text-xs font-bold text-amber-200">
-                  <Trophy className="w-4 h-4 text-amber-300" />
-                  <span>
-                    {isRtl ? 'تحدّى معلوماتك واربح رصيد مشتريات فوري' : 'Challenge Your Knowledge & Win Shopping Credit'}
-                  </span>
-                </div>
-                <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight">
-                  {isRtl
-                    ? `أجب عن أسئلة سريعة واكسب حتى ${formatPrice(((settings?.questionsPerChallenge ?? 10) * (settings?.defaultRewardAmount ?? 0.5)))}!`
-                    : `Answer quick questions and earn up to ${formatPrice(((settings?.questionsPerChallenge ?? 10) * (settings?.defaultRewardAmount ?? 0.5)))}!`}
-                </h2>
-                <p className="text-xs sm:text-sm text-amber-100/90 leading-relaxed">
-                  {isRtl
-                    ? `احصل على ${formatPrice(settings?.defaultRewardAmount ?? 0.5)} رصيد في محفظتك لكل إجابة صحيحة، واستخدم رصيدك فوراً لخصم حتى ${settings?.maxWalletUsagePercent ?? 50}% من قيمة أي طلب في المتجر.`
-                    : `Get ${formatPrice(settings?.defaultRewardAmount ?? 0.5)} wallet credit per correct answer. Use your balance immediately to cover up to ${settings?.maxWalletUsagePercent ?? 50}% of any order!`}
-                </p>
-                <div className="flex flex-wrap items-center gap-4 text-xs font-bold pt-2 text-white/90">
-                  <span className="flex items-center gap-1 bg-black/20 px-2.5 py-1 rounded-lg">
-                    <Coins className="w-4 h-4 text-amber-300" />
-                    <span>
-                      {isRtl ? `رصيدك الحالي: ${formatPrice(wallet?.activeBalance ?? 0)}` : `Current Balance: ${formatPrice(wallet?.activeBalance ?? 0)}`}
-                    </span>
-                  </span>
-                  <span className="flex items-center gap-1 bg-black/20 px-2.5 py-1 rounded-lg">
-                    <Zap className="w-4 h-4 text-sky-300" />
-                    <span>
-                      {isRtl ? `المستوى: ${profile?.currentTier || 'المستوى البرونزي'}` : `Tier: ${profile?.currentTier || 'Bronze Tier'}`}
-                    </span>
-                  </span>
-                </div>
+      {/* Gamification Games & XP Banner Section */}
+      <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="rounded-3xl bg-gradient-to-br from-indigo-900 via-sky-900 to-slate-900 text-white p-6 sm:p-10 shadow-xl relative overflow-hidden border border-sky-500/30">
+          <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top_right,rgba(56,189,248,0.2),transparent_60%)] pointer-events-none" />
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+            <div className={`space-y-3 max-w-xl ${isRtl ? 'text-right' : 'text-left'}`}>
+              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/20 backdrop-blur-xs border border-sky-400/30 text-xs font-bold text-sky-200">
+                <Trophy className="w-4 h-4 text-amber-300" />
+                <span>
+                  {isRtl ? '🎮 مركز الألعاب والـ XP التنافسي' : '🎮 Games & XP Competitive Center'}
+                </span>
               </div>
-
-              <div className="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0">
-                <button
-                  id="btn_home_start_challenge"
-                  onClick={openChallengeModal}
-                  className="py-3.5 px-8 rounded-2xl bg-slate-950 text-amber-300 hover:bg-slate-900 font-extrabold text-sm shadow-xl flex items-center justify-center gap-2.5 transition-all hover:scale-105 cursor-pointer"
-                >
-                  <Sparkles className="w-5 h-5 text-amber-400 animate-pulse" />
-                  <span>{t('games.play_now')}</span>
-                </button>
-                <button
-                  onClick={() => onNavigate('wallet')}
-                  className="py-3 px-6 rounded-2xl bg-white/15 hover:bg-white/25 text-white font-bold text-xs backdrop-blur-xs border border-white/20 text-center transition-colors cursor-pointer"
-                >
-                  {isRtl ? 'عرض سجل المحفظة والرصيد' : 'View Wallet Balance & History'}
-                </button>
+              <h2 className="text-2xl sm:text-3xl font-black text-white leading-tight">
+                {isRtl
+                  ? 'العب الألعاب اليومية واكسب نقاط الخبرة (XP) وتصدّر الموسم!'
+                  : 'Play daily games, earn XP, and climb the season leaderboard!'}
+              </h2>
+              <p className="text-xs sm:text-sm text-sky-100/90 leading-relaxed">
+                {isRtl
+                  ? 'تحدَّ مهاراتك في عجلة الحظ، واختبار المعلومات، ولعبة الذاكرة، والتثبيت. اكسب نقاط XP فارتقِ بمستواك وادخل قائمة أفضل 3 فائزين للموسم الحالي!'
+                  : 'Test your skills in Wheel of Fortune, Trivia Quiz, Memory Cards, and Stationery Catcher. Earn XP, rank up your level, and compete for the top 3 leaderboard spots!'}
+              </p>
+              <div className="flex flex-wrap items-center gap-4 text-xs font-bold pt-2 text-white/90">
+                <span className="flex items-center gap-1.5 bg-white/10 backdrop-blur-xs px-3 py-1.5 rounded-xl border border-white/10">
+                  <Zap className="w-4 h-4 text-amber-400" />
+                  <span>
+                    {isRtl ? `نقاط XP الخاصة بك: ${profile?.xp || 0} XP` : `Your XP: ${profile?.xp || 0} XP`}
+                  </span>
+                </span>
+                <span className="flex items-center gap-1.5 bg-white/10 backdrop-blur-xs px-3 py-1.5 rounded-xl border border-white/10">
+                  <Award className="w-4 h-4 text-sky-400" />
+                  <span>
+                    {isRtl ? `المستوى الحالي: ${profile?.level || 1}` : `Level: ${profile?.level || 1}`}
+                  </span>
+                </span>
               </div>
             </div>
+
+            <div className="flex flex-col sm:flex-row lg:flex-col gap-3 shrink-0">
+              <button
+                id="btn_home_start_games"
+                onClick={() => onNavigate('/games')}
+                className="py-3.5 px-8 rounded-2xl bg-amber-400 text-slate-950 hover:bg-amber-300 font-extrabold text-sm shadow-xl flex items-center justify-center gap-2.5 transition-all hover:scale-105 cursor-pointer"
+              >
+                <Sparkles className="w-5 h-5 text-slate-950 animate-pulse" />
+                <span>{isRtl ? 'دخول مركز الألعاب 🎮' : 'Enter Games Center 🎮'}</span>
+              </button>
+            </div>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
       {/* Why Choose Maktaba Q8 Banner */}
       <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

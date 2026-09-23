@@ -3,7 +3,6 @@ import { LanguageProvider, useLanguage } from './context/LanguageContext';
 import { CartProvider, useCart } from './context/CartContext';
 import { AuthProvider } from './context/AuthContext';
 import { GamificationProvider, useGamification } from './context/GamificationContext';
-import { FreeChallengeProvider } from './context/FreeChallengeContext';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
 import { BottomNav } from './components/BottomNav';
@@ -11,8 +10,6 @@ import { CartDrawer } from './components/CartDrawer';
 import { QuickViewModal } from './components/QuickViewModal';
 import { ChallengeModal } from './components/gamification/ChallengeModal';
 import { EntryChallengeBanner } from './components/gamification/EntryChallengeBanner';
-import { FreeChallengeModal } from './components/freeChallenge/FreeChallengeModal';
-import { LiveWinnersTicker } from './components/freeChallenge/LiveWinnersTicker';
 import { AuthModal } from './components/AuthModal';
 import { PromotionPopupModal } from './components/PromotionPopupModal';
 import { LoginPage } from './pages/LoginPage';
@@ -27,6 +24,7 @@ import { WalletPage } from './pages/WalletPage';
 import { AccountPage } from './pages/AccountPage';
 import { AdminDashboard } from './pages/AdminDashboard';
 import { PolicyPages } from './pages/PolicyPages';
+import { GamesPage } from './pages/GamesPage';
 import { Chatbot } from "./components/Chatbot";
 import { Category } from './types';
 import * as api from './lib/api';
@@ -80,6 +78,7 @@ const ToastContainer: React.FC = () => {
 };
 
 const MainApp: React.FC = () => {
+  const { showToast } = useCart();
   const [currentPath, setCurrentPath] = useState<string>(window.location.pathname || '/');
   const [queryParams, setQueryParams] = useState<Record<string, string>>({});
   const [categories, setCategories] = useState<Category[]>([]);
@@ -137,7 +136,7 @@ const MainApp: React.FC = () => {
 
   // Route matching
   const renderCurrentView = () => {
-    if (currentPath === '/' || currentPath === '' || currentPath === '/challenge') {
+    if (currentPath === '/' || currentPath === '') {
       return <HomePage categories={categories} onNavigate={navigate} />;
     }
 
@@ -169,6 +168,10 @@ const MainApp: React.FC = () => {
 
     if (currentPath === '/checkout') {
       return <CheckoutPage onNavigate={navigate} />;
+    }
+
+    if (currentPath === '/games' || currentPath === '/challenge' || currentPath === '/gamification') {
+      return <GamesPage onNavigate={navigate} showToast={showToast} />;
     }
 
     if (currentPath === '/wallet') {
@@ -216,7 +219,6 @@ const MainApp: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col justify-between font-sans text-slate-900 selection:bg-sky-500 selection:text-white" dir={dir}>
       <div>
-        {!isAdminRoute && <LiveWinnersTicker />}
         {!isAdminRoute && <EntryChallengeBanner />}
         {!isAdminRoute && <Header categories={categories} currentPath={currentPath} onNavigate={navigate} />}
         <main className={isAdminRoute ? "min-h-screen" : "min-h-[70vh] pb-20 md:pb-0"}>{renderCurrentView()}</main>
@@ -237,7 +239,6 @@ const MainApp: React.FC = () => {
           onNavigateToShop={() => navigate('/shop')}
         />
       )}
-      {!isAdminRoute && <FreeChallengeModal onNavigate={navigate} />}
       {!isAdminRoute && <PromotionPopupModal language={language} onNavigate={navigate} />}
       <ToastContainer />
     </div>
@@ -250,9 +251,7 @@ export default function App() {
       <AuthProvider>
         <CartProvider>
           <GamificationProvider>
-            <FreeChallengeProvider>
-              <MainApp />
-            </FreeChallengeProvider>
+            <MainApp />
           </GamificationProvider>
         </CartProvider>
       </AuthProvider>

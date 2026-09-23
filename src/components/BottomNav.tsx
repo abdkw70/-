@@ -75,11 +75,11 @@ export const BottomNav: React.FC<BottomNavProps> = ({ currentPath, onNavigate })
           </span>
         </button>
 
-        {/* 3. Challenge / Spin & Win */}
+        {/* 3. Games / XP Hub */}
         <button
           id="btn_bottom_nav_challenge"
           type="button"
-          onClick={openChallengeModal}
+          onClick={() => onNavigate('/games')}
           className="flex-1 flex flex-col items-center justify-center gap-1 py-1 px-1 h-full rounded-xl text-amber-600 hover:text-amber-700 font-bold transition-all cursor-pointer touch-manipulation select-none active:scale-95 group"
           aria-label={t('games.play_win')}
         >

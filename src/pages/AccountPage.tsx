@@ -32,7 +32,6 @@ import {
 } from 'lucide-react';
 import { useGamification } from '../context/GamificationContext';
 import { useAuth } from '../context/AuthContext';
-import { useFreeChallenge } from '../context/FreeChallengeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { fetchAchievements, fetchLeaderboard, fetchUserAddresses, saveUserAddress, deleteUserAddress, setDefaultUserAddress, fetchOrders } from '../lib/api';
 import { Achievement, LeaderboardEntry, UserAddress, Order } from '../types';
@@ -69,7 +68,6 @@ interface AccountPageProps {
 
 export const AccountPage: React.FC<AccountPageProps> = ({ onNavigate }) => {
   const { profile, wallet, settings } = useGamification();
-  const { openChallenge } = useFreeChallenge();
   const { user, userProfile, logout, openAuthModal, updateUserData } = useAuth();
   const { dir, isRtl, language, t, formatPrice } = useLanguage();
 
@@ -405,11 +403,11 @@ export const AccountPage: React.FC<AccountPageProps> = ({ onNavigate }) => {
               <span>{isRtl ? 'محفظة المكافآت' : 'Rewards Wallet'}</span>
             </button>
             <button
-              onClick={() => openChallenge()}
+              onClick={() => onNavigate('/games')}
               className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 flex items-center gap-1.5 transition-all cursor-pointer"
             >
               <Award className="w-4 h-4" />
-              <span>{isRtl ? 'تحدي الألعاب الذكية' : 'Smart Game Challenge'}</span>
+              <span>{isRtl ? 'مركز الألعاب والـ XP' : 'Games & XP Center'}</span>
             </button>
             <button
               onClick={logout}

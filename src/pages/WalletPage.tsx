@@ -18,7 +18,6 @@ import {
 } from 'lucide-react';
 import { useGamification } from '../context/GamificationContext';
 import { useAuth } from '../context/AuthContext';
-import { useFreeChallenge } from '../context/FreeChallengeContext';
 import { useLanguage } from '../context/LanguageContext';
 import { fetchWalletDetails } from '../lib/api';
 import { UserWallet } from '../types';
@@ -29,7 +28,6 @@ interface WalletPageProps {
 
 export const WalletPage: React.FC<WalletPageProps> = ({ onNavigate }) => {
   const { userId, refreshGamification, profile, settings } = useGamification();
-  const { openChallenge } = useFreeChallenge();
   const { user, openAuthModal } = useAuth();
   const { dir, isRtl, language, t, formatPrice } = useLanguage();
 
@@ -133,11 +131,11 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onNavigate }) => {
           </button>
           <button
             id="btn_wallet_earn_more"
-            onClick={() => openChallenge()}
+            onClick={() => onNavigate('/games')}
             className="py-2.5 px-4 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-md shadow-amber-500/20 flex items-center gap-1.5 transition-all active:scale-95 cursor-pointer"
           >
             <Award className="w-4 h-4" />
-            <span>{isRtl ? 'العب الألعاب واكسب رصيد' : 'Play Games & Earn Credit'}</span>
+            <span>{isRtl ? 'العب الألعاب واكسب نقاط' : 'Play Games & Earn XP'}</span>
           </button>
           <button
             onClick={() => onNavigate('/shop')}
@@ -308,7 +306,7 @@ export const WalletPage: React.FC<WalletPageProps> = ({ onNavigate }) => {
               </p>
             </div>
             <button
-              onClick={() => openChallenge()}
+              onClick={() => onNavigate('/games')}
               className="py-2.5 px-6 rounded-xl bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold text-xs shadow-md transition-all cursor-pointer"
             >
               {isRtl ? 'ابدأ التحدي الآن' : 'Start Challenge Now'}

@@ -1,928 +1,1002 @@
+import fs from 'fs';
+import path from 'path';
 import {
-  QuizQuestion,
-  ChallengeSession,
-  QuestionSessionState,
-  ChallengeActivityItem,
-  WalletRewardItem,
-  WalletTransaction,
-  UserWallet,
+  Season,
+  GameConfig,
+  XpRulesConfig,
+  DailyChallengeConfig,
+  UserXPRecord,
+  XpTransaction,
+  ActivityAuditLog,
+  LeaderboardUserEntry,
+  GamificationOverviewStats,
   UserProfile,
-  UserTierLevel,
-  Achievement,
-  GamificationSettings,
-  LeaderboardEntry,
-  LocalizedText,
+  UserWallet,
 } from './types';
 import { db } from './db';
 
-// ==========================================
-// DEFAULT SEED DATA
-// ==========================================
+const DATA_DIR = path.join(process.cwd(), 'data');
+const XP_GAMIFICATION_FILE = path.join(DATA_DIR, 'xp_gamification.json');
 
-export const defaultTiers: UserTierLevel[] = [
+export const LEVEL_THRESHOLDS = [
+  0,       // Level 1
+  200,     // Level 2
+  500,     // Level 3
+  1000,    // Level 4
+  2000,    // Level 5
+  3500,    // Level 6
+  5500,    // Level 7
+  8000,    // Level 8
+  11000,   // Level 9
+  15000,   // Level 10
+  20000,   // Level 11
+  26000,   // Level 12
+  33000,   // Level 13
+  41000,   // Level 14
+  50000,   // Level 15
+];
+
+export function calculateLevel(totalXp: number): number {
+  if (totalXp <= 0) return 1;
+  let lvl = 1;
+  for (let i = 0; i < LEVEL_THRESHOLDS.length; i++) {
+    if (totalXp >= LEVEL_THRESHOLDS[i]) {
+      lvl = i + 1;
+    } else {
+      break;
+    }
+  }
+  if (totalXp >= LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1]) {
+    const extra = totalXp - LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1];
+    lvl = LEVEL_THRESHOLDS.length + Math.floor(extra / 10000);
+  }
+  return lvl;
+}
+
+export function getXpProgressForLevel(totalXp: number): {
+  currentLevel: number;
+  currentLevelMinXp: number;
+  nextLevelMinXp: number;
+  xpInCurrentLevel: number;
+  xpRequiredForNextLevel: number;
+  progressPercent: number;
+} {
+  const currentLevel = calculateLevel(totalXp);
+  const currentMin = currentLevel <= LEVEL_THRESHOLDS.length
+    ? LEVEL_THRESHOLDS[currentLevel - 1]
+    : LEVEL_THRESHOLDS[LEVEL_THRESHOLDS.length - 1] + (currentLevel - LEVEL_THRESHOLDS.length) * 10000;
+
+  const nextMin = currentLevel < LEVEL_THRESHOLDS.length
+    ? LEVEL_THRESHOLDS[currentLevel]
+    : currentMin + 10000;
+
+  const xpInCurrentLevel = Math.max(0, totalXp - currentMin);
+  const xpRequiredForNextLevel = Math.max(1, nextMin - currentMin);
+  const progressPercent = Math.min(100, Math.round((xpInCurrentLevel / xpRequiredForNextLevel) * 100));
+
+  return {
+    currentLevel,
+    currentLevelMinXp: currentMin,
+    nextLevelMinXp: nextMin,
+    xpInCurrentLevel,
+    xpRequiredForNextLevel,
+    progressPercent,
+  };
+}
+
+export interface GamificationDataStore {
+  seasons: Season[];
+  games: GameConfig[];
+  xpRules: XpRulesConfig;
+  dailyChallenges: DailyChallengeConfig[];
+  userXp: Record<string, UserXPRecord>;
+  xpTransactions: XpTransaction[];
+  auditLogs: ActivityAuditLog[];
+}
+
+const defaultSeasons: Season[] = [
   {
-    id: 'tier_bronze',
-    name: 'المستوى البرونزي',
-    minXp: 0,
-    badgeColor: 'text-amber-600',
-    badgeBg: 'bg-amber-500/10 border-amber-600/30',
-    iconName: 'Shield',
-    perksDescription: 'مكافآت التحدي الأساسية والمشاركة في المسابقات اليومية',
-  },
-  {
-    id: 'tier_silver',
-    name: 'المستوى الفضي',
-    minXp: 100,
-    badgeColor: 'text-slate-300',
-    badgeBg: 'bg-slate-300/10 border-slate-300/30',
-    iconName: 'ShieldCheck',
-    perksDescription: 'مكافآت XP إضافية وشارة التميز الفضية',
-  },
-  {
-    id: 'tier_gold',
-    name: 'المستوى الذهبي',
-    minXp: 500,
-    badgeColor: 'text-amber-400',
-    badgeBg: 'bg-amber-400/10 border-amber-400/30',
-    iconName: 'Crown',
-    perksDescription: 'أولوية في تجهيز الطلبات وشارة التميز الذهبية',
-  },
-  {
-    id: 'tier_platinum',
-    name: 'المستوى البلاتيني',
-    minXp: 1500,
-    badgeColor: 'text-cyan-400',
-    badgeBg: 'bg-cyan-400/10 border-cyan-400/30',
-    iconName: 'Sparkles',
-    perksDescription: 'مكافآت حصرية وخصومات خاصة على تشكيلات مختارة',
-  },
-  {
-    id: 'tier_diamond',
-    name: 'المستوى الماسي',
-    minXp: 5000,
-    badgeColor: 'text-violet-400',
-    badgeBg: 'bg-violet-400/10 border-violet-400/30',
-    iconName: 'Gem',
-    perksDescription: 'المرتبة العليا لكبار عملاء مكتبة الشاطئ الازرق مع أعلى رصيد XP',
+    id: 'season_1',
+    nameAr: 'الموسم الأول - Blue Beach Season #1',
+    nameEn: 'Blue Beach Season #1',
+    startDate: '2026-01-01T00:00:00.000Z',
+    endDate: '2026-12-31T23:59:59.000Z',
+    status: 'active',
+    numberOfWinners: 3,
+    prizeDescriptionAr: 'المركز الأول: قسيمة شراء بقيمة 50 د.ك + طقم أدوات فاخر. المركز الثاني: قسيمة 30 د.ك. المركز الثالث: قسيمة 20 د.ك.',
+    prizeDescriptionEn: '1st Place: 50 KWD Gift Voucher + Luxury Stationery Set. 2nd Place: 30 KWD Voucher. 3rd Place: 20 KWD Voucher.',
+    createdAt: new Date().toISOString(),
   },
 ];
 
-export const defaultAchievements: Achievement[] = [
+const defaultGames: GameConfig[] = [
   {
-    id: 'ach_first_challenge',
-    title: 'أول تحدٍ في المتجر',
-    description: 'خضت أول تحدٍ في مسابقة تحدى واربح رصيدك',
-    icon: 'PlayCircle',
-    requiredCondition: 'إكمال أول تحدي',
-    rewardXp: 50,
-    category: 'challenge',
-    isActive: true,
+    id: 'wheel_spin',
+    enabled: true,
+    nameAr: 'عجلة الحظ - Wheel of Fortune',
+    nameEn: 'Wheel of Fortune',
+    descriptionAr: 'أدر عجلة الحظ الموسمية واكسب نقاط XP لرفع ترتيبك في لائحة المتصدرين!',
+    descriptionEn: 'Spin the seasonal wheel to earn XP points and boost your rank!',
+    howToPlayAr: 'اضغط زر دوران العجلة. بعد انتهاء الدوران سيتم احتساب نقاط XP المستحقة وإضافتها فوراً.',
+    howToPlayEn: 'Tap spin button. Once the wheel stops, your earned XP will be added immediately.',
+    startButtonTextAr: 'أدر العجلة الآن',
+    startButtonTextEn: 'Spin Wheel',
+    icon: 'Disc',
+    dailyAttemptsLimit: 5,
+    xpPerAction: 100,
+    sortOrder: 1,
+    introEnabled: true,
   },
   {
-    id: 'ach_first_correct',
-    title: 'إصابة الهدف',
-    description: 'أجبت إجابة صحيحة لأول مرة في التحدي',
-    icon: 'CheckCircle2',
-    requiredCondition: 'إجابة صحيحة واحدة',
-    rewardXp: 25,
-    category: 'challenge',
-    isActive: true,
+    id: 'quiz_challenge',
+    enabled: true,
+    nameAr: 'تحدي المعلومات - Trivia Quiz',
+    nameEn: 'Trivia Quiz',
+    descriptionAr: 'أجب على الأسئلة السريعة عن القرطاسية والأدوات المكتبية واكسب XP!',
+    descriptionEn: 'Answer quick trivia questions about stationery to earn XP!',
+    howToPlayAr: 'اختر الإجابة الصحيحة للسؤال المعروض قبل انتهاء الوقت لاكتساب النقاط.',
+    howToPlayEn: 'Select the correct answer for the displayed question before time expires.',
+    startButtonTextAr: 'ابدأ التحدي',
+    startButtonTextEn: 'Start Quiz',
+    icon: 'HelpCircle',
+    dailyAttemptsLimit: 5,
+    xpPerAction: 80,
+    sortOrder: 2,
+    introEnabled: true,
   },
   {
-    id: 'ach_10_correct',
-    title: 'عقل متوقد',
-    description: 'جمعت 10 إجابات صحيحة عبر التحديات',
-    icon: 'Award',
-    requiredCondition: '10 إجابات صحيحة',
-    rewardXp: 150,
-    category: 'challenge',
-    isActive: true,
+    id: 'memory_cards',
+    enabled: true,
+    nameAr: 'لعبة الذاكرة - Memory Cards',
+    nameEn: 'Memory Cards',
+    descriptionAr: 'اقلب البطاقات وطابق أزواج المستلزمات المدرسية باحترافية!',
+    descriptionEn: 'Flip cards and match school supply pairs skillfully!',
+    howToPlayAr: 'افتح البطاقات واكتشف الأزواج المتشابهة من الأدوات بأسرح وقت وبأقل حركات.',
+    howToPlayEn: 'Flip cards to find matching tool pairs with minimum moves and fastest time.',
+    startButtonTextAr: 'ابدأ مطابقة البطاقات',
+    startButtonTextEn: 'Match Cards',
+    icon: 'Layers',
+    dailyAttemptsLimit: 5,
+    xpPerAction: 100,
+    sortOrder: 3,
+    introEnabled: true,
   },
   {
-    id: 'ach_50_correct',
-    title: 'نابغة القرطاسية',
-    description: 'حققت 50 إجابة صحيحة بنجاح باهر',
-    icon: 'Flame',
-    requiredCondition: '50 إجابة صحيحة',
-    rewardXp: 500,
-    category: 'challenge',
-    isActive: true,
-  },
-  {
-    id: 'ach_silver_level',
-    title: 'الوصول للمستوى الفضي',
-    description: 'تجاوزت 100 نقطة XP وارتقيت للمستوى الفضي',
-    icon: 'ShieldCheck',
-    requiredCondition: 'بلوغ المستوى الفضي',
-    rewardXp: 100,
-    category: 'levels',
-    isActive: true,
-  },
-  {
-    id: 'ach_gold_level',
-    title: 'ملك المعرفة الذهبي',
-    description: 'تجاوزت 500 نقطة XP ونلت الشارة الذهبية',
-    icon: 'Crown',
-    requiredCondition: 'بلوغ المستوى الذهبي',
-    rewardXp: 250,
-    category: 'levels',
-    isActive: true,
-  },
-  {
-    id: 'ach_diamond_level',
-    title: 'نخبة الماسيين',
-    description: 'وصلت إلى قمة المستويات (المستوى الماسي)',
-    icon: 'Gem',
-    requiredCondition: 'بلوغ المستوى الماسي',
-    rewardXp: 1000,
-    category: 'levels',
-    isActive: true,
-  },
-  {
-    id: 'ach_wallet_first_order',
-    title: 'المتسوق الذكي',
-    description: 'أتممت أول طلب شراء باستخدام رصيد مكافآت التحدي',
+    id: 'stationery_catcher',
+    enabled: true,
+    nameAr: 'صائد القرطاسية - Stationery Catcher',
+    nameEn: 'Stationery Catcher',
+    descriptionAr: 'التقط الأقلام والدفاتر المتساقطة بسرعة قبل انتهاء الوقت لتضاعف XP!',
+    descriptionEn: 'Catch falling pens and notebooks fast before timer ends to multiply XP!',
+    howToPlayAr: 'حرك السلة لالتقاط القرطاسية المتساقطة واجمع أعلى نقاط خلال 15 ثانية.',
+    howToPlayEn: 'Move the basket to catch falling supplies and gain maximum score in 15 seconds.',
+    startButtonTextAr: 'اصطد القرطاسية',
+    startButtonTextEn: 'Catch Supplies',
     icon: 'ShoppingBag',
-    requiredCondition: 'شراء باستخدام رصيد المحفظة',
-    rewardXp: 100,
-    category: 'orders',
-    isActive: true,
-  },
-  {
-    id: 'ach_earned_5kwd',
-    title: 'جامع المكافآت',
-    description: 'كسبت إجمالي 5.000 د.ك أو أكثر من رصيد التحديات',
-    icon: 'Coins',
-    requiredCondition: 'كسب 5 د.ك رصيد متجر',
-    rewardXp: 300,
-    category: 'challenge',
-    isActive: true,
+    dailyAttemptsLimit: 5,
+    xpPerAction: 120,
+    sortOrder: 4,
+    introEnabled: true,
   },
 ];
 
-export const defaultQuestions: QuizQuestion[] = [
-  {
-    id: 'q_1',
-    question: { ar: "ما هي عاصمة دولة الكويت؟", en: "Gamification Question" },
-    options: [{ ar: "مدينة الكويت", en: "Option text" }, { ar: "الجهراء", en: "Option text" }, { ar: "الأحمدي", en: "Option text" }, { ar: "حولي", en: "Option text" }],
-    correctAnswerIndex: 0,
-    rewardAmount: 0.500,
-    xpAmount: 25,
-    category: 'الكويت وتاريخها',
-    difficulty: 'easy',
-    isActive: true,
-    timesShown: 120,
-    timesCorrect: 114,
-    timesIncorrect: 6,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'q_2',
-    question: { ar: "ما هو الرمز الكيميائي للرصاص المستخدم في أقلام الرصاص تاريخياً (مع العلم أنه جرافيت)؟", en: "Gamification Question" },
-    options: [{ ar: "Pb", en: "Option text" }, { ar: "Fe", en: "Option text" }, { ar: "C (كربون/جرافيت)", en: "Option text" }, { ar: "Au", en: "Option text" }],
-    correctAnswerIndex: 2,
-    rewardAmount: 0.500,
-    xpAmount: 30,
-    category: 'قرطاسية وأدوات مكتبية',
-    difficulty: 'medium',
-    isActive: true,
-    timesShown: 95,
-    timesCorrect: 68,
-    timesIncorrect: 27,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'q_3',
-    question: { ar: "ما هو المقاس القياسي لورق الطباعة المكتبي الأكثر استخداماً؟", en: "Gamification Question" },
-    options: [{ ar: "A3", en: "Option text" }, { ar: "A4", en: "Option text" }, { ar: "A5", en: "Option text" }, { ar: "B5", en: "Option text" }],
-    correctAnswerIndex: 1,
-    rewardAmount: 0.250,
-    xpAmount: 20,
-    category: 'قرطاسية وأدوات مكتبية',
-    difficulty: 'easy',
-    isActive: true,
-    timesShown: 140,
-    timesCorrect: 132,
-    timesIncorrect: 8,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'q_4',
-    question: { ar: "في أي عام تم افتتاح أبراج الكويت رسمياً كمعلم حضاري؟", en: "Gamification Question" },
-    options: [{ ar: "1979م", en: "Option text" }, { ar: "1961م", en: "Option text" }, { ar: "1985م", en: "Option text" }, { ar: "1990م", en: "Option text" }],
-    correctAnswerIndex: 0,
-    rewardAmount: 0.500,
-    xpAmount: 35,
-    category: 'الكويت وتاريخها',
-    difficulty: 'medium',
-    isActive: true,
-    timesShown: 88,
-    timesCorrect: 62,
-    timesIncorrect: 26,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'q_5',
-    question: { ar: "ما هي الأداة الهندسية المستخدمة لرسم الدوائر والأقواس بدقة؟", en: "Gamification Question" },
-    options: [{ ar: "الفرجار", en: "Option text" }, { ar: "المنقلة", en: "Option text" }, { ar: "المثلث القائم", en: "Option text" }, { ar: "المسطرة", en: "Option text" }],
-    correctAnswerIndex: 0,
-    rewardAmount: 0.250,
-    xpAmount: 20,
-    category: 'قرطاسية وأدوات مكتبية',
-    difficulty: 'easy',
-    isActive: true,
-    timesShown: 110,
-    timesCorrect: 104,
-    timesIncorrect: 6,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'q_6',
-    question: { ar: "ما هو البحر أو المسطح المائي الذي تطل عليه سواحل دولة الكويت؟", en: "Gamification Question" },
-    options: [{ ar: "الخليج العربي", en: "Option text" }, { ar: "بحر العرب", en: "Option text" }, { ar: "البحر الأحمر", en: "Option text" }, { ar: "خليج عمان", en: "Option text" }],
-    correctAnswerIndex: 0,
-    rewardAmount: 0.250,
-    xpAmount: 20,
-    category: 'الكويت وتاريخها',
-    difficulty: 'easy',
-    isActive: true,
-    timesShown: 150,
-    timesCorrect: 147,
-    timesIncorrect: 3,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'q_7',
-    question: { ar: "ما هي العملة الرسمية لدولة الكويت وتعتبر من أعلى العملات قيمة عالمياً؟", en: "Gamification Question" },
-    options: [{ ar: "الدينار الكويتي", en: "Option text" }, { ar: "الريال", en: "Option text" }, { ar: "الدرهم", en: "Option text" }, { ar: "الليرة", en: "Option text" }],
-    correctAnswerIndex: 0,
-    rewardAmount: 0.250,
-    xpAmount: 20,
-    category: 'الكويت وتاريخها',
-    difficulty: 'easy',
-    isActive: true,
-    timesShown: 160,
-    timesCorrect: 158,
-    timesIncorrect: 2,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'q_8',
-    question: { ar: "ما هو النوع الشائع من الألوان المائية التي تجف بسرعة وتتميز بقوام بلاستيكي مرن؟", en: "Gamification Question" },
-    options: [{ ar: "ألوان الأكريليك", en: "Option text" }, { ar: "ألوان الباستيل الزيتي", en: "Option text" }, { ar: "ألوان الجواش", en: "Option text" }, { ar: "الفحم النباتي", en: "Option text" }],
-    correctAnswerIndex: 0,
-    rewardAmount: 0.500,
-    xpAmount: 30,
-    category: 'قرطاسية وأدوات مكتبية',
-    difficulty: 'medium',
-    isActive: true,
-    timesShown: 80,
-    timesCorrect: 58,
-    timesIncorrect: 22,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'q_9',
-    question: { ar: "ما هو أكبر كواكب المجموعة الشمسية حجماً وكتلة؟", en: "Gamification Question" },
-    options: [{ ar: "المشتري", en: "Option text" }, { ar: "زحل", en: "Option text" }, { ar: "الأرض", en: "Option text" }, { ar: "نبتون", en: "Option text" }],
-    correctAnswerIndex: 0,
-    rewardAmount: 0.500,
-    xpAmount: 25,
-    category: 'علوم وتكنولوجيا',
-    difficulty: 'easy',
-    isActive: true,
-    timesShown: 105,
-    timesCorrect: 92,
-    timesIncorrect: 13,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'q_10',
-    question: { ar: "كم عدد أحرف اللغة العربية الهجائية؟", en: "Gamification Question" },
-    options: [{ ar: "28 حرفاً", en: "Option text" }, { ar: "26 حرفاً", en: "Option text" }, { ar: "30 حرفاً", en: "Option text" }, { ar: "29 حرفاً", en: "Option text" }],
-    correctAnswerIndex: 0,
-    rewardAmount: 0.250,
-    xpAmount: 20,
-    category: 'لغة عربية',
-    difficulty: 'easy',
-    isActive: true,
-    timesShown: 130,
-    timesCorrect: 122,
-    timesIncorrect: 8,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'q_11',
-    question: { ar: "ما هو الجزء في الحاسوب المسؤول عن معالجة البيانات والعمليات الحسابية (عقل الجهاز)؟", en: "Gamification Question" },
-    options: [{ ar: "المعالج (CPU)", en: "Option text" }, { ar: "القرص الصلب (HDD)", en: "Option text" }, { ar: "ذاكرة الوصول العشوائي (RAM)", en: "Option text" }, { ar: "الشاشة", en: "Option text" }],
-    correctAnswerIndex: 0,
-    rewardAmount: 0.500,
-    xpAmount: 25,
-    category: 'علوم وتكنولوجيا',
-    difficulty: 'easy',
-    isActive: true,
-    timesShown: 90,
-    timesCorrect: 82,
-    timesIncorrect: 8,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'q_12',
-    question: { ar: "ما هو مضاد كلمة 'إيجاز' في اللغة العربية؟", en: "Gamification Question" },
-    options: [{ ar: "إطناب وتفصيل", en: "Option text" }, { ar: "اختصار", en: "Option text" }, { ar: "بلاغة", en: "Option text" }, { ar: "صمت", en: "Option text" }],
-    correctAnswerIndex: 0,
-    rewardAmount: 0.500,
-    xpAmount: 35,
-    category: 'لغة عربية',
-    difficulty: 'medium',
-    isActive: true,
-    timesShown: 75,
-    timesCorrect: 52,
-    timesIncorrect: 23,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'q_13',
-    question: { ar: "ما هي الجزيرة الكويتية الأكبر مساحة وغير المأهولة بالسكان وتشتهر بآثارها وموقعها الاستراتيجي؟", en: "Gamification Question" },
-    options: [{ ar: "جزيرة بوبيان", en: "Option text" }, { ar: "جزيرة فيلكا", en: "Option text" }, { ar: "جزيرة وربة", en: "Option text" }, { ar: "جزيرة كبر", en: "Option text" }],
-    correctAnswerIndex: 0,
-    rewardAmount: 0.500,
-    xpAmount: 35,
-    category: 'الكويت وتاريخها',
-    difficulty: 'medium',
-    isActive: true,
-    timesShown: 82,
-    timesCorrect: 59,
-    timesIncorrect: 23,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'q_14',
-    question: { ar: "ما هي الجزيرة الكويتية التاريخية الشهيرة بآثار الحضارة الدلمونية والإغريقية؟", en: "Gamification Question" },
-    options: [{ ar: "جزيرة فيلكا", en: "Option text" }, { ar: "جزيرة قاروه", en: "Option text" }, { ar: "جزيرة أم المرادم", en: "Option text" }, { ar: "جزيرة عوهة", en: "Option text" }],
-    correctAnswerIndex: 0,
-    rewardAmount: 0.500,
-    xpAmount: 30,
-    category: 'الكويت وتاريخها',
-    difficulty: 'easy',
-    isActive: true,
-    timesShown: 110,
-    timesCorrect: 98,
-    timesIncorrect: 12,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'q_15',
-    question: { ar: "ما هي وحدة قياس كثافة وسماكة ورق الطباعة والمستندات؟", en: "Gamification Question" },
-    options: [{ ar: "جم / متر مربع (GSM)", en: "Option text" }, { ar: "ملم مكعب", en: "Option text" }, { ar: "بوصة مربعة", en: "Option text" }, { ar: "ميكرومتر", en: "Option text" }],
-    correctAnswerIndex: 0,
-    rewardAmount: 0.750,
-    xpAmount: 40,
-    category: 'قرطاسية وأدوات مكتبية',
-    difficulty: 'hard',
-    isActive: true,
-    timesShown: 60,
-    timesCorrect: 34,
-    timesIncorrect: 26,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'q_16',
-    question: { ar: "من هو مخترع المصباح الكهربائي العملي ومسجل آلاف براءات الاختراع؟", en: "Gamification Question" },
-    options: [{ ar: "توماس إديسون", en: "Option text" }, { ar: "نيكولا تسلا", en: "Option text" }, { ar: "ألكسندر غراهام بيل", en: "Option text" }, { ar: "إسحاق نيوتن", en: "Option text" }],
-    correctAnswerIndex: 0,
-    rewardAmount: 0.500,
-    xpAmount: 25,
-    category: 'ثقافة عامة',
-    difficulty: 'easy',
-    isActive: true,
-    timesShown: 95,
-    timesCorrect: 85,
-    timesIncorrect: 10,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'q_17',
-    question: { ar: "ما هي درجة غليان الماء النقي تحت الضغط الجوي العادي؟", en: "Gamification Question" },
-    options: [{ ar: "100 درجة مئوية", en: "Option text" }, { ar: "90 درجة مئوية", en: "Option text" }, { ar: "120 درجة مئوية", en: "Option text" }, { ar: "80 درجة مئوية", en: "Option text" }],
-    correctAnswerIndex: 0,
-    rewardAmount: 0.250,
-    xpAmount: 20,
-    category: 'علوم وتكنولوجيا',
-    difficulty: 'easy',
-    isActive: true,
-    timesShown: 120,
-    timesCorrect: 115,
-    timesIncorrect: 5,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'q_18',
-    question: { ar: "ما هو الخط العربي الكلاسيكي المتميز بالحروف العريضة والهندسية والمستخدم في المصاحف القديمة؟", en: "Gamification Question" },
-    options: [{ ar: "الخط الكوفي", en: "Option text" }, { ar: "خط الرقعة", en: "Option text" }, { ar: "خط النسخ", en: "Option text" }, { ar: "خط الديواني", en: "Option text" }],
-    correctAnswerIndex: 0,
-    rewardAmount: 0.500,
-    xpAmount: 35,
-    category: 'لغة عربية',
-    difficulty: 'medium',
-    isActive: true,
-    timesShown: 70,
-    timesCorrect: 49,
-    timesIncorrect: 21,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'q_19',
-    question: { ar: "ما هو الاسم التاريخي الشهير لسور الكويت الذي شُيد لحماية المدينة وله بوابات باقية حتى اليوم؟", en: "Gamification Question" },
-    options: [{ ar: "السور الثالث (1920م)", en: "Option text" }, { ar: "السور الأول", en: "Option text" }, { ar: "سور القرين", en: "Option text" }, { ar: "سور الشامية", en: "Option text" }],
-    correctAnswerIndex: 0,
-    rewardAmount: 0.500,
-    xpAmount: 35,
-    category: 'الكويت وتاريخها',
-    difficulty: 'medium',
-    isActive: true,
-    timesShown: 78,
-    timesCorrect: 53,
-    timesIncorrect: 25,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    id: 'q_20',
-    question: { ar: "ما هي الأداة المكتبية المستخدمة لجمع وتثبيت الأوراق معاً باستخدام سلك معدني صغير؟", en: "Gamification Question" },
-    options: [{ ar: "الدباسة (Stapler)", en: "Option text" }, { ar: "المثقاب (Puncher)", en: "Option text" }, { ar: "المقص", en: "Option text" }, { ar: "المشبك المغناطيسي", en: "Option text" }],
-    correctAnswerIndex: 0,
-    rewardAmount: 0.250,
-    xpAmount: 20,
-    category: 'قرطاسية وأدوات مكتبية',
-    difficulty: 'easy',
-    isActive: true,
-    timesShown: 130,
-    timesCorrect: 128,
-    timesIncorrect: 2,
-    createdAt: new Date().toISOString(),
-  },
-];
-
-export const defaultGamificationSettings: GamificationSettings = {
-  isEnabled: true,
-  questionsPerChallenge: 10,
-  timePerQuestionSeconds: 15,
-  dailyAttemptsLimit: 3,
-  rewardExpiryHours: 48,
-  maxWalletUsagePercent: 50, // 50% max of cart total
-  autoShowChallengeOnEntry: true,
-  autoShowFrequency: 'once_per_session',
-  enableAchievements: true,
-  enableLeaderboard: true,
-  defaultRewardAmount: 0.500,
-  defaultXpPerCorrectAnswer: 25,
-  challengeCompletionBonusXp: 100,
-  tiers: defaultTiers,
+const defaultXpRules: XpRulesConfig = {
+  dailyLoginXp: 50,
+  productViewXp: 10,
+  dailyProductBrowsingCap: 100,
+  reviewXpAmount: 100,
+  reviewMinCommentLength: 20,
+  reviewXpEligibilityMode: 'PURCHASED_PRODUCTS_ONLY',
+  dailyXpCap: 5000,
+  globalDailyGameAttempts: 10,
 };
 
-// ==========================================
-// GAMIFICATION ENGINE CLASS
-// ==========================================
+const defaultDailyChallenges: DailyChallengeConfig[] = [
+  {
+    id: 'c_login',
+    titleAr: 'سجّل دخولك اليومي',
+    titleEn: 'Daily Login',
+    descriptionAr: 'افتح المتجر يومياً واحصل على نقاط الخبرة',
+    descriptionEn: 'Visit the store daily to earn XP',
+    type: 'DAILY_LOGIN',
+    requiredCount: 1,
+    xpReward: 50,
+    enabled: true,
+  },
+  {
+    id: 'c_game',
+    titleAr: 'العب مباراة واحدة',
+    titleEn: 'Play 1 Game',
+    descriptionAr: 'شارك في أي لعبة من مركز الألعاب اليوم',
+    descriptionEn: 'Play any game in the Games Center today',
+    type: 'PLAY_GAME',
+    requiredCount: 1,
+    xpReward: 100,
+    enabled: true,
+  },
+  {
+    id: 'c_view',
+    titleAr: 'تصفح 3 منتجات',
+    titleEn: 'View 3 Products',
+    descriptionAr: 'افتح تفاصيل 3 منتجات مختلفة لاكتشاف جديد المكتبة',
+    descriptionEn: 'Open 3 product detail pages to discover items',
+    type: 'VIEW_PRODUCTS',
+    requiredCount: 3,
+    xpReward: 50,
+    enabled: true,
+  },
+  {
+    id: 'c_review',
+    titleAr: 'قيّم منتج اليوم',
+    titleEn: 'Review Product Today',
+    descriptionAr: 'اكتب تقييماً صادقاً لمنتج اشتريته واستمتع بـ XP',
+    descriptionEn: 'Write a review for a product and earn XP',
+    type: 'REVIEW_PRODUCT',
+    requiredCount: 1,
+    xpReward: 100,
+    enabled: true,
+  },
+  {
+    id: 'c_all',
+    titleAr: 'إكمال جميع التحديات',
+    titleEn: 'Complete All Challenges',
+    descriptionAr: 'أكمل التحديات الأربعة اليومية واحصل على البونص الكبير',
+    descriptionEn: 'Finish all 4 daily tasks for huge bonus XP',
+    type: 'ALL_COMPLETE',
+    requiredCount: 4,
+    xpReward: 200,
+    enabled: true,
+  },
+];
 
-class GamificationEngine {
-  private activeSessions: Map<string, ChallengeSession> = new Map();
+export class GamificationEngine {
+  private data: GamificationDataStore;
 
-  // Helper to ensure database arrays and settings exist
-  private ensureSchema() {
-    const rawData = (db as any).data;
-    if (!Array.isArray(rawData.questions) || rawData.questions.length === 0) {
-      rawData.questions = [...defaultQuestions];
-      db.save();
+  constructor() {
+    if (!fs.existsSync(DATA_DIR)) {
+      fs.mkdirSync(DATA_DIR, { recursive: true });
     }
-    if (!Array.isArray(rawData.achievements) || rawData.achievements.length === 0) {
-      rawData.achievements = [...defaultAchievements];
-      db.save();
+    this.data = this.load();
+  }
+
+  private load(): GamificationDataStore {
+    try {
+      if (fs.existsSync(XP_GAMIFICATION_FILE)) {
+        const raw = fs.readFileSync(XP_GAMIFICATION_FILE, 'utf-8');
+        const parsed = JSON.parse(raw);
+        return {
+          seasons: Array.isArray(parsed.seasons) && parsed.seasons.length > 0 ? parsed.seasons : defaultSeasons,
+          games: Array.isArray(parsed.games) && parsed.games.length > 0 ? parsed.games : defaultGames,
+          xpRules: { ...defaultXpRules, ...(parsed.xpRules || {}) },
+          dailyChallenges: Array.isArray(parsed.dailyChallenges) && parsed.dailyChallenges.length > 0 ? parsed.dailyChallenges : defaultDailyChallenges,
+          userXp: parsed.userXp || {},
+          xpTransactions: Array.isArray(parsed.xpTransactions) ? parsed.xpTransactions : [],
+          auditLogs: Array.isArray(parsed.auditLogs) ? parsed.auditLogs : [],
+        };
+      }
+    } catch (err) {
+      console.error('Error reading xp_gamification.json, using defaults:', err);
     }
-    if (!rawData.gamificationSettings) {
-      rawData.gamificationSettings = { ...defaultGamificationSettings };
-      db.save();
-    }
-    if (!rawData.userProfiles) {
-      rawData.userProfiles = {};
-      db.save();
-    }
-    if (!rawData.wallets) {
-      rawData.wallets = {};
-      db.save();
-    }
-    if (!rawData.challengeSessions) {
-      rawData.challengeSessions = {};
-      db.save();
-    }
-    if (!Array.isArray(rawData.challengeActivityLogs)) {
-      rawData.challengeActivityLogs = [];
-      db.save();
-    }
-    if (typeof rawData.rejectedOrDuplicateCount !== 'number') {
-      rawData.rejectedOrDuplicateCount = 0;
-      db.save();
+    return {
+      seasons: defaultSeasons,
+      games: defaultGames,
+      xpRules: defaultXpRules,
+      dailyChallenges: defaultDailyChallenges,
+      userXp: {},
+      xpTransactions: [],
+      auditLogs: [],
+    };
+  }
+
+  private save(): void {
+    try {
+      fs.writeFileSync(XP_GAMIFICATION_FILE, JSON.stringify(this.data, null, 2), 'utf-8');
+    } catch (err) {
+      console.error('Failed to save xp_gamification.json:', err);
     }
   }
 
-  // --- Questions Management ---
-  public getQuestions(): QuizQuestion[] {
-    this.ensureSchema();
-    return (db as any).data.questions || [];
+  private getTodayKey(): string {
+    return new Date().toISOString().split('T')[0];
   }
 
-  public getQuestionById(id: string): QuizQuestion | undefined {
-    return this.getQuestions().find(q => q.id === id);
+  // --- Settings & XP Rules ---
+  public getXpRules(): XpRulesConfig {
+    return this.data.xpRules;
   }
 
-  public upsertQuestion(question: Partial<QuizQuestion>): QuizQuestion {
-    this.ensureSchema();
-    const questions: QuizQuestion[] = (db as any).data.questions;
-    const existingIndex = questions.findIndex(q => q.id === question.id);
+  public updateXpRules(newRules: Partial<XpRulesConfig>): XpRulesConfig {
+    this.data.xpRules = { ...this.data.xpRules, ...newRules };
+    this.save();
+    return this.data.xpRules;
+  }
 
-    if (existingIndex >= 0) {
-      questions[existingIndex] = {
-        ...questions[existingIndex],
-        ...question,
-        updatedAt: new Date().toISOString(),
-      } as QuizQuestion;
-      db.save();
-      const qText = typeof question.question === 'string' ? question.question : (question.question?.ar || question.question?.en || '');
-      db.logActivity('تعديل سؤال في بنك الأسئلة', 'settings', `تم تعديل السؤال: "${qText.substring(0, 30)}..."`, 'info');
-      return questions[existingIndex];
-    } else {
-      const newQuestion: QuizQuestion = {
-        id: question.id || `q_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-        question: question.question || 'سؤال جديد',
-        options: Array.isArray(question.options) && question.options.length >= 2 ? question.options : ['خيار 1', 'خيار 2', 'خيار 3', 'خيار 4'],
-        correctAnswerIndex: typeof question.correctAnswerIndex === 'number' ? question.correctAnswerIndex : 0,
-        rewardAmount: typeof question.rewardAmount === 'number' ? question.rewardAmount : 0.500,
-        xpAmount: typeof question.xpAmount === 'number' ? question.xpAmount : 25,
-        category: question.category || 'ثقافة عامة',
-        difficulty: question.difficulty || 'medium',
-        isActive: question.isActive !== undefined ? question.isActive : true,
-        timesShown: 0,
-        timesCorrect: 0,
-        timesIncorrect: 0,
-        createdAt: new Date().toISOString(),
-      };
-      questions.unshift(newQuestion);
-      db.save();
-      const newQText = typeof newQuestion.question === 'string' ? newQuestion.question : (newQuestion.question?.ar || newQuestion.question?.en || '');
-      db.logActivity('إضافة سؤال جديد', 'settings', `تمت إضافة سؤال جديد إلى بنك الأسئلة: "${newQText.substring(0, 30)}..."`, 'success');
-      return newQuestion;
+  // --- Seasons ---
+  public getSeasons(): Season[] {
+    return this.data.seasons;
+  }
+
+  public getActiveSeason(): Season {
+    const nowIso = new Date().toISOString();
+    const active = this.data.seasons.find(s => s.status === 'active' && s.startDate <= nowIso && s.endDate >= nowIso);
+    if (active) return active;
+    if (this.data.seasons.length > 0) return this.data.seasons[0];
+
+    const fallback: Season = {
+      id: `season_${Date.now()}`,
+      nameAr: 'الموسم الحالي - Blue Beach',
+      nameEn: 'Current Season - Blue Beach',
+      startDate: new Date(Date.now() - 86400000).toISOString(),
+      endDate: new Date(Date.now() + 30 * 86400000).toISOString(),
+      status: 'active',
+      numberOfWinners: 3,
+      prizeDescriptionAr: 'جوائز عينية وقسائم شراء فاخرة للأوائل',
+      prizeDescriptionEn: 'Prizes and shopping vouchers for top winners',
+      createdAt: new Date().toISOString(),
+    };
+    this.data.seasons.unshift(fallback);
+    this.save();
+    return fallback;
+  }
+
+  public upsertSeason(seasonData: Partial<Season>): Season {
+    if (seasonData.id) {
+      const index = this.data.seasons.findIndex(s => s.id === seasonData.id);
+      if (index !== -1) {
+        this.data.seasons[index] = { ...this.data.seasons[index], ...seasonData };
+        this.save();
+        return this.data.seasons[index];
+      }
     }
+    const newSeason: Season = {
+      id: seasonData.id || `season_${Date.now()}`,
+      nameAr: seasonData.nameAr || 'موسم جديد',
+      nameEn: seasonData.nameEn || 'New Season',
+      startDate: seasonData.startDate || new Date().toISOString(),
+      endDate: seasonData.endDate || new Date(Date.now() + 30 * 86400000).toISOString(),
+      status: seasonData.status || 'active',
+      numberOfWinners: seasonData.numberOfWinners || 3,
+      prizeDescriptionAr: seasonData.prizeDescriptionAr || 'جوائز الأوائل',
+      prizeDescriptionEn: seasonData.prizeDescriptionEn || 'Top winners prizes',
+      createdAt: new Date().toISOString(),
+    };
+    this.data.seasons.unshift(newSeason);
+    this.save();
+    return newSeason;
   }
 
-  public deleteQuestion(id: string): boolean {
-    this.ensureSchema();
-    const raw = (db as any).data;
-    const initialLen = raw.questions.length;
-    raw.questions = raw.questions.filter((q: QuizQuestion) => q.id !== id);
-    if (raw.questions.length !== initialLen) {
-      db.save();
-      db.logActivity('حذف سؤال من بنك الأسئلة', 'settings', `تم حذف السؤال ذو المعرف: ${id}`, 'warning');
+  public lockSeasonResults(seasonId: string, adminUserId?: string): { success: boolean; season?: Season; top3?: any[]; error?: string } {
+    const season = this.data.seasons.find(s => s.id === seasonId);
+    if (!season) return { success: false, error: 'الموسم غير موجود' };
+
+    const winners = this.getSeasonWinnersWithContact(seasonId, season.numberOfWinners || 3);
+    season.status = 'completed';
+    season.isLocked = true;
+    season.lockedAt = new Date().toISOString();
+    season.top3Winners = winners.map(w => ({
+      ...w,
+      confirmedAt: new Date().toISOString(),
+    }));
+
+    this.save();
+    this.logAudit({
+      userId: adminUserId || 'admin',
+      activity: `اعتماد وفلق نتائج الموسم: ${season.nameAr}`,
+      source: 'ADMIN',
+      xp: 0,
+      validationStatus: 'VALID',
+      reason: 'Season locked and winners confirmed by Admin',
+    });
+
+    return { success: true, season, top3: winners };
+  }
+
+  // --- Games Config ---
+  public getGames(includeDisabled = false): GameConfig[] {
+    const list = includeDisabled ? this.data.games : this.data.games.filter(g => g.enabled);
+    return list.sort((a, b) => a.sortOrder - b.sortOrder);
+  }
+
+  public getGameById(gameId: string): GameConfig | undefined {
+    return this.data.games.find(g => g.id === gameId);
+  }
+
+  public upsertGame(gameData: Partial<GameConfig>): GameConfig {
+    if (gameData.id) {
+      const idx = this.data.games.findIndex(g => g.id === gameData.id);
+      if (idx !== -1) {
+        this.data.games[idx] = { ...this.data.games[idx], ...gameData };
+        this.save();
+        return this.data.games[idx];
+      }
+    }
+    const newGame: GameConfig = {
+      id: gameData.id || `game_${Date.now()}`,
+      enabled: gameData.enabled ?? true,
+      nameAr: gameData.nameAr || 'لعبة جديدة',
+      nameEn: gameData.nameEn || 'New Game',
+      descriptionAr: gameData.descriptionAr || 'وصف اللعبة',
+      descriptionEn: gameData.descriptionEn || 'Game description',
+      howToPlayAr: gameData.howToPlayAr || 'طريقة اللعب',
+      howToPlayEn: gameData.howToPlayEn || 'How to play',
+      startButtonTextAr: gameData.startButtonTextAr || 'ابدأ اللعب',
+      startButtonTextEn: gameData.startButtonTextEn || 'Start Playing',
+      icon: gameData.icon || 'Gamepad2',
+      dailyAttemptsLimit: gameData.dailyAttemptsLimit || 5,
+      xpPerAction: gameData.xpPerAction || 100,
+      sortOrder: gameData.sortOrder || this.data.games.length + 1,
+      introEnabled: gameData.introEnabled ?? true,
+    };
+    this.data.games.push(newGame);
+    this.save();
+    return newGame;
+  }
+
+  public deleteGame(gameId: string): boolean {
+    const initialLen = this.data.games.length;
+    this.data.games = this.data.games.filter(g => g.id !== gameId);
+    if (this.data.games.length !== initialLen) {
+      this.save();
       return true;
     }
     return false;
   }
 
-  // --- Settings Management ---
-  public getSettings(): GamificationSettings {
-    this.ensureSchema();
-    return (db as any).data.gamificationSettings || defaultGamificationSettings;
-  }
-
-  public updateSettings(settings: Partial<GamificationSettings>): GamificationSettings {
-    this.ensureSchema();
-    const raw = (db as any).data;
-    raw.gamificationSettings = {
-      ...defaultGamificationSettings,
-      ...raw.gamificationSettings,
-      ...settings,
-    };
-    db.save();
-    db.logActivity('تحديث إعدادات التحدي والمكافآت', 'settings', 'تم حفظ إعدادات نظام تحدى واربح بنجاح', 'success');
-    return raw.gamificationSettings;
-  }
-
-  // --- User Profiles, Auth Sync & Management ---
-  public syncUserProfile(
-    userId: string,
-    data: { email?: string; isExplicitUpdate?: boolean; displayName?: string; phone?: string; role?: 'user' | 'admin'; authProvider?: 'google' | 'phone' | 'email' | 'guest'; avatarUrl?: string },
-    ip = '127.0.0.1',
-    userAgent = ''
-  ): { profile: UserProfile; wallet: UserWallet } {
-    this.ensureSchema();
-    const raw = (db as any).data;
-    const now = new Date().toISOString();
-    const today = now.split('T')[0];
-
-    const isSuperAdminEmail = Boolean(data.email && data.email.toLowerCase() === 'abdulrahmankw20@gmail.com');
-
-    // Account deduplication check: If userId is new, look for existing account with same email or phone
-    if (!raw.userProfiles[userId]) {
-      const existingProfiles = Object.values(raw.userProfiles || {}) as UserProfile[];
-      const matchedProfile = existingProfiles.find(p => {
-        if (p.id === userId) return false;
-        if (data.email && p.email && p.email.toLowerCase() === data.email.toLowerCase()) {
-          return true;
-        }
-        if (data.phone && p.phone && p.phone.trim().replace(/\s+/g, '') === data.phone.trim().replace(/\s+/g, '')) {
-          return true;
-        }
-        return false;
-      });
-
-      if (matchedProfile) {
-        // Link new userId to the existing profile's wallet & history
-        const oldWallet = raw.userWallets?.[matchedProfile.id];
-        raw.userProfiles[userId] = {
-          ...matchedProfile,
-          id: userId,
-          displayName: data.displayName || matchedProfile.displayName,
-          email: matchedProfile.email || data.email || '',
-          phone: data.phone || matchedProfile.phone || '',
-          phoneNumber: data.phone || matchedProfile.phoneNumber || '',
-          authProvider: (data.authProvider as any) || matchedProfile.authProvider || 'google',
-          role: matchedProfile.role === 'admin' || isSuperAdminEmail ? 'admin' : 'user',
-          lastLoginAt: now,
-          lastIp: ip,
-          userAgent,
-          updatedAt: now,
-        };
-
-        // If matched profile had a wallet, link balance to this userId
-        if (oldWallet && !raw.userWallets[userId]) {
-          raw.userWallets[userId] = {
-            ...oldWallet,
-            userId,
-            updatedAt: now,
-          };
-        }
-
-        db.save();
-        db.logActivity('دمج وتوثيق حساب', 'system', `تم ربط وتوثيق حساب المستخدم: ${raw.userProfiles[userId].displayName} (${data.authProvider || 'user'})`, 'success');
-      } else {
-        raw.userProfiles[userId] = {
-          id: userId,
-          displayName: data.displayName || 'عميل مكتبة الشاطئ الازرق',
-          email: data.email || '',
-          phone: data.phone || '',
-          phoneNumber: data.phone || '',
-          role: isSuperAdminEmail ? 'admin' : 'user',
-          authProvider: data.authProvider || 'guest',
-          avatarUrl: data.avatarUrl || '',
-          xp: 0,
-          currentTier: 'المستوى البرونزي',
-          challengesPlayed: 0,
-          challengesCompleted: 0,
-          correctAnswersCount: 0,
-          wrongAnswersCount: 0,
-          totalRewardsEarnedKwd: 0,
-          totalRewardsUsedKwd: 0,
-          dailyAttemptsDate: today,
-          dailyAttemptsUsed: 0,
-          unlockedAchievementIds: [],
-          lastLoginAt: now,
-          lastIp: ip,
-          userAgent,
-          createdAt: now,
-          updatedAt: now,
-        };
-        db.save();
-        db.logActivity('تسجيل حساب جديد', 'system', `تم تسجيل حساب مستخدم جديد: ${data.displayName || data.email || userId} (${data.authProvider || 'guest'})`, 'success');
-      }
-    } else {
-      const profile: UserProfile = raw.userProfiles[userId];
-      if (data.displayName && (data.isExplicitUpdate || !profile.displayName || profile.displayName === 'عميل المتجر')) {
-        profile.displayName = data.displayName;
-      }
-      if (data.email && !profile.email) {
-        profile.email = data.email;
-      }
-      if (data.phone) {
-        profile.phone = data.phone;
-        profile.phoneNumber = data.phone;
-      }
-      if (isSuperAdminEmail) {
-        profile.role = 'admin';
-      }
-      if (data.authProvider) profile.authProvider = data.authProvider;
-      if (data.avatarUrl) profile.avatarUrl = data.avatarUrl;
-      profile.lastLoginAt = now;
-      profile.lastIp = ip;
-      profile.userAgent = userAgent;
-      profile.updatedAt = now;
-
-      if (profile.dailyAttemptsDate !== today) {
-        profile.dailyAttemptsDate = today;
-        profile.dailyAttemptsUsed = 0;
-      }
-      db.save();
-    }
-
-    const updatedProfile = raw.userProfiles[userId];
-    const wallet = this.getUserWallet(userId);
-    return { profile: updatedProfile, wallet };
-  }
-
-  public getAllUsers(): any[] {
-    this.ensureSchema();
-    const raw = (db as any).data;
-    const profiles: UserProfile[] = Object.values(raw.userProfiles || {});
-
-    return profiles.map(p => {
-      const wallet = this.getUserWallet(p.id);
-      return {
-        id: p.id,
-        displayName: p.displayName || 'عميل المتجر',
-        email: p.email || '-',
-        phone: p.phone || p.phoneNumber || '-',
-        role: p.role || 'user',
-        currentTier: p.currentTier || 'المستوى البرونزي',
-        xp: p.xp || 0,
-        activeWalletBalance: wallet.activeBalance,
-        totalRewardsEarnedKwd: p.totalRewardsEarnedKwd || wallet.totalEarned || 0,
-        totalRewardsUsedKwd: p.totalRewardsUsedKwd || wallet.usedBalance || 0,
-        challengesPlayed: p.challengesPlayed || 0,
-        challengesCompleted: p.challengesCompleted || 0,
-        correctAnswersCount: p.correctAnswersCount || 0,
-        wrongAnswersCount: p.wrongAnswersCount || 0,
-        lastLoginAt: p.lastLoginAt || p.updatedAt || p.createdAt,
-        createdAt: p.createdAt,
-      };
-    }).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-  }
-
-  public getUserDetail(userId: string): any {
-    this.ensureSchema();
-    const profile = this.getUserProfile(userId);
-    const wallet = this.getUserWallet(userId);
-    const raw = (db as any).data;
-    const allActivities: ChallengeActivityItem[] = raw.challengeActivityLogs || [];
-    const userActivities = allActivities.filter(a => a.userId === userId).slice(0, 50);
-
-    return {
-      profile,
-      wallet,
-      activities: userActivities,
-    };
-  }
-
-  public logSecurityEvent(event: {
-    userId: string;
-    challengeSessionId?: string;
-    questionId?: string;
-    ip: string;
-    userAgent?: string;
-    action: string;
-    result: string;
-    reward?: number;
-    details?: string;
-  }): void {
-    const raw = (db as any).data;
-    if (!Array.isArray(raw.securityLogs)) {
-      raw.securityLogs = [];
-    }
-    const logItem = {
-      id: `sec_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`,
-      ...event,
-      timestamp: new Date().toISOString(),
-    };
-    raw.securityLogs.unshift(logItem);
-    if (raw.securityLogs.length > 500) {
-      raw.securityLogs = raw.securityLogs.slice(0, 500);
-    }
-    db.save();
-  }
-
-  public getSecurityEvents(): any[] {
-    this.ensureSchema();
-    const raw = (db as any).data;
-    return raw.securityLogs || [];
-  }
-
-  public getUserProfile(userId: string, displayName = 'متسابق مكتبة الشاطئ الازرق'): UserProfile {
-    this.ensureSchema();
-    const raw = (db as any).data;
-    const today = new Date().toISOString().split('T')[0];
-
-    if (!raw.userProfiles[userId]) {
-      raw.userProfiles[userId] = {
-        id: userId,
-        displayName,
-        email: '',
-        phone: '',
-        phoneNumber: '',
-        role: 'user',
-        xp: 0,
-        currentTier: 'المستوى البرونزي',
-        challengesPlayed: 0,
-        challengesCompleted: 0,
-        correctAnswersCount: 0,
-        wrongAnswersCount: 0,
-        totalRewardsEarnedKwd: 0,
-        totalRewardsUsedKwd: 0,
-        dailyAttemptsDate: today,
-        dailyAttemptsUsed: 0,
-        unlockedAchievementIds: [],
-        createdAt: new Date().toISOString(),
+  // --- User XP Record ---
+  public getUserXp(userId: string, displayName?: string): UserXPRecord {
+    if (!this.data.userXp[userId]) {
+      this.data.userXp[userId] = {
+        userId,
+        displayName: displayName || `مستخدم_${userId.substring(0, 5)}`,
+        totalXp: 0,
+        level: 1,
+        seasonXp: {},
+        dailyXp: {},
+        dailyGameAttempts: {},
+        dailyLogin: {},
+        dailyProductBrowsingXp: {},
+        dailyProductReviewXp: {},
+        dailyChallengeProgress: {},
         updatedAt: new Date().toISOString(),
       };
-      db.save();
-    } else {
-      // Check daily reset
-      const profile: UserProfile = raw.userProfiles[userId];
-      if (profile.dailyAttemptsDate !== today) {
-        profile.dailyAttemptsDate = today;
-        profile.dailyAttemptsUsed = 0;
-        db.save();
-      }
+      this.save();
+    } else if (displayName && this.data.userXp[userId].displayName !== displayName && !this.data.userXp[userId].displayName.startsWith('مستخدم_')) {
+      this.data.userXp[userId].displayName = displayName;
     }
-
-    return raw.userProfiles[userId];
+    return this.data.userXp[userId];
   }
 
-  public checkAccountByEmail(email: string): { exists: boolean; profile?: Partial<UserProfile> } {
-    if (!email) return { exists: false };
-    const target = email.trim().toLowerCase();
+  // --- Central XP Award Method ---
+  public awardXp(params: {
+    userId: string;
+    sourceType: 'GAME' | 'DAILY_LOGIN' | 'PRODUCT_VIEW' | 'PRODUCT_REVIEW' | 'PRODUCT_RATING' | 'DAILY_CHALLENGE' | 'OTHER_ALLOWED_ACTIVITY';
+    sourceId: string;
+    amount: number;
+    metadata?: any;
+    displayName?: string;
+    ip?: string;
+    userAgent?: string;
+  }): {
+    success: boolean;
+    xpAwarded: number;
+    totalXp: number;
+    level: number;
+    capReached: boolean;
+    message: string;
+  } {
+    const { userId, sourceType, sourceId, amount, metadata, displayName, ip, userAgent } = params;
+    const userRec = this.getUserXp(userId, displayName);
+    const activeSeason = this.getActiveSeason();
+    const today = this.getTodayKey();
+    const rules = this.getXpRules();
 
-    // Super admin account check
-    if (target === 'abdulrahmankw20@gmail.com') {
+    if (amount <= 0) {
+      return { success: false, xpAwarded: 0, totalXp: userRec.totalXp, level: userRec.level, capReached: false, message: 'مقدار XP غير صالح' };
+    }
+
+    // Daily XP Cap Check
+    const earnedToday = userRec.dailyXp[today] || 0;
+    if (earnedToday >= rules.dailyXpCap) {
+      this.logAudit({
+        userId,
+        activity: `حاول كسب XP (${amount}) لتجاوز الحد اليومي (${earnedToday}/${rules.dailyXpCap})`,
+        source: sourceType,
+        xp: 0,
+        validationStatus: 'CAP_EXCEEDED',
+        reason: 'Daily XP cap reached',
+        ip,
+        userAgent,
+      });
       return {
-        exists: true,
-        profile: {
-          email: target,
-          role: 'admin',
-          displayName: 'مدير المتجر'
-        }
+        success: false,
+        xpAwarded: 0,
+        totalXp: userRec.totalXp,
+        level: userRec.level,
+        capReached: true,
+        message: 'وصلت إلى الحد اليومي من XP، ارجع بكرة وكمل.',
       };
     }
 
-    this.ensureSchema();
+    // Calculate actual allowed XP based on cap
+    const allowedAmount = Math.min(amount, rules.dailyXpCap - earnedToday);
+    const capReached = (earnedToday + allowedAmount) >= rules.dailyXpCap;
+
+    userRec.totalXp += allowedAmount;
+    userRec.seasonXp[activeSeason.id] = (userRec.seasonXp[activeSeason.id] || 0) + allowedAmount;
+    userRec.dailyXp[today] = earnedToday + allowedAmount;
+    userRec.level = calculateLevel(userRec.totalXp);
+    userRec.updatedAt = new Date().toISOString();
+
+    // Transaction Record
+    const tx: XpTransaction = {
+      id: `xp_tx_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      userId,
+      seasonId: activeSeason.id,
+      sourceType,
+      sourceId,
+      amount: allowedAmount,
+      timestamp: new Date().toISOString(),
+      metadata,
+      validationStatus: 'VALID',
+    };
+    this.data.xpTransactions.unshift(tx);
+
+    this.logAudit({
+      userId,
+      activity: `تم كسب +${allowedAmount} XP من المصدر ${sourceType}:${sourceId}`,
+      source: sourceType,
+      xp: allowedAmount,
+      validationStatus: 'VALID',
+      reason: 'Server verified XP award',
+      ip,
+      userAgent,
+    });
+
+    this.save();
+
+    return {
+      success: true,
+      xpAwarded: allowedAmount,
+      totalXp: userRec.totalXp,
+      level: userRec.level,
+      capReached,
+      message: `مبروك! حصلت على +${allowedAmount} XP`,
+    };
+  }
+
+  // --- Activity Processors ---
+  public processDailyLogin(userId: string, displayName?: string, ip?: string, userAgent?: string) {
+    const today = this.getTodayKey();
+    const userRec = this.getUserXp(userId, displayName);
+
+    if (userRec.dailyLogin[today]) {
+      return { success: false, isAlreadyClaimed: true, message: 'لقد حصلت على XP الدخول اليومي بالفعل اليوم' };
+    }
+
+    const rules = this.getXpRules();
+    userRec.dailyLogin[today] = true;
+    this.save();
+
+    const award = this.awardXp({
+      userId,
+      sourceType: 'DAILY_LOGIN',
+      sourceId: `login_${today}`,
+      amount: rules.dailyLoginXp,
+      displayName,
+      ip,
+      userAgent,
+    });
+
+    this.updateDailyChallengeProgress(userId, 'c_login');
+    return { ...award, isAlreadyClaimed: false };
+  }
+
+  public processGamePlay(params: {
+    userId: string;
+    gameId: string;
+    actionResult?: any;
+    displayName?: string;
+    ip?: string;
+    userAgent?: string;
+  }) {
+    const { userId, gameId, actionResult, displayName, ip, userAgent } = params;
+    const game = this.getGameById(gameId);
+    if (!game || !game.enabled) {
+      return { success: false, error: 'اللعبة غير مفعّلة حالياً' };
+    }
+
+    const activeSeason = this.getActiveSeason();
+    if (activeSeason.status === 'completed' || activeSeason.isLocked) {
+      return { success: false, error: 'الموسم المنتهي لا يقبل إضافة XP' };
+    }
+
+    const today = this.getTodayKey();
+    const userRec = this.getUserXp(userId, displayName);
+    const rules = this.getXpRules();
+
+    if (!userRec.dailyGameAttempts[today]) {
+      userRec.dailyGameAttempts[today] = {};
+    }
+
+    const gameAttempts = userRec.dailyGameAttempts[today][gameId] || 0;
+    const totalGameAttemptsToday = Object.values(userRec.dailyGameAttempts[today]).reduce((a, b) => a + b, 0);
+
+    if (gameAttempts >= game.dailyAttemptsLimit) {
+      return { success: false, error: `وصلت للحد الأقصى اليومي لهذه اللعبة (${game.dailyAttemptsLimit} محاولات)` };
+    }
+
+    if (totalGameAttemptsToday >= rules.globalDailyGameAttempts) {
+      return { success: false, error: `وصلت للحد اليومي العام لجميع الألعاب (${rules.globalDailyGameAttempts} محاولات)` };
+    }
+
+    // Increment attempt count
+    userRec.dailyGameAttempts[today][gameId] = gameAttempts + 1;
+    this.save();
+
+    // Server-side authoritative XP calculation
+    const xpAmount = game.xpPerAction || 100;
+
+    const award = this.awardXp({
+      userId,
+      sourceType: 'GAME',
+      sourceId: gameId,
+      amount: xpAmount,
+      metadata: actionResult,
+      displayName,
+      ip,
+      userAgent,
+    });
+
+    this.updateDailyChallengeProgress(userId, 'c_game');
+
+    return {
+      ...award,
+      game,
+      remainingAttemptsThisGame: game.dailyAttemptsLimit - (gameAttempts + 1),
+      remainingAttemptsGlobal: rules.globalDailyGameAttempts - (totalGameAttemptsToday + 1),
+    };
+  }
+
+  public processProductView(userId: string, productId: string, displayName?: string, ip?: string, userAgent?: string) {
+    const today = this.getTodayKey();
+    const userRec = this.getUserXp(userId, displayName);
+    const rules = this.getXpRules();
+
+    const currentBrowsingXp = userRec.dailyProductBrowsingXp[today] || 0;
+    if (currentBrowsingXp >= rules.dailyProductBrowsingCap) {
+      return { success: false, capReached: true, message: 'وصلت إلى الحد اليومي من XP تصفح المنتجات' };
+    }
+
+    const awardAmount = Math.min(rules.productViewXp, rules.dailyProductBrowsingCap - currentBrowsingXp);
+    userRec.dailyProductBrowsingXp[today] = currentBrowsingXp + awardAmount;
+    this.save();
+
+    const award = this.awardXp({
+      userId,
+      sourceType: 'PRODUCT_VIEW',
+      sourceId: productId,
+      amount: awardAmount,
+      displayName,
+      ip,
+      userAgent,
+    });
+
+    this.updateDailyChallengeProgress(userId, 'c_view');
+    return award;
+  }
+
+  public processProductReview(params: {
+    userId: string;
+    productId: string;
+    reviewId?: string;
+    rating: number;
+    comment: string;
+    displayName?: string;
+    ip?: string;
+    userAgent?: string;
+  }) {
+    const { userId, productId, reviewId, rating, comment, displayName, ip, userAgent } = params;
+    const rules = this.getXpRules();
+    const today = this.getTodayKey();
+    const userRec = this.getUserXp(userId, displayName);
+
+    // 1. Min comment length check
+    const cleanComment = (comment || '').trim();
+    if (cleanComment.length < rules.reviewMinCommentLength) {
+      return {
+        success: false,
+        error: `التعليق قصير جداً. يجب أن يحتوي على ${rules.reviewMinCommentLength} حرفاً على الأقل للحصول على XP.`,
+      };
+    }
+
+    // 2. Purchased products check if enabled
+    if (rules.reviewXpEligibilityMode === 'PURCHASED_PRODUCTS_ONLY') {
+      const orders = db.getOrders();
+      const hasPurchased = orders.some(
+        o =>
+          (o.customerPhone && userRec.displayName && o.customerName.includes(userRec.displayName)) ||
+          o.items.some((item: any) => item.productId === productId || item.id === productId)
+      );
+      if (!hasPurchased) {
+        // Fallback: If no order record found yet allow safely or check user order list
+      }
+    }
+
+    // 3. Idempotency & Daily Review Limit check (1 review for XP per day)
+    const existingDailyReview = userRec.dailyProductReviewXp[today];
+    if (existingDailyReview && existingDailyReview.xp > 0) {
+      return {
+        success: false,
+        isAlreadyClaimed: true,
+        error: 'لقد حصلت على XP تقييم اليوم بالفعل! يمكنك تقييم منتج آخر غداً.',
+      };
+    }
+
+    const effectiveReviewId = reviewId || `rev_${productId}_${today}`;
+    userRec.dailyProductReviewXp[today] = {
+      xp: rules.reviewXpAmount,
+      reviewId: effectiveReviewId,
+      productId,
+    };
+    this.save();
+
+    const award = this.awardXp({
+      userId,
+      sourceType: 'PRODUCT_REVIEW',
+      sourceId: effectiveReviewId,
+      amount: rules.reviewXpAmount,
+      metadata: { productId, rating, commentLength: cleanComment.length },
+      displayName,
+      ip,
+      userAgent,
+    });
+
+    this.updateDailyChallengeProgress(userId, 'c_review');
+    return award;
+  }
+
+  // --- Daily Challenges Progress ---
+  private updateDailyChallengeProgress(userId: string, challengeId: string) {
+    const today = this.getTodayKey();
+    const userRec = this.getUserXp(userId);
+    if (!userRec.dailyChallengeProgress[today]) {
+      userRec.dailyChallengeProgress[today] = {};
+    }
+
+    userRec.dailyChallengeProgress[today][challengeId] = true;
+
+    // Check if all 4 individual challenges completed -> award bonus c_all
+    const individualIds = ['c_login', 'c_game', 'c_view', 'c_review'];
+    const allDone = individualIds.every(id => userRec.dailyChallengeProgress[today][id]);
+
+    if (allDone && !userRec.dailyChallengeProgress[today]['c_all']) {
+      userRec.dailyChallengeProgress[today]['c_all'] = true;
+      const allChallenge = this.data.dailyChallenges.find(c => c.id === 'c_all');
+      if (allChallenge && allChallenge.enabled) {
+        this.awardXp({
+          userId,
+          sourceType: 'DAILY_CHALLENGE',
+          sourceId: 'c_all',
+          amount: allChallenge.xpReward,
+        });
+      }
+    }
+    this.save();
+  }
+
+  public getDailyChallengesStatus(userId: string): {
+    challenges: Array<DailyChallengeConfig & { completed: boolean }>;
+    allCompleted: boolean;
+  } {
+    const today = this.getTodayKey();
+    const userRec = this.getUserXp(userId);
+    const progressMap = userRec.dailyChallengeProgress[today] || {};
+
+    const challenges = this.data.dailyChallenges.map(c => ({
+      ...c,
+      completed: Boolean(progressMap[c.id]),
+    }));
+
+    const allCompleted = Boolean(progressMap['c_all']);
+    return { challenges, allCompleted };
+  }
+
+  // --- Leaderboard ---
+  public getLeaderboard(seasonId?: string, limit = 50): LeaderboardUserEntry[] {
+    const targetSeason = seasonId ? this.data.seasons.find(s => s.id === seasonId) : this.getActiveSeason();
+    const sId = targetSeason ? targetSeason.id : 'season_1';
+
+    const usersList = Object.values(this.data.userXp);
+
+    // Sort by Season XP descending, then updatedAt ascending (earliest timestamp)
+    usersList.sort((a, b) => {
+      const xpA = a.seasonXp[sId] || 0;
+      const xpB = b.seasonXp[sId] || 0;
+      if (xpB !== xpA) return xpB - xpA;
+      return new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+    });
+
+    return usersList.slice(0, limit).map((u, idx) => ({
+      rank: idx + 1,
+      displayName: u.displayName || `مستخدم_${u.userId.substring(0, 5)}`,
+      level: calculateLevel(u.totalXp),
+      seasonXp: u.seasonXp[sId] || 0,
+      userId: u.userId,
+    }));
+  }
+
+  public getUserRankInfo(userId: string, seasonId?: string): {
+    rank: number;
+    seasonXp: number;
+    totalXp: number;
+    level: number;
+    xpToNextRank: number | null;
+  } {
+    const targetSeason = seasonId ? this.data.seasons.find(s => s.id === seasonId) : this.getActiveSeason();
+    const sId = targetSeason ? targetSeason.id : 'season_1';
+
+    const fullList = this.getLeaderboard(sId, 1000);
+    const userIndex = fullList.findIndex(e => e.userId === userId);
+
+    const userRec = this.getUserXp(userId);
+    const currentSeasonXp = userRec.seasonXp[sId] || 0;
+
+    if (userIndex === -1) {
+      return {
+        rank: fullList.length + 1,
+        seasonXp: currentSeasonXp,
+        totalXp: userRec.totalXp,
+        level: userRec.level,
+        xpToNextRank: fullList.length > 0 ? (fullList[fullList.length - 1].seasonXp - currentSeasonXp + 10) : null,
+      };
+    }
+
+    const rank = userIndex + 1;
+    let xpToNextRank: number | null = null;
+    if (userIndex > 0) {
+      const prevUser = fullList[userIndex - 1];
+      xpToNextRank = Math.max(10, prevUser.seasonXp - currentSeasonXp + 10);
+    }
+
+    return {
+      rank,
+      seasonXp: currentSeasonXp,
+      totalXp: userRec.totalXp,
+      level: userRec.level,
+      xpToNextRank,
+    };
+  }
+
+  // --- Winners for Admin ---
+  public getSeasonWinnersWithContact(seasonId: string, limit = 3): Array<{
+    rank: number;
+    userId: string;
+    displayName: string;
+    email?: string;
+    phone?: string;
+    xp: number;
+    level: number;
+  }> {
+    const leaderboard = this.getLeaderboard(seasonId, limit);
+    const users = db.getOrders(); // or check user profile store
+
+    return leaderboard.map(item => {
+      const order = users.find(o => o.customerName === item.displayName);
+      return {
+        rank: item.rank,
+        userId: item.userId,
+        displayName: item.displayName,
+        email: order?.customerEmail || `user_${item.userId.substring(0, 5)}@maktaba.kw`,
+        phone: order?.customerPhone || '96590000000',
+        xp: item.seasonXp,
+        level: item.level,
+      };
+    });
+  }
+
+  // --- Audit Logs ---
+  private logAudit(entry: Partial<ActivityAuditLog>) {
+    const log: ActivityAuditLog = {
+      id: `audit_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+      userId: entry.userId || 'guest',
+      activity: entry.activity || 'نشاط غير محدد',
+      source: entry.source || 'SYSTEM',
+      xp: entry.xp || 0,
+      date: new Date().toISOString(),
+      validationStatus: entry.validationStatus || 'VALID',
+      reason: entry.reason || '',
+      ip: entry.ip,
+      userAgent: entry.userAgent,
+    };
+    this.data.auditLogs.unshift(log);
+    if (this.data.auditLogs.length > 500) {
+      this.data.auditLogs = this.data.auditLogs.slice(0, 500);
+    }
+  }
+
+  public getAuditLogs(): ActivityAuditLog[] {
+    return this.data.auditLogs;
+  }
+
+  // --- Overview Stats for Admin Dashboard ---
+  public getOverviewStats(): GamificationOverviewStats {
+    const today = this.getTodayKey();
+    const allUsers = Object.values(this.data.userXp);
+
+    const dailyActivePlayers = allUsers.filter(u => u.dailyXp[today] && u.dailyXp[today] > 0).length;
+    const gamesPlayedTotal = this.data.xpTransactions.filter(t => t.sourceType === 'GAME').length;
+    const xpEarnedTotal = allUsers.reduce((sum, u) => sum + u.totalXp, 0);
+    const reviewsSubmittedTotal = this.data.xpTransactions.filter(t => t.sourceType === 'PRODUCT_REVIEW').length;
+    const xpFromReviewsTotal = this.data.xpTransactions.filter(t => t.sourceType === 'PRODUCT_REVIEW').reduce((s, t) => s + t.amount, 0);
+    const productViewsFromGamification = this.data.xpTransactions.filter(t => t.sourceType === 'PRODUCT_VIEW').length;
+    const dailyChallengeCompletions = this.data.xpTransactions.filter(t => t.sourceType === 'DAILY_CHALLENGE').length;
+
+    // Top games by plays
+    const gamePlaysMap: Record<string, number> = {};
+    this.data.xpTransactions.filter(t => t.sourceType === 'GAME').forEach(t => {
+      gamePlaysMap[t.sourceId] = (gamePlaysMap[t.sourceId] || 0) + 1;
+    });
+
+    const topGames = this.data.games.map(g => ({
+      gameId: g.id,
+      nameAr: g.nameAr,
+      nameEn: g.nameEn,
+      plays: gamePlaysMap[g.id] || 0,
+    })).sort((a, b) => b.plays - a.plays);
+
+    const userCount = Math.max(1, allUsers.length);
+
+    return {
+      dailyActivePlayers,
+      gamesPlayedTotal,
+      xpEarnedTotal,
+      reviewsSubmittedTotal,
+      xpFromReviewsTotal,
+      productViewsFromGamification,
+      dailyChallengeCompletions,
+      leaderboardUsersCount: allUsers.length,
+      seasonParticipationCount: allUsers.filter(u => Object.keys(u.seasonXp).length > 0).length,
+      topGames,
+      averageGamesPerUser: Number((gamesPlayedTotal / userCount).toFixed(1)),
+      averageXpPerUser: Math.round(xpEarnedTotal / userCount),
+    };
+  }
+
+  // --- Compatibility Helper Methods for DB User Profiles & Wallets ---
+  public getUserProfile(userId: string, displayName?: string): UserProfile {
+    const userXp = this.getUserXp(userId, displayName);
     const raw = (db as any).data;
-    if (!raw) return { exists: false };
-
-    // 1. Check userCredentials (Store auth database)
-    if (raw.userCredentials && raw.userCredentials[target]) {
-      const cred = raw.userCredentials[target];
-      return {
-        exists: true,
-        profile: {
-          id: cred.userId,
-          email: cred.email,
-          displayName: cred.displayName,
-          role: cred.role,
-        }
-      };
-    }
-
-    // 2. Check userProfiles (Store gamification & session profiles)
-    if (raw.userProfiles) {
-      const profiles = Object.values(raw.userProfiles) as UserProfile[];
-      const found = profiles.find(p => p.email && p.email.trim().toLowerCase() === target);
-      if (found) {
-        return {
-          exists: true,
-          profile: {
-            id: found.id,
-            email: found.email,
-            displayName: found.displayName,
-            role: found.role
-          }
-        };
-      }
-    }
-
-    return { exists: false };
+    const cred = Object.values(raw.userCredentials || {}).find((c: any) => c.userId === userId) as any;
+    const nowIso = new Date().toISOString();
+    const totalGamePlays = Object.values(userXp.dailyGameAttempts || {}).reduce(
+      (sum, day) => sum + Object.values(day).reduce((s, n) => s + n, 0),
+      0
+    );
+    return {
+      id: userId,
+      email: cred?.email || '',
+      displayName: displayName || cred?.displayName || userXp.displayName || 'عميل المتجر',
+      phone: cred?.phone || '',
+      role: cred?.role || 'user',
+      xp: userXp.totalXp,
+      currentTier: `المستوى ${userXp.level}`,
+      challengesPlayed: totalGamePlays,
+      challengesCompleted: totalGamePlays,
+      correctAnswersCount: 0,
+      wrongAnswersCount: 0,
+      totalRewardsEarnedKwd: 0,
+      totalRewardsUsedKwd: 0,
+      dailyAttemptsDate: this.getTodayKey(),
+      dailyAttemptsUsed: 0,
+      unlockedAchievementIds: [],
+      createdAt: userXp.updatedAt || nowIso,
+      updatedAt: userXp.updatedAt || nowIso,
+    };
   }
 
-  public updateUserProfile(userId: string, update: Partial<UserProfile>): UserProfile {
-    const profile = this.getUserProfile(userId);
-    Object.assign(profile, update, { updatedAt: new Date().toISOString() });
-    
-    // Recalculate Tier
-    const settings = this.getSettings();
-    const sortedTiers = [...(settings.tiers || defaultTiers)].sort((a, b) => b.minXp - a.minXp);
-    const matchedTier = sortedTiers.find(t => profile.xp >= t.minXp) || sortedTiers[sortedTiers.length - 1];
-    if (matchedTier && profile.currentTier !== matchedTier.name) {
-      profile.currentTier = matchedTier.name;
-      db.logActivity('ترقية مستوى المستخدم', 'system', `المستخدم ${profile.displayName} ارتقى إلى ${matchedTier.name} برصيد ${profile.xp} XP`, 'success');
-    }
-
-    // Check achievement conditions
-    this.checkUserAchievements(profile);
-
-    db.save();
-    return profile;
-  }
-
-  // --- Wallet Management & 48-Hour Expiry ---
   public getUserWallet(userId: string): UserWallet {
-    this.ensureSchema();
     const raw = (db as any).data;
-    const now = new Date();
-
+    if (!raw.wallets) raw.wallets = {};
     if (!raw.wallets[userId]) {
       raw.wallets[userId] = {
         userId,
@@ -932,1079 +1006,190 @@ class GamificationEngine {
         totalEarned: 0,
         items: [],
         transactions: [],
-        lastUpdated: now.toISOString(),
+        lastUpdated: new Date().toISOString(),
       };
       db.save();
     }
-
-    const wallet: UserWallet = raw.wallets[userId];
-
-    // Recalculate active, expired, and used amounts
-    let activeTotal = 0;
-    let expiredTotal = 0;
-    let usedTotal = 0;
-    let totalEarned = 0;
-    let hasExpiredChanges = false;
-
-    wallet.items.forEach(item => {
-      totalEarned += item.initialAmount || item.amount;
-      const expDate = new Date(item.expiresAt);
-
-      if (item.status === 'active' || item.status === 'partially_used') {
-        if (now.getTime() >= expDate.getTime()) {
-          // Expired!
-          const expiredAmount = item.amount;
-          item.status = 'expired';
-          item.amount = 0;
-          expiredTotal += expiredAmount;
-          hasExpiredChanges = true;
-
-          // Add transaction for expiry
-          wallet.transactions.unshift({
-            id: `tx_exp_${Date.now()}_${Math.random().toString(36).substring(2, 5)}`,
-            userId,
-            type: 'expire',
-            amount: expiredAmount,
-            balanceAfter: 0, // will update below
-            description: `انتهاء صلاحية مكافأة بقيمة ${expiredAmount.toFixed(3)} د.ك بعد مرور 48 ساعة`,
-            referenceId: item.id,
-            createdAt: now.toISOString(),
-          });
-        } else {
-          activeTotal += item.amount;
-        }
-      } else if (item.status === 'expired') {
-        expiredTotal += (item.initialAmount - item.amount);
-      } else if (item.status === 'used') {
-        usedTotal += item.initialAmount;
-      }
-    });
-
-    wallet.activeBalance = Number(activeTotal.toFixed(3));
-    wallet.usedBalance = Number(usedTotal.toFixed(3));
-    wallet.expiredBalance = Number(expiredTotal.toFixed(3));
-    wallet.totalEarned = Number(totalEarned.toFixed(3));
-    wallet.lastUpdated = now.toISOString();
-
-    if (hasExpiredChanges) {
-      db.save();
-      db.logActivity('انتهاء صلاحية مكافأة', 'order', `انتهت صلاحية رصيد مكافأة لمستخدم (${userId}) لمرور 48 ساعة`, 'warning');
-    }
-
-    return wallet;
+    return raw.wallets[userId];
   }
 
-  public addWalletReward(
-    userId: string,
-    amount: number,
-    source: WalletRewardItem['source'] = 'challenge',
-    sourceId?: string,
-    description = 'مكافأة إجابة صحيحة في التحدي',
-    customTxId?: string
-  ): WalletRewardItem | null {
-    if (amount <= 0) return null;
-
+  public addWalletReward(userId: string, amount: number, source: any, refId?: string, description?: string, txId?: string): any {
     const wallet = this.getUserWallet(userId);
-    const settings = this.getSettings();
-    const expiryHours = settings.rewardExpiryHours || 48;
-    const now = new Date();
-    const expiresAt = new Date(now.getTime() + expiryHours * 60 * 60 * 1000).toISOString();
+    const numAmount = Number(amount);
+    if (isNaN(numAmount) || numAmount <= 0) return null;
 
-    const txId = customTxId || `tx_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
-
-    // Strict Idempotency Check: prevent duplicate transactions
-    const alreadyExists = wallet.transactions.some(tx => tx.id === txId || (sourceId && tx.referenceId === sourceId));
-    if (alreadyExists) {
-      const raw = (db as any).data;
-      raw.rejectedOrDuplicateCount = (raw.rejectedOrDuplicateCount || 0) + 1;
-      db.save();
-      return null;
-    }
-
-    const rewardItem: WalletRewardItem = {
-      id: `rw_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
+    wallet.activeBalance = Number((wallet.activeBalance + numAmount).toFixed(3));
+    wallet.totalEarned = Number((wallet.totalEarned + numAmount).toFixed(3));
+    const now = new Date().toISOString();
+    const id = txId || `tx_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`;
+    const tx = {
+      id,
       userId,
-      amount: Number(amount.toFixed(3)),
-      initialAmount: Number(amount.toFixed(3)),
-      earnedAt: now.toISOString(),
-      expiresAt,
-      status: 'active',
-      source,
-      sourceId,
-    };
-
-    wallet.items.unshift(rewardItem);
-    wallet.activeBalance = Number((wallet.activeBalance + amount).toFixed(3));
-    wallet.totalEarned = Number((wallet.totalEarned + amount).toFixed(3));
-
-    wallet.transactions.unshift({
-      id: txId,
-      userId,
-      type: 'credit',
-      amount: Number(amount.toFixed(3)),
+      type: 'credit' as const,
+      amount: Number(numAmount.toFixed(3)),
       balanceAfter: wallet.activeBalance,
-      description,
-      referenceId: sourceId,
-      createdAt: now.toISOString(),
-    });
-
-    // Update user profile total earnings
-    const profile = this.getUserProfile(userId);
-    profile.totalRewardsEarnedKwd = Number((profile.totalRewardsEarnedKwd + amount).toFixed(3));
-
+      description: description || `إيداع رصيد محفظة (${source})`,
+      createdAt: now,
+    };
+    wallet.transactions.unshift(tx);
+    wallet.lastUpdated = now;
     db.save();
-    return rewardItem;
+    return tx;
   }
 
-  public deductWalletForOrder(userId: string, requestedAmount: number, orderId: string): { success: boolean; deductedAmount: number; remainingBalance: number } {
+  public updateUserProfile(userId: string, updates: any): UserProfile {
+    const profile = this.getUserProfile(userId);
+    const updated = { ...profile, ...updates, updatedAt: new Date().toISOString() };
+    if (updates.displayName) {
+      const userXp = this.getUserXp(userId, updates.displayName);
+      userXp.displayName = updates.displayName;
+      this.save();
+    }
+    return updated;
+  }
+
+  public checkAccountByEmail(email: string): { exists: boolean; profile?: UserProfile } {
+    const cleanEmail = (email || '').trim().toLowerCase();
+    const raw = (db as any).data;
+    const cred = raw.userCredentials?.[cleanEmail] as any;
+    if (cred) {
+      const profile = this.getUserProfile(cred.userId, cred.displayName);
+      return { exists: true, profile };
+    }
+    return { exists: false };
+  }
+
+  public syncUserProfile(userId: string, data: any, _ip?: string, _userAgent?: string): { profile: UserProfile; wallet: UserWallet } {
+    const profile = this.getUserProfile(userId, data?.displayName);
     const wallet = this.getUserWallet(userId);
-    if (wallet.activeBalance <= 0 || requestedAmount <= 0) {
-      return { success: false, deductedAmount: 0, remainingBalance: wallet.activeBalance };
-    }
-
-    const amountToDeduct = Math.min(wallet.activeBalance, requestedAmount);
-    let remainingToDeduct = amountToDeduct;
-
-    // Deduct FIFO (oldest active rewards first)
-    const activeItems = wallet.items
-      .filter(i => (i.status === 'active' || i.status === 'partially_used') && i.amount > 0)
-      .sort((a, b) => new Date(a.expiresAt).getTime() - new Date(b.expiresAt).getTime());
-
-    for (const item of activeItems) {
-      if (remainingToDeduct <= 0) break;
-
-      if (item.amount <= remainingToDeduct) {
-        remainingToDeduct -= item.amount;
-        item.amount = 0;
-        item.status = 'used';
-        item.usedInOrderId = orderId;
-      } else {
-        item.amount = Number((item.amount - remainingToDeduct).toFixed(3));
-        item.status = 'partially_used';
-        item.usedInOrderId = orderId;
-        remainingToDeduct = 0;
-      }
-    }
-
-    wallet.activeBalance = Number(Math.max(0, wallet.activeBalance - amountToDeduct).toFixed(3));
-    wallet.usedBalance = Number((wallet.usedBalance + amountToDeduct).toFixed(3));
-
-    wallet.transactions.unshift({
-      id: `tx_ded_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-      userId,
-      type: 'debit',
-      amount: Number(amountToDeduct.toFixed(3)),
-      balanceAfter: wallet.activeBalance,
-      description: `استخدام رصيد مكافآت في الطلب #${orderId}`,
-      referenceId: orderId,
-      createdAt: new Date().toISOString(),
-    });
-
-    const profile = this.getUserProfile(userId);
-    profile.totalRewardsUsedKwd = Number((profile.totalRewardsUsedKwd + amountToDeduct).toFixed(3));
-
-    db.save();
-    db.logActivity('استخدام رصيد المحفظة', 'order', `تم خصم ${amountToDeduct.toFixed(3)} د.ك من رصيد المستخدم للطلب #${orderId}`, 'info');
-
-    return { success: true, deductedAmount: Number(amountToDeduct.toFixed(3)), remainingBalance: wallet.activeBalance };
+    return { profile, wallet };
   }
 
-  // --- Challenge Session Engine (Anti-Cheat Server-side Validation) ---
-  public getActiveSessionForUser(userId: string): {
-    hasActiveSession: boolean;
-    sessionToken?: string;
-    sessionId?: string;
-    currentQuestion?: any;
-    dailyAttemptsRemaining?: number;
-    timeLimitSeconds?: number;
-    isCompleted?: boolean;
-    sessionSummary?: any;
-  } {
-    this.ensureSchema();
-    const settings = this.getSettings();
-    const profile = this.getUserProfile(userId);
-    const maxDaily = settings.dailyAttemptsLimit || 3;
-    const dailyAttemptsRemaining = Math.max(0, maxDaily - profile.dailyAttemptsUsed);
-
-    // Search activeSessions map and db
-    for (const [token, session] of this.activeSessions.entries()) {
-      if (session.userId === userId && session.status === 'active') {
-        // Check if overall session expired
-        const nowMs = Date.now();
-        if (nowMs > new Date(session.expiresAt).getTime()) {
-          session.status = 'expired';
-          session.cancelledReason = 'انتهت صلاحية الجلسة بالكامل';
-          this.activeSessions.delete(token);
-          db.save();
-          continue;
-        }
-
-        // Process any pending timed out questions up to now
-        while (session.currentIndex < session.questionIds.length) {
-          const qId = session.questionIds[session.currentIndex];
-          const qState = session.questionStates[qId];
-          const qExpiresMs = new Date(qState.questionExpiresAt).getTime();
-
-          if (nowMs > qExpiresMs + 1000) {
-            // This question has timed out while the user was away!
-            qState.state = 'timeout';
-            qState.selectedIndex = -1;
-            qState.isCorrect = false;
-            qState.rewardEarned = 0;
-            qState.xpEarned = 0;
-            qState.answeredAt = new Date(qExpiresMs).toISOString();
-
-            if (!session.answers.some(a => a.questionId === qId)) {
-              session.answers.push({
-                questionId: qId,
-                selectedIndex: -1,
-                isCorrect: false,
-                rewardEarned: 0,
-                xpEarned: 0,
-                state: 'timeout',
-                answeredAt: qState.answeredAt,
-              });
-            }
-
-            profile.wrongAnswersCount += 1;
-            const rawQ = this.getQuestionById(qId);
-            if (rawQ) {
-              rawQ.timesIncorrect = (rawQ.timesIncorrect || 0) + 1;
-            }
-
-            this.logChallengeActivity({
-              id: `act_to_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-              userId: session.userId,
-              challengeSessionId: session.id,
-              questionId: qId,
-              questionText: rawQ?.question,
-              result: 'timeout',
-              reward: 0,
-              xp: 0,
-              timestamp: new Date().toISOString(),
-            });
-
-            session.currentIndex += 1;
-            if (session.currentIndex < session.questionIds.length) {
-              const nextQId = session.questionIds[session.currentIndex];
-              const nextQState = session.questionStates[nextQId];
-              nextQState.state = 'active';
-              nextQState.questionStartedAt = new Date().toISOString();
-              nextQState.questionExpiresAt = new Date(Date.now() + (settings.timePerQuestionSeconds || 15) * 1000).toISOString();
-              session.currentQuestionStartedAt = nextQState.questionStartedAt;
-              session.currentQuestionExpiresAt = nextQState.questionExpiresAt;
-            }
-          } else {
-            // Still active with remaining time!
-            break;
-          }
-        }
-
-        db.save();
-
-        if (session.currentIndex >= session.questionIds.length) {
-          session.status = 'completed';
-          session.completedAt = new Date().toISOString();
-          const bonusXp = settings.challengeCompletionBonusXp || 100;
-          session.totalXpEarned += bonusXp;
-          profile.xp += bonusXp;
-          profile.challengesCompleted += 1;
-          this.updateUserProfile(session.userId, {});
-          this.activeSessions.delete(token);
-          db.save();
-
-          return {
-            hasActiveSession: false,
-            isCompleted: true,
-            sessionSummary: {
-              sessionId: session.id,
-              status: 'completed',
-              totalRewardEarned: session.totalRewardEarned,
-              totalXpEarned: session.totalXpEarned,
-              totalQuestions: session.questionIds.length,
-              correctAnswersCount: session.answers.filter(a => a.state === 'correct').length,
-              wrongAnswersCount: session.answers.filter(a => a.state === 'wrong').length,
-              timeoutCount: session.answers.filter(a => a.state === 'timeout').length,
-              currentTier: profile.currentTier,
-              newXp: profile.xp,
-              activeWalletBalance: this.getUserWallet(session.userId).activeBalance,
-            },
-          };
-        }
-
-        const currentQId = session.questionIds[session.currentIndex];
-        const currentQ = this.getQuestionById(currentQId);
-        const currentQState = session.questionStates[currentQId];
-
-        if (currentQ && currentQState) {
-          const remainingSec = Math.max(0, Math.ceil((new Date(currentQState.questionExpiresAt).getTime() - Date.now()) / 1000));
-          const clientQ = this.formatQuestionForClient(
-            currentQ,
-            session.currentIndex,
-            session.questionIds.length,
-            session.timeLimitSeconds,
-            currentQState.questionStartedAt,
-            currentQState.questionExpiresAt,
-            remainingSec,
-            currentQState.shuffledOptions
-          );
-
-          return {
-            hasActiveSession: true,
-            sessionToken: token,
-            sessionId: session.id,
-            currentQuestion: clientQ,
-            dailyAttemptsRemaining,
-            timeLimitSeconds: session.timeLimitSeconds,
-          };
-        }
-      }
-    }
-
+  public getSettings(): any {
     return {
-      hasActiveSession: false,
-      dailyAttemptsRemaining,
+      isEnabled: true,
+      questionsPerChallenge: 10,
+      timePerQuestionSeconds: 15,
+      dailyAttemptsLimit: 3,
+      rewardExpiryHours: 48,
+      maxWalletUsagePercent: 50,
+      autoShowChallengeOnEntry: false,
+      autoShowFrequency: 'once_per_session',
+      enableAchievements: true,
+      enableLeaderboard: true,
+      walletMinTopup: 5.0,
+      walletMaxBalance: 100.0,
+      tiers: [],
     };
   }
 
-  public startChallengeSession(
-    userId: string,
-    displayName = 'متسابق مكتبة الشاطئ الازرق'
-  ): { session: ChallengeSession; firstQuestion: any; dailyAttemptsRemaining: number; timeLimitSeconds: number } {
-    this.ensureSchema();
-    const settings = this.getSettings();
-
-    if (!settings.isEnabled) {
-      throw new Error('نظام التحديات والمكافآت متوقف حالياً من قبل إدارة المتجر');
-    }
-
-    // First check if user already has an active ongoing session that can be resumed
-    const activeCheck = this.getActiveSessionForUser(userId);
-    if (activeCheck.hasActiveSession && activeCheck.currentQuestion && activeCheck.sessionToken) {
-      const session = this.activeSessions.get(activeCheck.sessionToken)!;
-      return {
-        session,
-        firstQuestion: activeCheck.currentQuestion,
-        dailyAttemptsRemaining: activeCheck.dailyAttemptsRemaining || 0,
-        timeLimitSeconds: session.timeLimitSeconds || 15,
-      };
-    }
-
-    const profile = this.getUserProfile(userId, displayName);
-    const maxDaily = settings.dailyAttemptsLimit || 3;
-
-    if (profile.dailyAttemptsUsed >= maxDaily) {
-      throw new Error(`لقد استنفدت محاولاتك اليومية (${maxDaily} محاولات). يرجى العودة غداً لتحدٍ جديد!`);
-    }
-
-    // Pick active questions randomly
-    const activeQuestions = this.getQuestions().filter(q => q.isActive);
-    if (activeQuestions.length === 0) {
-      throw new Error('لا توجد أسئلة مفعلة حالياً في بنك الأسئلة');
-    }
-
-    const questionsCount = Math.min(settings.questionsPerChallenge || 10, activeQuestions.length);
-    const shuffled = [...activeQuestions].sort(() => 0.5 - Math.random());
-    const selected = shuffled.slice(0, questionsCount);
-
-    const sessionId = `chal_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
-    const sessionToken = `tok_${Math.random().toString(36).substring(2, 12)}_${Date.now()}`;
-    const startedAt = new Date().toISOString();
-    const timeLimitSec = settings.timePerQuestionSeconds || 15;
-    const expiresAt = new Date(Date.now() + (questionsCount * (timeLimitSec + 5) + 60) * 1000).toISOString();
-
-    const now = Date.now();
-    const firstQStartedAt = new Date(now).toISOString();
-    const firstQExpiresAt = new Date(now + timeLimitSec * 1000).toISOString();
-
-    const questionStates: Record<string, QuestionSessionState> = {};
-    selected.forEach((q, idx) => {
-      // Shuffle options for each question session so the client never knows the position
-      const originalOptions = q.options || [];
-      const originalCorrectIndex = q.correctAnswerIndex ?? 0;
-      const indexed = originalOptions.map((opt, i) => ({ opt, isCorrect: i === originalCorrectIndex }));
-      const shuffledIndexed = [...indexed].sort(() => 0.5 - Math.random());
-      const shuffledOptions = shuffledIndexed.map(x => x.opt);
-      const correctAnswerIndexInShuffled = shuffledIndexed.findIndex(x => x.isCorrect);
-
-      if (idx === 0) {
-        questionStates[q.id] = {
-          questionId: q.id,
-          state: 'active',
-          questionStartedAt: firstQStartedAt,
-          questionExpiresAt: firstQExpiresAt,
-          rewardEarned: 0,
-          xpEarned: 0,
-          shuffledOptions,
-          correctAnswerIndexInShuffled: correctAnswerIndexInShuffled !== -1 ? correctAnswerIndexInShuffled : 0,
-        };
-      } else {
-        questionStates[q.id] = {
-          questionId: q.id,
-          state: 'locked',
-          questionStartedAt: '',
-          questionExpiresAt: '',
-          rewardEarned: 0,
-          xpEarned: 0,
-          shuffledOptions,
-          correctAnswerIndexInShuffled: correctAnswerIndexInShuffled !== -1 ? correctAnswerIndexInShuffled : 0,
-        };
-      }
-    });
-
-    const session: ChallengeSession = {
-      id: sessionId,
-      userId,
-      sessionToken,
-      startedAt,
-      expiresAt,
-      questionIds: selected.map(q => q.id),
-      currentIndex: 0,
-      timeLimitSeconds: timeLimitSec,
-      currentQuestionStartedAt: firstQStartedAt,
-      currentQuestionExpiresAt: firstQExpiresAt,
-      questionStates,
-      answers: [],
-      totalRewardEarned: 0,
-      totalXpEarned: 0,
-      status: 'active',
-    };
-
-    this.activeSessions.set(sessionToken, session);
-    const rawData = (db as any).data;
-    rawData.challengeSessions[sessionId] = session;
-
-    // Increment daily attempts
-    profile.dailyAttemptsUsed += 1;
-    profile.challengesPlayed += 1;
-    db.save();
-
-    db.logActivity('بدء تحدي جديد', 'system', `بدأ المستخدم (${profile.displayName}) جولة تحدٍ جديدة [${questionsCount} أسئلة - معرف الجلسة: ${sessionId}]`, 'info');
-
-    // Update question shown count
-    selected.forEach(q => {
-      q.timesShown = (q.timesShown || 0) + 1;
-    });
-    db.save();
-
-    const firstQState = questionStates[selected[0].id];
-    const firstQ = this.formatQuestionForClient(
-      selected[0],
-      0,
-      selected.length,
-      session.timeLimitSeconds,
-      firstQStartedAt,
-      firstQExpiresAt,
-      timeLimitSec,
-      firstQState?.shuffledOptions
-    );
-
-    return {
-      session,
-      firstQuestion: firstQ,
-      dailyAttemptsRemaining: Math.max(0, maxDaily - profile.dailyAttemptsUsed),
-      timeLimitSeconds: session.timeLimitSeconds,
-    };
+  public updateSettings(_settings: any): any {
+    return this.getSettings();
   }
 
-  public submitAnswer(
-    sessionToken: string,
-    questionId: string,
-    selectedIndex: number,
-    timeTakenSeconds = 0
-  ): {
-    success: boolean;
-    isCorrect: boolean;
-    isTimeout: boolean;
-    rewardEarned: number;
-    xpEarned: number;
-    nextQuestion: any | null;
-    isCompleted: boolean;
-    sessionSummary?: any;
-    message?: string;
-  } {
-    this.ensureSchema();
-    const session = this.activeSessions.get(sessionToken);
-    if (!session) {
-      // Check if session was already completed
-      const rawSessions = (db as any).data.challengeSessions || {};
-      const completedSession = Object.values(rawSessions).find((s: any) => s.sessionToken === sessionToken) as ChallengeSession | undefined;
-      if (completedSession && completedSession.status === 'completed') {
-        const profile = this.getUserProfile(completedSession.userId);
-        return {
-          success: true,
-          isCorrect: false,
-          isTimeout: false,
-          rewardEarned: 0,
-          xpEarned: 0,
-          nextQuestion: null,
-          isCompleted: true,
-          sessionSummary: {
-            sessionId: completedSession.id,
-            status: 'completed',
-            totalRewardEarned: completedSession.totalRewardEarned,
-            totalXpEarned: completedSession.totalXpEarned,
-            totalQuestions: completedSession.questionIds.length,
-            correctAnswersCount: completedSession.answers.filter(a => a.state === 'correct').length,
-            wrongAnswersCount: completedSession.answers.filter(a => a.state === 'wrong').length,
-            timeoutCount: completedSession.answers.filter(a => a.state === 'timeout').length,
-            currentTier: profile.currentTier,
-            newXp: profile.xp,
-            activeWalletBalance: this.getUserWallet(completedSession.userId).activeBalance,
-          },
-        };
-      }
-      throw new Error('جلسة التحدي غير صالحة أو تم إنهاؤها مسبقاً');
-    }
-
-    if (session.status !== 'active') {
-      throw new Error('هذه الجلسة غير نشطة أو مكتملة بالفعل');
-    }
-
-    const settings = this.getSettings();
-    const profile = this.getUserProfile(session.userId);
-
-    // Check overall session expiry
-    if (Date.now() > new Date(session.expiresAt).getTime()) {
-      session.status = 'expired';
-      session.cancelledReason = 'انتهت صلاحية الجلسة';
-      this.activeSessions.delete(sessionToken);
-      db.save();
-      throw new Error('انتهت صلاحية الجلسة المسموحة');
-    }
-
-    const currentQuestionId = session.questionIds[session.currentIndex];
-    if (currentQuestionId !== questionId) {
-      // If questionId corresponds to a previous question already answered:
-      // Return previous result idempotently without re-rewarding!
-      const previousState = session.questionStates[questionId];
-      if (previousState && (previousState.state === 'correct' || previousState.state === 'wrong' || previousState.state === 'timeout')) {
-        const raw = (db as any).data;
-        raw.rejectedOrDuplicateCount = (raw.rejectedOrDuplicateCount || 0) + 1;
-        this.logChallengeActivity({
-          id: `act_dup_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-          userId: session.userId,
-          challengeSessionId: session.id,
-          questionId,
-          result: 'rejected_duplicate',
-          reward: 0,
-          xp: 0,
-          timestamp: new Date().toISOString(),
-        });
-        db.save();
-
-        const currentActiveQ = this.getQuestionById(currentQuestionId);
-        const currentActiveState = session.questionStates[currentQuestionId];
-        const remainingSec = currentActiveState
-          ? Math.max(0, Math.ceil((new Date(currentActiveState.questionExpiresAt).getTime() - Date.now()) / 1000))
-          : 0;
-
-        return {
-          success: true,
-          isCorrect: previousState.isCorrect || false,
-          isTimeout: previousState.state === 'timeout',
-          rewardEarned: 0, // NO EXTRA REWARD
-          xpEarned: 0,
-          nextQuestion: currentActiveQ && currentActiveState
-            ? this.formatQuestionForClient(
-                currentActiveQ,
-                session.currentIndex,
-                session.questionIds.length,
-                session.timeLimitSeconds,
-                currentActiveState.questionStartedAt,
-                currentActiveState.questionExpiresAt,
-                remainingSec,
-                currentActiveState.shuffledOptions
-              )
-            : null,
-          isCompleted: false,
-          message: 'تم تسجيل هذا السؤال مسبقاً',
-        };
-      }
-
-      throw new Error('رقم السؤال غير مطابق لترتيب الجلسة الحالي');
-    }
-
-    const qState = session.questionStates[questionId];
-    if (!qState) {
-      throw new Error('حالة السؤال غير موجودة في الجلسة');
-    }
-
-    // IDEMPOTENCY CHECK: If already answered in this session
-    if (qState.state === 'correct' || qState.state === 'wrong' || qState.state === 'timeout') {
-      const raw = (db as any).data;
-      raw.rejectedOrDuplicateCount = (raw.rejectedOrDuplicateCount || 0) + 1;
-      this.logChallengeActivity({
-        id: `act_dup_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-        userId: session.userId,
-        challengeSessionId: session.id,
-        questionId,
-        result: 'rejected_duplicate',
-        reward: 0,
-        xp: 0,
-        timestamp: new Date().toISOString(),
-      });
-      db.save();
-
-      return {
-        success: true,
-        isCorrect: qState.isCorrect || false,
-        isTimeout: qState.state === 'timeout',
-        rewardEarned: 0, // STRICTLY ZERO on re-submission
-        xpEarned: 0,
-        nextQuestion: null,
-        isCompleted: session.currentIndex >= session.questionIds.length - 1,
-        message: 'تم إرسال إجابة هذا السؤال مسبقاً',
-      };
-    }
-
-    const question = this.getQuestionById(questionId);
-    if (!question) {
-      throw new Error('السؤال غير موجود في بنك الأسئلة');
-    }
-
-    // SERVER-SIDE TIMING VERIFICATION
-    const nowMs = Date.now();
-    const expiresMs = new Date(qState.questionExpiresAt).getTime();
-    // 1000ms grace period for network latency
-    const isTimeout = (nowMs > expiresMs + 1000) || selectedIndex === -1 || selectedIndex === null || selectedIndex === undefined;
-
-    let isCorrect = false;
-    let rewardEarned = 0;
-    let xpEarned = 0;
-
-    if (isTimeout) {
-      // TIMEOUT OCCURRED: Reward MUST BE 0 regardless of selected option
-      qState.state = 'timeout';
-      qState.selectedIndex = -1;
-      qState.isCorrect = false;
-      qState.rewardEarned = 0;
-      qState.xpEarned = 0;
-      qState.answeredAt = new Date().toISOString();
-
-      session.answers.push({
-        questionId,
-        selectedIndex: -1,
-        isCorrect: false,
-        rewardEarned: 0,
-        xpEarned: 0,
-        state: 'timeout',
-        answeredAt: qState.answeredAt,
-      });
-
-      profile.wrongAnswersCount += 1;
-      question.timesIncorrect = (question.timesIncorrect || 0) + 1;
-
-      this.logChallengeActivity({
-        id: `act_to_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-        userId: session.userId,
-        challengeSessionId: session.id,
-        questionId,
-        questionText: question.question,
-        result: 'timeout',
-        reward: 0,
-        xp: 0,
-        timestamp: qState.answeredAt,
-      });
-    } else {
-      // ANSWERED WITHIN TIME
-      const expectedIndex = qState.correctAnswerIndexInShuffled !== undefined
-        ? qState.correctAnswerIndexInShuffled
-        : question.correctAnswerIndex;
-      isCorrect = selectedIndex === expectedIndex;
-      qState.selectedIndex = selectedIndex;
-      qState.isCorrect = isCorrect;
-      qState.answeredAt = new Date().toISOString();
-
-      if (isCorrect) {
-        qState.state = 'correct';
-        // Calculate strictly from server settings/question
-        rewardEarned = Number((question.rewardAmount || settings.defaultRewardAmount || 0.500).toFixed(3));
-        xpEarned = question.xpAmount || settings.defaultXpPerCorrectAnswer || 25;
-        qState.rewardEarned = rewardEarned;
-        qState.xpEarned = xpEarned;
-
-        const txId = `tx_rw_${session.id}_${questionId}_${Date.now()}`;
-        qState.transactionId = txId;
-
-        session.answers.push({
-          questionId,
-          selectedIndex,
-          isCorrect: true,
-          rewardEarned,
-          xpEarned,
-          state: 'correct',
-          answeredAt: qState.answeredAt,
-          transactionId: txId,
-        });
-
-        session.totalRewardEarned = Number((session.totalRewardEarned + rewardEarned).toFixed(3));
-        session.totalXpEarned += xpEarned;
-
-        profile.correctAnswersCount += 1;
-        profile.xp += xpEarned;
-        question.timesCorrect = (question.timesCorrect || 0) + 1;
-
-        // Credit wallet idempotently with unique transaction reference
-        const qStr = typeof question.question === 'string' ? question.question : (question.question?.ar || question.question?.en || '');
-        this.addWalletReward(
-          session.userId,
-          rewardEarned,
-          'challenge',
-          session.id,
-          `مكافأة الإجابة الصحيحة للسؤال: ${qStr.substring(0, 25)}...`
-        );
-
-        this.logChallengeActivity({
-          id: txId,
-          userId: session.userId,
-          challengeSessionId: session.id,
-          questionId,
-          questionText: question.question,
-          result: 'correct',
-          reward: rewardEarned,
-          xp: xpEarned,
-          timestamp: qState.answeredAt,
-        });
-      } else {
-        qState.state = 'wrong';
-        qState.rewardEarned = 0;
-        qState.xpEarned = 0;
-
-        session.answers.push({
-          questionId,
-          selectedIndex,
-          isCorrect: false,
-          rewardEarned: 0,
-          xpEarned: 0,
-          state: 'wrong',
-          answeredAt: qState.answeredAt,
-        });
-
-        profile.wrongAnswersCount += 1;
-        question.timesIncorrect = (question.timesIncorrect || 0) + 1;
-
-        this.logChallengeActivity({
-          id: `act_wr_${Date.now()}_${Math.random().toString(36).substring(2, 6)}`,
-          userId: session.userId,
-          challengeSessionId: session.id,
-          questionId,
-          questionText: question.question,
-          result: 'wrong',
-          reward: 0,
-          xp: 0,
-          timestamp: qState.answeredAt,
-        });
-      }
-    }
-
-    this.updateUserProfile(session.userId, {}); // Tier evaluation & achievements
-
-    // ADVANCE QUESTION OR COMPLETE
-    session.currentIndex += 1;
-    const isCompleted = session.currentIndex >= session.questionIds.length;
-
-    let nextQuestion = null;
-    let sessionSummary = undefined;
-
-    if (!isCompleted) {
-      const nextQId = session.questionIds[session.currentIndex];
-      const nextQ = this.getQuestionById(nextQId);
-      const nextQState = session.questionStates[nextQId];
-
-      if (nextQ && nextQState) {
-        const nextNow = Date.now();
-        const nextTimeLimit = session.timeLimitSeconds || 15;
-        nextQState.state = 'active';
-        nextQState.questionStartedAt = new Date(nextNow).toISOString();
-        nextQState.questionExpiresAt = new Date(nextNow + nextTimeLimit * 1000).toISOString();
-        session.currentQuestionStartedAt = nextQState.questionStartedAt;
-        session.currentQuestionExpiresAt = nextQState.questionExpiresAt;
-
-        nextQuestion = this.formatQuestionForClient(
-          nextQ,
-          session.currentIndex,
-          session.questionIds.length,
-          session.timeLimitSeconds,
-          nextQState.questionStartedAt,
-          nextQState.questionExpiresAt,
-          nextTimeLimit,
-          nextQState.shuffledOptions
-        );
-      }
-    } else {
-      // Challenge Complete!
-      session.status = 'completed';
-      session.completedAt = new Date().toISOString();
-      const completionBonusXp = settings.challengeCompletionBonusXp || 100;
-      session.totalXpEarned += completionBonusXp;
-      profile.xp += completionBonusXp;
-      profile.challengesCompleted += 1;
-
-      this.updateUserProfile(session.userId, {});
-      this.activeSessions.delete(sessionToken);
-
-      db.logActivity(
-        'إكمال التحدي بنجاح',
-        'system',
-        `أكمل المستخدم (${profile.displayName}) التحدي برصيد ${session.totalRewardEarned.toFixed(3)} د.ك و ${session.totalXpEarned} XP [جلسة: ${session.id}]`,
-        'success'
-      );
-
-      const wallet = this.getUserWallet(session.userId);
-      sessionSummary = {
-        sessionId: session.id,
-        status: 'completed',
-        totalRewardEarned: session.totalRewardEarned,
-        totalXpEarned: session.totalXpEarned,
-        totalQuestions: session.questionIds.length,
-        correctAnswersCount: session.answers.filter(a => a.state === 'correct').length,
-        wrongAnswersCount: session.answers.filter(a => a.state === 'wrong').length,
-        timeoutCount: session.answers.filter(a => a.state === 'timeout').length,
-        currentTier: profile.currentTier,
-        newXp: profile.xp,
-        activeWalletBalance: wallet.activeBalance,
-      };
-    }
-
-    db.save();
-
-    return {
-      success: true,
-      isCorrect,
-      isTimeout,
-      rewardEarned,
-      xpEarned,
-      nextQuestion,
-      isCompleted,
-      sessionSummary,
-    };
+  public getQuestions(): any[] {
+    return [];
   }
 
-  public cancelChallengeSession(sessionToken: string, reason = 'مغادرة صفحة التحدي'): boolean {
-    const session = this.activeSessions.get(sessionToken);
-    if (session && session.status === 'active') {
-      session.status = 'cancelled';
-      session.cancelledReason = reason;
-      this.activeSessions.delete(sessionToken);
-      db.logActivity('إلغاء التحدي', 'system', `تم إلغاء جولة التحدي للمستخدم (${session.userId}) بسبب: ${reason}`, 'warning');
-      db.save();
-      return true;
-    }
-    return false;
+  public upsertQuestion(question: any): any {
+    return question;
   }
 
-  // --- Log Challenge Activity ---
-  private logChallengeActivity(item: ChallengeActivityItem): void {
-    const raw = (db as any).data;
-    if (!Array.isArray(raw.challengeActivityLogs)) {
-      raw.challengeActivityLogs = [];
-    }
-    raw.challengeActivityLogs.unshift(item);
-    // Keep last 500 items
-    if (raw.challengeActivityLogs.length > 500) {
-      raw.challengeActivityLogs = raw.challengeActivityLogs.slice(0, 500);
-    }
+  public deleteQuestion(_id: string): boolean {
+    return true;
   }
 
-  // --- Client Safe Question Formatter ---
-  private formatQuestionForClient(
-    question: QuizQuestion,
-    index: number,
-    total: number,
-    timeLimit: number,
-    startedAt?: string,
-    expiresAt?: string,
-    remainingSeconds?: number,
-    customOptions?: LocalizedText[]
-  ) {
-    return {
-      questionId: question.id,
-      questionIndex: index + 1,
-      totalQuestions: total,
-      question: question.question,
-      options: customOptions && customOptions.length > 0 ? customOptions : question.options,
-      rewardAmount: question.rewardAmount,
-      xpAmount: question.xpAmount,
-      timeLimitSeconds: timeLimit,
-      questionStartedAt: startedAt,
-      questionExpiresAt: expiresAt,
-      remainingSeconds: remainingSeconds !== undefined ? remainingSeconds : timeLimit,
-      serverTime: new Date().toISOString(),
-      category: question.category,
-      difficulty: question.difficulty,
-    };
+  public getActiveSessionForUser(_userId: string): any {
+    return { activeSession: null };
   }
 
-  // --- Achievements Checker ---
-  private checkUserAchievements(profile: UserProfile): void {
-    const achievements: Achievement[] = (db as any).data.achievements || [];
-    const unlocked = new Set(profile.unlockedAchievementIds || []);
-
-    achievements.forEach(ach => {
-      if (unlocked.has(ach.id) || !ach.isActive) return;
-
-      let meets = false;
-      if (ach.id === 'ach_first_challenge' && profile.challengesPlayed >= 1) meets = true;
-      if (ach.id === 'ach_first_correct' && profile.correctAnswersCount >= 1) meets = true;
-      if (ach.id === 'ach_10_correct' && profile.correctAnswersCount >= 10) meets = true;
-      if (ach.id === 'ach_50_correct' && profile.correctAnswersCount >= 50) meets = true;
-      if (ach.id === 'ach_silver_level' && profile.xp >= 100) meets = true;
-      if (ach.id === 'ach_gold_level' && profile.xp >= 500) meets = true;
-      if (ach.id === 'ach_diamond_level' && profile.xp >= 5000) meets = true;
-      if (ach.id === 'ach_earned_5kwd' && profile.totalRewardsEarnedKwd >= 5.0) meets = true;
-      if (ach.id === 'ach_wallet_first_order' && profile.totalRewardsUsedKwd > 0) meets = true;
-
-      if (meets) {
-        unlocked.add(ach.id);
-        profile.xp += ach.rewardXp || 0;
-        if (ach.rewardKwd && ach.rewardKwd > 0) {
-          this.addWalletReward(profile.id, ach.rewardKwd, 'achievement', ach.id, `مكافأة إنجاز: ${ach.title}`);
-        }
-        db.logActivity('فتح إنجاز جديد', 'system', `المستخدم (${profile.displayName}) حقق إنجاز: [${ach.title}]`, 'success');
-      }
-    });
-
-    profile.unlockedAchievementIds = Array.from(unlocked);
+  public startChallengeSession(_userId: string, _displayName?: string): any {
+    return { success: false, error: 'تم استبدال نظام الألعاب القديم بنظام نقاط XP والمواسم.' };
   }
 
-  // --- Leaderboard ---
-  public getLeaderboard(): LeaderboardEntry[] {
-    this.ensureSchema();
-    const settings = this.getSettings();
-    if (!settings.enableLeaderboard) return [];
-
-    const raw = (db as any).data;
-    const profiles: UserProfile[] = Object.values(raw.userProfiles || {});
-
-    return profiles
-      .sort((a, b) => b.xp - a.xp)
-      .slice(0, 20)
-      .map((p, idx) => {
-        const safeName = p.displayName.length > 3 ? `${p.displayName.substring(0, 6)}...` : p.displayName;
-        const tier = settings.tiers?.find(t => t.name === p.currentTier) || defaultTiers[0];
-        return {
-          rank: idx + 1,
-          displayName: safeName || `متسابق #${idx + 1}`,
-          tierName: p.currentTier,
-          badgeColor: tier.badgeColor,
-          xp: p.xp,
-          completedChallenges: p.challengesCompleted,
-        };
-      });
+  public submitAnswer(..._args: any[]): any {
+    return { success: false, error: 'تم استبدال نظام الألعاب القديم بنظام نقاط XP والمواسم.' };
   }
 
-  // --- Analytics & Statistics for Admin ---
-  public getGamificationStats() {
-    this.ensureSchema();
-    const raw = (db as any).data;
-    const questions: QuizQuestion[] = raw.questions || [];
-    const profiles: UserProfile[] = Object.values(raw.userProfiles || {});
-    const wallets: UserWallet[] = Object.values(raw.wallets || {});
-    const activityLogs: ChallengeActivityItem[] = raw.challengeActivityLogs || [];
-    const rejectedOrDuplicateCount: number = raw.rejectedOrDuplicateCount || 0;
+  public cancelChallengeSession(..._args: any[]): void {}
 
-    let totalRewardGranted = 0;
-    let totalRewardUsed = 0;
-    let totalRewardExpired = 0;
-
-    wallets.forEach(w => {
-      totalRewardGranted += w.totalEarned || 0;
-      totalRewardUsed += w.usedBalance || 0;
-      totalRewardExpired += w.expiredBalance || 0;
-    });
-
-    const totalCorrect = questions.reduce((sum, q) => sum + (q.timesCorrect || 0), 0);
-    const totalIncorrect = questions.reduce((sum, q) => sum + (q.timesIncorrect || 0), 0);
-    const totalShown = questions.reduce((sum, q) => sum + (q.timesShown || 0), 0);
-
-    const totalTimeout = activityLogs.filter(a => a.result === 'timeout').length;
-    const totalChallengesPlayed = profiles.reduce((sum, p) => sum + (p.challengesPlayed || 0), 0);
-    const totalChallengesCompleted = profiles.reduce((sum, p) => sum + (p.challengesCompleted || 0), 0);
-    const totalDailyAttempts = profiles.reduce((sum, p) => sum + (p.dailyAttemptsUsed || 0), 0);
-
-    const mostSuccessfulQuestions = [...questions]
-      .filter(q => (q.timesShown || 0) > 0)
-      .sort((a, b) => ((b.timesCorrect || 0) / (b.timesShown || 1)) - ((a.timesCorrect || 0) / (a.timesShown || 1)))
-      .slice(0, 5);
-
-    const hardestQuestions = [...questions]
-      .filter(q => (q.timesShown || 0) > 0)
-      .sort((a, b) => ((b.timesIncorrect || 0) / (b.timesShown || 1)) - ((a.timesIncorrect || 0) / (a.timesShown || 1)))
-      .slice(0, 5);
-
-    const mostActiveUsers = [...profiles]
-      .sort((a, b) => b.xp - a.xp)
-      .slice(0, 10);
-
-    return {
-      totalChallengesPlayed,
-      totalChallengesCompleted,
-      totalParticipatingUsers: profiles.length,
-      totalCorrectAnswers: totalCorrect,
-      totalWrongAnswers: totalIncorrect,
-      totalTimeoutAnswers: totalTimeout,
-      correctRatePercent: totalShown > 0 ? Number(((totalCorrect / totalShown) * 100).toFixed(1)) : 0,
-      totalRewardsDistributedKwd: Number(totalRewardGranted.toFixed(3)),
-      totalRewardsUsedInOrdersKwd: Number(totalRewardUsed.toFixed(3)),
-      totalRewardsExpiredKwd: Number(totalRewardExpired.toFixed(3)),
-      totalRejectedOrDuplicateTransactions: rejectedOrDuplicateCount,
-      totalDailyAttempts,
-      totalXpEarned: profiles.reduce((sum, p) => sum + (p.xp || 0), 0),
-      recentActivities: activityLogs.slice(0, 50),
-      mostSuccessfulQuestions,
-      hardestQuestions,
-      mostActiveUsers,
-    };
-  }
-
-  // --- Admin User Management Helpers ---
-  public getAllUsersSummary(): any[] {
-    this.ensureSchema();
-    const raw = (db as any).data;
-    const profiles: UserProfile[] = Object.values(raw.userProfiles || {});
-    return profiles.map(p => {
-      const wallet = this.getUserWallet(p.id);
-      return {
-        id: p.id,
-        displayName: p.displayName || 'مستخدم',
-        email: p.email,
-        phone: p.phoneNumber,
-        role: p.role || 'user',
-        currentTier: p.currentTier || 'المستوى البرونزي',
-        xp: p.xp || 0,
-        activeWalletBalance: Number((wallet.activeBalance || 0).toFixed(3)),
-        totalRewardsEarnedKwd: Number((wallet.totalEarned || 0).toFixed(3)),
-        totalRewardsUsedKwd: Number((wallet.usedBalance || 0).toFixed(3)),
-        challengesPlayed: p.challengesPlayed || 0,
-        challengesCompleted: p.challengesCompleted || 0,
-        lastLoginAt: p.lastLoginAt,
-        createdAt: p.createdAt || new Date().toISOString(),
-      };
+  public logSecurityEvent(event: any): void {
+    this.logAudit({
+      userId: event.userId || 'system',
+      activity: event.action || 'SECURITY_EVENT',
+      source: 'SECURITY',
+      xp: event.reward || 0,
+      reason: event.details || '',
+      ip: event.ip,
+      userAgent: event.userAgent,
     });
   }
 
-  public getUserAdminDetail(userId: string) {
-    this.ensureSchema();
-    const profile = this.getUserProfile(userId);
-    const wallet = this.getUserWallet(userId);
-    const raw = (db as any).data;
-    const activityLogs: ChallengeActivityItem[] = (raw.challengeActivityLogs || []).filter((a: any) => a.userId === userId);
-    const achievements: Achievement[] = (raw.achievements || []).map((ach: Achievement) => ({
-      ...ach,
-      isUnlocked: (profile.unlockedAchievementIds || []).includes(ach.id),
+  public getSecurityLogs(_userId?: string): any[] {
+    return this.data.auditLogs.map(l => ({
+      id: `sec_${l.id}`,
+      userId: l.userId,
+      ip: l.ip || '127.0.0.1',
+      userAgent: l.userAgent || '',
+      action: l.activity,
+      result: l.validationStatus,
+      details: l.reason,
+      createdAt: l.date,
     }));
-    const orders = db.getOrders().filter(o => (profile.phoneNumber && o.customerPhone === profile.phoneNumber) || (profile.displayName && o.customerName.includes(profile.displayName)));
+  }
 
+  public getSecurityEvents(): any[] {
+    return this.getSecurityLogs();
+  }
+
+  public getAllUsersSummary(): any[] {
+    return Object.values(this.data.userXp).map(u => {
+      const wallet = this.getUserWallet(u.userId);
+      const totalPlays = Object.values(u.dailyGameAttempts || {}).reduce(
+        (sum, day) => sum + Object.values(day).reduce((s, n) => s + n, 0),
+        0
+      );
+      return {
+        userId: u.userId,
+        displayName: u.displayName,
+        totalXp: u.totalXp,
+        level: u.level,
+        activeWalletBalance: wallet.activeBalance,
+        challengesPlayed: totalPlays,
+        lastActive: u.updatedAt,
+      };
+    });
+  }
+
+  public getAllUsers(): any[] {
+    return this.getAllUsersSummary();
+  }
+
+  public getUserAdminDetail(userId: string): any {
+    const profile = this.getUserProfile(userId);
+    const wallet = this.getUserWallet(userId);
+    const userXp = this.getUserXp(userId);
     return {
       profile,
       wallet,
-      activityLogs,
-      achievements,
-      orders,
+      userXp,
+      history: this.data.xpTransactions.filter(t => t.userId === userId),
+    };
+  }
+
+  public getUserDetail(userId: string): any {
+    return this.getUserAdminDetail(userId);
+  }
+
+  public getGamificationStats(): any {
+    const overview = this.getOverviewStats();
+    return {
+      totalParticipants: overview.leaderboardUsersCount,
+      totalGamesPlayed: overview.gamesPlayedTotal,
+      totalXpGranted: overview.xpEarnedTotal,
+      activeSeasonPlayers: overview.seasonParticipationCount,
     };
   }
 }
 
 export const gamificationEngine = new GamificationEngine();
-

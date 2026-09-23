@@ -215,6 +215,142 @@ export interface StoreSettings {
 
 export type LocalizedText = string | { ar: string; en: string };
 
+// ==========================================
+// NEW UNIFIED XP & GAMIFICATION SYSTEM TYPES
+// ==========================================
+
+export interface Season {
+  id: string;
+  nameAr: string;
+  nameEn: string;
+  startDate: string;
+  endDate: string;
+  status: 'active' | 'upcoming' | 'completed' | 'archived';
+  numberOfWinners: number;
+  prizeDescriptionAr: string;
+  prizeDescriptionEn: string;
+  top3Winners?: Array<{
+    rank: number;
+    userId: string;
+    displayName: string;
+    email?: string;
+    phone?: string;
+    xp: number;
+    level: number;
+    confirmedAt?: string;
+    deliveredAt?: string;
+  }>;
+  isLocked?: boolean;
+  lockedAt?: string;
+  createdAt: string;
+}
+
+export interface GameConfig {
+  id: string;
+  enabled: boolean;
+  nameAr: string;
+  nameEn: string;
+  descriptionAr: string;
+  descriptionEn: string;
+  howToPlayAr: string;
+  howToPlayEn: string;
+  startButtonTextAr: string;
+  startButtonTextEn: string;
+  icon: string;
+  dailyAttemptsLimit: number;
+  xpPerAction: number;
+  sortOrder: number;
+  introEnabled: boolean;
+}
+
+export interface XpRulesConfig {
+  dailyLoginXp: number;
+  productViewXp: number;
+  dailyProductBrowsingCap: number;
+  reviewXpAmount: number;
+  reviewMinCommentLength: number;
+  reviewXpEligibilityMode: 'PURCHASED_PRODUCTS_ONLY' | 'ANY_PRODUCT';
+  dailyXpCap: number;
+  globalDailyGameAttempts: number;
+}
+
+export interface DailyChallengeConfig {
+  id: string;
+  titleAr: string;
+  titleEn: string;
+  descriptionAr: string;
+  descriptionEn: string;
+  type: 'PLAY_GAME' | 'REVIEW_PRODUCT' | 'VIEW_PRODUCTS' | 'DAILY_LOGIN' | 'ALL_COMPLETE';
+  requiredCount: number;
+  xpReward: number;
+  enabled: boolean;
+}
+
+export interface UserXPRecord {
+  userId: string;
+  displayName: string;
+  totalXp: number;
+  level: number;
+  seasonXp: Record<string, number>;
+  dailyXp: Record<string, number>;
+  dailyGameAttempts: Record<string, Record<string, number>>;
+  dailyLogin: Record<string, boolean>;
+  dailyProductBrowsingXp: Record<string, number>;
+  dailyProductReviewXp: Record<string, { xp: number; reviewId?: string; productId?: string }>;
+  dailyChallengeProgress: Record<string, Record<string, boolean>>;
+  updatedAt: string;
+}
+
+export interface XpTransaction {
+  id: string;
+  userId: string;
+  seasonId: string;
+  sourceType: 'GAME' | 'DAILY_LOGIN' | 'PRODUCT_VIEW' | 'PRODUCT_REVIEW' | 'PRODUCT_RATING' | 'DAILY_CHALLENGE' | 'OTHER_ALLOWED_ACTIVITY';
+  sourceId: string;
+  amount: number;
+  timestamp: string;
+  metadata?: any;
+  validationStatus: 'VALID' | 'REJECTED' | 'CAP_EXCEEDED';
+  reason?: string;
+}
+
+export interface ActivityAuditLog {
+  id: string;
+  userId: string;
+  activity: string;
+  source: string;
+  xp: number;
+  date: string;
+  validationStatus: string;
+  reason: string;
+  ip?: string;
+  userAgent?: string;
+}
+
+export interface LeaderboardUserEntry {
+  rank: number;
+  displayName: string;
+  level: number;
+  seasonXp: number;
+  userId: string;
+  isCurrentUser?: boolean;
+}
+
+export interface GamificationOverviewStats {
+  dailyActivePlayers: number;
+  gamesPlayedTotal: number;
+  xpEarnedTotal: number;
+  reviewsSubmittedTotal: number;
+  xpFromReviewsTotal: number;
+  productViewsFromGamification: number;
+  dailyChallengeCompletions: number;
+  leaderboardUsersCount: number;
+  seasonParticipationCount: number;
+  topGames: Array<{ gameId: string; nameAr: string; nameEn: string; plays: number }>;
+  averageGamesPerUser: number;
+  averageXpPerUser: number;
+}
+
 export interface QuizQuestion {
   id: string;
   question: LocalizedText;

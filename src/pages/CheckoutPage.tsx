@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Truck, CheckCircle2, Lock, AlertCircle, ShoppingBag, MessageCircle, MapPin, Wallet, Coins, Plus, Minus, Trash2, X, Star, Bookmark, Gift } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useGamification } from '../context/GamificationContext';
-import { useFreeChallenge } from '../context/FreeChallengeContext';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
 import * as api from '../lib/api';
@@ -34,7 +33,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
   const { cart, removeItem, updateItemQuantity, showToast } = useCart();
   const { userId, wallet, settings, refreshGamification } = useGamification();
   const { user, userProfile } = useAuth();
-  const { challengeResult } = useFreeChallenge();
   const { dir, isRtl, language, t, formatPrice, translateProductTitle } = useLanguage();
 
   const effectiveUserId = user?.uid || userProfile?.id || userId || localStorage.getItem('mq_user_id') || 'guest';
@@ -124,13 +122,9 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
   const items = cart?.items || [];
   const subtotal = cart?.subtotal || 0;
 
-  // Challenge reward discount (if from wheel discount)
-  let challengeDiscount = 0;
-  if (challengeResult?.discountWon?.percentage) {
-    challengeDiscount = Number(((subtotal * challengeResult.discountWon.percentage) / 100).toFixed(3));
-  }
-
-  const remainingAfterChallenge = Math.max(0, subtotal - (cart?.discount || 0) - challengeDiscount);
+  // Challenge reward discount
+  const challengeDiscount = 0;
+  const remainingAfterChallenge = Math.max(0, subtotal - (cart?.discount || 0));
 
   const activeWalletBalance = wallet?.activeBalance ?? 0;
   const maxUsagePercent = settings?.maxWalletUsagePercent || 100;
@@ -215,8 +209,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
         notes: notes.trim() || undefined,
         paymentMethod,
         useWalletBalance: applicableWalletDiscount > 0,
-        challengeId: challengeResult?.challengeId,
-        voucherCode: challengeResult?.discountWon?.token,
       });
 
       if (res.success && res.order) {
@@ -299,24 +291,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
           </a>
         </div>
       </div>
-
-      {challengeResult?.discountWon && !challengeResult.won && (
-        <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-500 to-yellow-600 text-slate-950 shadow-md border border-amber-300 flex items-center gap-3">
-          <Gift className="w-6 h-6 text-slate-950 shrink-0" />
-          <div className={isRtl ? 'text-right' : 'text-left'}>
-            <h3 className="text-xs font-black">
-              {isRtl
-                ? `جائزة عجلة التحدي مفعلة: خصم ${challengeResult.discountWon.percentage}% على طلبك!`
-                : `Challenge Wheel reward active: ${challengeResult.discountWon.percentage}% off your order!`}
-            </h3>
-            <p className="text-[11px] text-slate-900 font-medium mt-0.5">
-              {isRtl
-                ? 'تم تطبيق الخصم فوراً على سلتك تقديراً لمشاركتك في التحدي.'
-                : 'Discount applied immediately to your cart in recognition of your challenge play.'}
-            </p>
-          </div>
-        </div>
-      )}
 
       {errorMsg && (
         <div className="p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-xs font-bold flex items-center gap-2">
@@ -782,20 +756,6 @@ export const CheckoutPage: React.FC<CheckoutPageProps> = ({ onNavigate }) => {
                   <span className="font-bold">-{formatPrice(cart.discount)}</span>
                 </div>
               ) : null}
-
-              {challengeDiscount > 0 && (
-                <div className="flex items-center justify-between text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
-                  <span className="flex items-center gap-1">
-                    <Gift className="w-3.5 h-3.5 text-emerald-600" />
-                    <span>
-                      {isRtl
-                        ? `خصم عجلة التحدي (${challengeResult?.discountWon?.percentage}%):`
-                        : `Wheel Discount (${challengeResult?.discountWon?.percentage}%):`}
-                    </span>
-                  </span>
-                  <span>-{formatPrice(challengeDiscount)}</span>
-                </div>
-              )}
 
               {applicableWalletDiscount > 0 && (
                 <div className="flex items-center justify-between text-emerald-600 font-medium">
