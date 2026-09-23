@@ -32,6 +32,9 @@ export const AdminPromotions: React.FC<AdminPromotionsProps> = ({ showToast }) =
   const [previewLang, setPreviewLang] = useState<'ar' | 'en'>('ar');
   const [previewSampleName, setPreviewSampleName] = useState('عبدالرحمن');
 
+  // Input String State for Discount Value to avoid "0" coercion bugs and support "2.500", "10", empty, etc.
+  const [discountValueInput, setDiscountValueInput] = useState<string>('15');
+
   // Form State
   const [formData, setFormData] = useState<PromotionSettings>({
     enabled: true,
@@ -52,6 +55,24 @@ export const AdminPromotions: React.FC<AdminPromotionsProps> = ({ showToast }) =
     frequency: 'session_once',
   });
 
+  const normalizeArabicNumbers = (str: string): string => {
+    if (!str) return '';
+    return str
+      .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString())
+      .replace(/[0-9]/g, d => '0123456789'.indexOf(d).toString())
+      .replace(/,/g, '.');
+  };
+
+  const handleDiscountInputChange = (rawVal: string) => {
+    const normalized = normalizeArabicNumbers(rawVal);
+    setDiscountValueInput(normalized);
+
+    const parsed = Number(normalized);
+    if (!isNaN(parsed) && normalized.trim() !== '') {
+      setFormData(prev => ({ ...prev, discountValue: parsed }));
+    }
+  };
+
   const loadPromotions = async () => {
     setLoading(true);
     try {
@@ -63,6 +84,7 @@ export const AdminPromotions: React.FC<AdminPromotionsProps> = ({ showToast }) =
           startAt: p.startAt ? new Date(p.startAt).toISOString().slice(0, 16) : '',
           endAt: p.endAt ? new Date(p.endAt).toISOString().slice(0, 16) : '',
         });
+        setDiscountValueInput(p.discountValue !== undefined && p.discountValue !== null ? String(p.discountValue) : '');
       }
     } catch (err: any) {
       showToast?.(err.message || 'فشل تحميل إعدادات العروض', 'error');
@@ -77,19 +99,47 @@ export const AdminPromotions: React.FC<AdminPromotionsProps> = ({ showToast }) =
 
   const handleSave = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+
     if (!formData.couponCode.trim()) {
       showToast?.('يرجى إدخال كود الخصم', 'error');
       return;
     }
-    if (formData.discountValue <= 0) {
-      showToast?.('يرجى إدخال قيمة خصم أكبر من 0', 'error');
+
+    const trimmedDiscount = discountValueInput.trim();
+    if (!trimmedDiscount) {
+      showToast?.('يرجى إدخال قيمة الخصم.', 'error');
       return;
+    }
+
+    const normalizedDiscount = normalizeArabicNumbers(trimmedDiscount);
+    const numDiscount = Number(normalizedDiscount);
+
+    if (isNaN(numDiscount) || !isFinite(numDiscount)) {
+      showToast?.('أدخل رقماً صحيحاً.', 'error');
+      return;
+    }
+
+    if (formData.discountType === 'percentage') {
+      if (numDiscount < 0) {
+        showToast?.('يجب ألا تقل نسبة الخصم عن 0%.', 'error');
+        return;
+      }
+      if (numDiscount > 100) {
+        showToast?.('لا يمكن أن تتجاوز نسبة الخصم 100%.', 'error');
+        return;
+      }
+    } else {
+      if (numDiscount < 0) {
+        showToast?.('لا يمكن أن تكون قيمة الخصم سالبة.', 'error');
+        return;
+      }
     }
 
     setSaving(true);
     try {
       const payload: Partial<PromotionSettings> = {
         ...formData,
+        discountValue: numDiscount,
         couponCode: formData.couponCode.toUpperCase().trim(),
         startAt: formData.startAt ? new Date(formData.startAt).toISOString() : null,
         endAt: formData.endAt ? new Date(formData.endAt).toISOString() : null,
@@ -104,6 +154,7 @@ export const AdminPromotions: React.FC<AdminPromotionsProps> = ({ showToast }) =
           startAt: p.startAt ? new Date(p.startAt).toISOString().slice(0, 16) : '',
           endAt: p.endAt ? new Date(p.endAt).toISOString().slice(0, 16) : '',
         });
+        setDiscountValueInput(String(p.discountValue));
       } else {
         throw new Error(res.error || 'تعذر الحفظ');
       }
@@ -116,10 +167,11 @@ export const AdminPromotions: React.FC<AdminPromotionsProps> = ({ showToast }) =
 
   // Helper to substitute template variables for Preview
   const getSubstitutedText = (rawText: string, lang: 'ar' | 'en', nameOverride?: string) => {
+    const currentNum = Number(normalizeArabicNumbers(discountValueInput.trim())) || 0;
     const formattedDiscount =
       formData.discountType === 'percentage'
-        ? `${formData.discountValue}%`
-        : `${formData.discountValue.toFixed(3)} ${lang === 'ar' ? 'د.ك' : 'KWD'}`;
+        ? `${currentNum}%`
+        : `${currentNum.toFixed(3)} ${lang === 'ar' ? 'د.ك' : 'KWD'}`;
 
     const effectiveName = nameOverride && nameOverride.trim()
       ? nameOverride.trim()
@@ -341,13 +393,13 @@ export const AdminPromotions: React.FC<AdminPromotionsProps> = ({ showToast }) =
                     قيمة الخصم {formData.discountType === 'percentage' ? '(%)' : '(د.ك KWD)'}
                   </label>
                   <input
-                    type="number"
-                    step={formData.discountType === 'percentage' ? '1' : '0.250'}
-                    min="0.1"
-                    value={formData.discountValue}
-                    onChange={e => setFormData({ ...formData, discountValue: parseFloat(e.target.value) || 0 })}
+                    type="text"
+                    inputMode="decimal"
+                    value={discountValueInput}
+                    onChange={e => handleDiscountInputChange(e.target.value)}
                     className="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white font-bold text-sm focus:outline-hidden focus:border-sky-500"
-                    placeholder="مثال: 15"
+                    placeholder={formData.discountType === 'percentage' ? 'مثال: 10' : 'مثال: 2.500'}
+                    dir="ltr"
                   />
                 </div>
 

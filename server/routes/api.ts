@@ -1654,16 +1654,46 @@ apiRouter.get('/admin/promotions', requireAdminAuth, (req, res) => {
 // Admin Update Promotion Settings
 apiRouter.put('/admin/promotions', requireAdminAuth, (req, res) => {
   try {
-    const { discountValue, couponCode, delaySeconds } = req.body;
-    if (typeof discountValue === 'number' && discountValue <= 0) {
-      return res.status(400).json({ success: false, error: 'قيمة الخصم يجب أن تكون أصل أكبر من صفر' });
+    const { discountValue, discountType, couponCode, delaySeconds } = req.body;
+
+    if (discountValue === undefined || discountValue === null || String(discountValue).trim() === '') {
+      return res.status(400).json({ success: false, error: 'يرجى إدخال قيمة الخصم.' });
     }
+
+    // Convert Arabic numerals if any
+    const normalizedStr = String(discountValue)
+      .replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d).toString())
+      .replace(/[0-9]/g, d => '0123456789'.indexOf(d).toString())
+      .replace(/,/g, '.');
+
+    const numVal = Number(normalizedStr.trim());
+
+    if (isNaN(numVal) || !isFinite(numVal)) {
+      return res.status(400).json({ success: false, error: 'أدخل رقماً صحيحاً.' });
+    }
+
+    if (discountType === 'percentage') {
+      if (numVal < 0) {
+        return res.status(400).json({ success: false, error: 'يجب ألا تقل نسبة الخصم عن 0%.' });
+      }
+      if (numVal > 100) {
+        return res.status(400).json({ success: false, error: 'لا يمكن أن تتجاوز نسبة الخصم 100%.' });
+      }
+    } else {
+      if (numVal < 0) {
+        return res.status(400).json({ success: false, error: 'لا يمكن أن تكون قيمة الخصم سالبة.' });
+      }
+    }
+
     if (couponCode && typeof couponCode === 'string' && !couponCode.trim()) {
       return res.status(400).json({ success: false, error: 'كود الخصم لا يمكن أن يكون فارغاً' });
     }
+
     if (typeof delaySeconds === 'number' && delaySeconds < 0) {
       return res.status(400).json({ success: false, error: 'وقت التأخير يجب أن يكون 0 أو أكثر' });
     }
+
+    req.body.discountValue = numVal;
 
     const updated = db.updatePromotionSettings(req.body);
     res.json({ success: true, message: 'تم حفظ إعدادات العرض المنبثق والكوبون بنجاح!', promotion: updated });
